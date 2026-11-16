@@ -84,7 +84,9 @@ Veja qual motor de IA o seu `.env` usa:
 grep -E '^AI_(PROVIDER|BASE_URL|MODEL)=' apps/backend/.env
 ```
 
-Se aparecer `AI_PROVIDER="rules"` (ou nenhuma linha `AI_PROVIDER`), **pule para o comando de subir, abaixo**. Se aparecer `AI_PROVIDER="openai-compatible"` com `AI_BASE_URL="http://localhost:11434/v1"`, faça antes estes três passos (instalação do Ollama, uma vez só, na seção 8b):
+- `AI_PROVIDER="rules"` (ou nenhuma linha `AI_PROVIDER`): **pule para o comando de subir, abaixo**.
+- `AI_PROVIDER="openai-compatible"` com outro endereço em `AI_BASE_URL` (fornecedor hospedado): também pule; não há nada a subir na sua máquina.
+- `AI_PROVIDER="openai-compatible"` com `AI_BASE_URL="http://localhost:11434/v1"` (Ollama): faça antes os três passos abaixo. A instalação do Ollama (uma vez só) está na seção 8b.
 
 1. **O Ollama está no ar?**
 
@@ -98,6 +100,16 @@ Se aparecer `AI_PROVIDER="rules"` (ou nenhuma linha `AI_PROVIDER`), **pule para 
    brew services start ollama
    ```
 
+   Se o `brew` responder que o `ollama` não está instalado (`Formula ollama is not installed` ou `No available formula`), pare: falta a instalação da seção 8b.
+
+   **Depois de um `brew services start`, confira o keep-alive**: quando o serviço estava parado, o `start` recria o arquivo do serviço sem o `OLLAMA_KEEP_ALIVE`, e o modelo volta a sair da memória depois de 5 min parado.
+
+   ```bash
+   launchctl print gui/$(id -u)/sh.brew.ollama | grep OLLAMA_KEEP_ALIVE
+   ```
+
+   Esperado: `OLLAMA_KEEP_ALIVE => 24h`. Se não aparecer nada, repita o passo 2 de "Instalar e configurar o Ollama" (seção 8b).
+
 2. **O modelo do `.env` está instalado?**
 
    ```bash
@@ -109,10 +121,10 @@ Se aparecer `AI_PROVIDER="rules"` (ou nenhuma linha `AI_PROVIDER`), **pule para 
 3. **Aqueça o modelo** (carrega na memória; sem isso, o primeiro rascunho demora mais):
 
    ```bash
-   MODEL=$(grep -E '^AI_MODEL=' apps/backend/.env | cut -d'"' -f2); curl -s http://localhost:11434/api/generate -d "{\"model\":\"$MODEL\",\"keep_alive\":\"24h\"}"
+   MODEL=$(sed -nE 's/^AI_MODEL=["'\'']?([^"'\'' #]+).*/\1/p' apps/backend/.env); curl -s http://localhost:11434/api/generate -d "{\"model\":\"$MODEL\",\"keep_alive\":\"24h\"}"
    ```
 
-   Esperado: `"done":true` e `"done_reason":"load"` (cerca de 1 s).
+   Esperado: `"done":true` e `"done_reason":"load"` (cerca de 1 s). O comando lê o `AI_MODEL` com ou sem aspas. Se vier `model ... not found`, volte ao passo 2.
 
 Para subir o backend:
 
@@ -302,24 +314,32 @@ Testado em 16/11/2026 num Mac com Apple M4 Pro e 48 GB de RAM, Ollama 0.40.16 in
    /usr/libexec/PlistBuddy -c "Add :EnvironmentVariables:OLLAMA_KEEP_ALIVE string 24h" ~/Library/LaunchAgents/sh.brew.ollama.plist
    ```
 
+   Se responder `Entry Already Exists`, a variável já está no arquivo: troque `Add` por `Set` no mesmo comando (ou siga para o próximo).
+
    ```bash
    launchctl bootout gui/$(id -u)/sh.brew.ollama; launchctl bootstrap gui/$(id -u) ~/Library/LaunchAgents/sh.brew.ollama.plist
    ```
 
-   Confira com `launchctl print gui/$(id -u)/sh.brew.ollama | grep OLLAMA_KEEP_ALIVE` (esperado: `OLLAMA_KEEP_ALIVE => 24h`) e, depois de um rascunho, com `ollama ps` (coluna `UNTIL`: `24 hours from now`). **Atenção:** `brew services restart ollama` e `brew upgrade ollama` recriam esse arquivo sem a variável; depois deles, repita os dois comandos.
+   Se o `bootstrap` responder `Bootstrap failed: 5: Input/output error`, espere 1 s e rode de novo só o `launchctl bootstrap ...`.
 
-3. **Baixe o modelo** (1,9 GB):
+   Confira com `launchctl print gui/$(id -u)/sh.brew.ollama | grep OLLAMA_KEEP_ALIVE` (esperado: `OLLAMA_KEEP_ALIVE => 24h`) e, depois de um rascunho, com `ollama ps` (coluna `UNTIL`: `24 hours from now`). **Atenção:** `brew services start ollama` (com o serviço parado, por exemplo depois de um `brew services stop`), `brew services restart ollama` e `brew upgrade ollama` recriam esse arquivo sem a variável; depois deles, repita os dois comandos.
+
+3. **Baixe os modelos.** Qual usar está em aberto no `afazeres.md` ([DECIDIR] "Modelo local do Ollama"). Enquanto isso, o `.env` do Mac de desenvolvimento usa o `qwen2.5:3b`, **provisório**: é o único dos dois que cabe nos 15 s do orçamento. O `qwen2.5:7b` escreve etapas melhores, mas passa dos 15 s.
 
    ```bash
    ollama pull qwen2.5:3b
    ```
 
-   O `qwen2.5:7b` (4,7 GB, `ollama pull qwen2.5:7b`) escreve etapas melhores, mas passa dos 15 s do orçamento. A escolha está em aberto no `afazeres.md` ([DECIDIR] "Modelo local do Ollama"); os números estão em `docs/8-avaliacao-ia.md`:
+   ```bash
+   ollama pull qwen2.5:7b
+   ```
+
+   O primeiro tem 1,9 GB e o segundo, 4,7 GB. Números em `docs/8-avaliacao-ia.md`:
 
    | Modelo | Rascunho com o modelo carregado | Primeiro rascunho (modelo frio) | Respostas do LLM no `ai:eval` (orçamento de 15 s) |
    |---|---|---|---|
-   | `qwen2.5:3b` | 5,6–9,0 s | 9,7 s | 7 de 10 (3 caem nas regras: o modelo repete etapas sem parar) |
-   | `qwen2.5:7b` | 17,3–21,1 s | 21,9 s | 0 de 10 (todas passam de 15 s) |
+   | `qwen2.5:3b` | 5,6–12,2 s | 9,7 s | 7 de 10 (3 caem nas regras por tempo; no texto 2, por repetir etapas sem parar) |
+   | `qwen2.5:7b` | 12,1–21,1 s | 21,9 s | 0 de 10 (todas passam de 15 s; com 120 s, 10 de 10) |
 
 #### Usar o Ollama no backend
 
@@ -332,11 +352,13 @@ Testado em 16/11/2026 num Mac com Apple M4 Pro e 48 GB de RAM, Ollama 0.40.16 in
    AI_API_KEY=""
    ```
 
+   `qwen2.5:3b` é o provisório do item acima; para o 7b, troque o `AI_MODEL`.
+
    Mantenha `AI_FALLBACK="rules"` e `AI_TIMEOUT_MS="15000"`. Não ponha chave: o Ollama não pede.
 
 2. **Confira, suba e aqueça o Ollama** (passo 6a) e **reinicie o backend** (passo 6). O `.env` só é lido na subida.
 
-3. **Repita o `curl` do rascunho** (acima). Com o `qwen2.5:3b`, ele leva de 6 a 10 s.
+3. **Repita o `curl` do rascunho** (acima). Com o `qwen2.5:3b`, ele leva de 6 a 12 s (até 15 s, quando cai nas regras).
 
 #### Saber qual motor respondeu
 
@@ -349,7 +371,7 @@ Testado em 16/11/2026 num Mac com Apple M4 Pro e 48 GB de RAM, Ollama 0.40.16 in
     assistant op=suggestSteps provider=openai-compatible model=qwen2.5:3b prompt=suggest-steps@v1 ms=5750 outcome=ok tokens_in=434 tokens_out=215
     ```
 
-  - o LLM falhou e a reserva respondeu: `assistant op=draft ... outcome=assistant.timeout fallback=rules` (ou `assistant.unavailable`, `assistant.invalid-output`), e a linha da chamada mostra o motivo (`outcome=timeout`, `http_404`, `invalid_json`, `invalid_output`). Isso é a reserva funcionando, não um erro;
+  - o LLM falhou e a reserva respondeu: `assistant op=draft ... outcome=assistant.timeout fallback=rules` (ou `assistant.unavailable`, `assistant.invalid-output`), e a linha da chamada mostra o motivo (`outcome=timeout`, `network` (Ollama parado), `http_404` (modelo não instalado), `invalid_json`, `invalid_output` ou `error`). Isso é a reserva funcionando, não um erro;
   - com `AI_PROVIDER="rules"`: nenhuma linha `assistant`.
 - Para ver o texto e a resposta do modelo no log, acrescente `AI_LOG_CONTENT="true"` (só na sua máquina).
 
@@ -423,6 +445,6 @@ Os dados do banco continuam guardados para a próxima vez.
 | Erro 500 logo depois de uma migration nova | Cliente do Prisma desatualizado | Rode `prisma:generate` e `npm run build` de novo |
 | O backend não sobe e diz `AI_PROVIDER inválido` ou `exige AI_BASE_URL e AI_MODEL` | Variável `AI_*` errada ou faltando | Corrija o `apps/backend/.env` (seção 8b) |
 | O rascunho sempre volta com `"engine":"rules"` com o Ollama | Modelo inexistente, Ollama fora do ar ou resposta lenta/inválida | Veja o `outcome=` no log do backend e confira `ollama list` (seção 8b) |
-| `curl http://localhost:11434/api/tags` não responde | Serviço do Ollama parado | `brew services start ollama` (passo 6a) |
+| `curl http://localhost:11434/api/tags` não responde | Serviço do Ollama parado | `brew services start ollama` e confira o keep-alive (passo 6a) |
 | Com o Ollama, um texto leva 15 s e volta `"engine":"rules"` com `outcome=timeout` | Modelo frio, modelo grande demais para 15 s (`qwen2.5:7b`) ou o `qwen2.5:3b` repetindo etapas sem parar | Aqueça o modelo (passo 6a). Se repetir sempre no mesmo texto, é o limite conhecido do `qwen2.5:3b` (`docs/8-avaliacao-ia.md`) |
-| `ollama ps` mostra `UNTIL` em 5 minutos, e não em 24 horas | O `OLLAMA_KEEP_ALIVE` saiu do serviço (`brew services restart` ou `brew upgrade`) | Repita o passo 2 de "Instalar e configurar o Ollama" (seção 8b) |
+| `ollama ps` mostra `UNTIL` em 5 minutos, e não em 24 horas | O `OLLAMA_KEEP_ALIVE` saiu do serviço (`brew services start` com o serviço parado, `brew services restart` ou `brew upgrade`) | Repita o passo 2 de "Instalar e configurar o Ollama" (seção 8b) |

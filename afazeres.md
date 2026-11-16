@@ -243,6 +243,7 @@ Siglas: W = tela do protótipo web (`design/web/SCREENS.md`); M = tela do mobile
 - Na W30 manual o subtítulo passou a "Novo objetivo · 3 de 3" (passo "result" do protótipo); cruza com o [DECIDIR] "Título 'Quebrei em etapas pra você' no objetivo manual".
 
 - Ver também no Backend: "Aprovar a proposta de IA", "O que fazer quando a IA falha", "Leitura de link e anexo (UC03)" (aba "Colar link" da W28) e "Perguntas de esclarecimento no chat". Ver também no Frontend (acima): "Título 'Quebrei em etapas pra você' no objetivo manual", que fica verdadeiro quando a IA preencher a W30.
+- Ver também no Backend, rodada do Ollama local (16/11/2026): "Modelo local do Ollama" (o "IA analisando…" da W29 dura de 6 a 21 s conforme o modelo; o web desiste aos 25 s) e "Prazo relativo errado quando o LLM responde" (o prazo da W30 pode vir errado).
 
 ## Mobile
 
@@ -421,6 +422,7 @@ Siglas: W = tela do protótipo web (`design/web/SCREENS.md`); M = tela do mobile
 ### Proposta de IA (11/11/2026)
 
 - Ver também no Backend, subseção "Proposta de IA (11/11/2026)": "Aprovar a proposta de IA" (traz a `HttpGoalAssistantRepository` e os campos novos do `GoalSuggestion`: `microSteps`, `aiEstimatedMinutes`, `requirements`, `missingFields`), "O que fazer quando a IA falha" (cruza com "Aviso quando a IA falha no chat", acima), "Leitura de link e anexo (UC03)" (cruza com "Anexo e áudio do chat (M13/M14) só visuais") e "Perguntas de esclarecimento no chat".
+- Ver também no Backend, rodada do Ollama local (16/11/2026): "Modelo local do Ollama" (o "analisando" do chat dura de 6 a 21 s conforme o modelo; o app desiste aos 25 s) e "Prazo relativo errado quando o LLM responde" (o prazo da M15 pode vir errado).
 
 ## Backend (inclui domínio modules/*, banco e contrato)
 
@@ -770,7 +772,11 @@ Origem comum: `docs/7-proposta-ia.md` (rodada de análise, sem implementação).
 - [x] [INVESTIGAR] O fornecedor escolhido aceita `response_format: { type: 'json_object' }` e devolve `usage`? — (origem: tarefa 9, `docs/7` §c.3 "a confirmar", 12/11/2026) — **resolvido para o Ollama em 16/11/2026:** aceita e devolve.
   - **Evidência:** `curl http://localhost:11434/v1/chat/completions` com `response_format: {"type":"json_object"}` (`qwen2.5:7b`) devolveu JSON puro e válido, sem cercas de markdown, com `finish_reason: stop` e `usage: {"prompt_tokens": 82, "completion_tokens": 46, ...}`, os campos que o adaptador lê. Nas chamadas reais do backend, o log mostra `tokens_in` e `tokens_out` preenchidos (ex.: `outcome=ok tokens_in=429 tokens_out=54`), e nenhuma resposta caiu em `invalid_json` ou `invalid_output` (as falhas foram só de tempo). Nenhuma mudança no adaptador. Detalhes em `docs/8-avaliacao-ia.md`. Para um fornecedor hospedado (IA6), repetir o mesmo `curl` quando ele for escolhido.
   - **Sintoma possível:** fornecedor que ignora `response_format` pode responder com texto em volta do JSON (`outcome=invalid_json` → reserva). Cercas de markdown (```json) já são aceitas. `tokens_in`/`tokens_out` aparecem como `-` se o fornecedor não mandar `usage`.
-  - **Onde olhar:** rodar o `ai:eval` com o fornecedor escolhido e conferir os `outcome=` no log. Nada foi testado contra fornecedor real (o Ollama local não tem modelo).
+  - **Onde olhar:** rodar o `ai:eval` com o fornecedor escolhido e conferir os `outcome=` no log. (Texto de 12/11; em 16/11 o Ollama foi testado com modelo, ver acima. O fornecedor hospedado segue no [EXECUTAR] abaixo.)
+
+- [ ] [EXECUTAR] Conferir `response_format` e `usage` no fornecedor hospedado quando a IA6 for decidida — (origem: fechamento do [INVESTIGAR] acima, 16/11/2026)
+  - **O que fazer:** com a chave no `apps/backend/.env`, repetir contra o fornecedor escolhido o `curl` de `/chat/completions` com `response_format: {"type":"json_object"}` (exemplo em `docs/8-avaliacao-ia.md`, seção "`response_format` e `usage` no Ollama") e rodar o `ai:eval`.
+  - **Pronto quando:** o conteúdo vem como JSON válido, o log mostra `tokens_in`/`tokens_out` preenchidos e nenhum `outcome=invalid_json` aparece; o resultado entra no `docs/8`.
 
 - [ ] [DECIDIR] Modelo local do Ollama: o `qwen2.5:7b` passa de 15 s e o `qwen2.5:3b` repete etapas — (origem: rodada do Ollama local, 16/11/2026, `docs/8-avaliacao-ia.md`) — também afeta Frontend e Mobile (tempo limite de 25 s dos apps)
   - **Contexto:** com o Ollama instalado (IA8), a regra combinada foi `qwen2.5:7b` para 16 GB de RAM ou mais (o Mac tem 48 GB) e, se o rascunho com o modelo carregado passasse de 15 s, não mexer no código nem no padrão e trazer a decisão para cá. O orçamento `AI_TIMEOUT_MS` (15 s) cobre as duas chamadas (`parseGoal` + `suggestSteps`). Os dois apps desistem do rascunho aos 25 s (`HttpGoalAssistantRepository`, web e mobile) e abrem o formulário manual.
@@ -778,16 +784,16 @@ Origem comum: `docs/7-proposta-ia.md` (rodada de análise, sem implementação).
 
     | Modelo | Rascunho carregado | Frio | Respostas do LLM no `ai:eval` (15 s) | Qualidade |
     |---|---|---|---|---|
-    | `qwen2.5:7b` | 17,3–21,1 s | 21,9 s | 0 de 10 (com 120 s: 10 de 10, 12,1–16,6 s) | boa: etapas específicas; um prazo errado e uma etapa em inglês |
-    | `qwen2.5:3b` | 5,6–9,0 s | 9,7 s | 7 de 10 (3 estouram o orçamento) | fraca: título vazio em 4 de 7, um prazo errado, etapas inventadas |
+    | `qwen2.5:7b` | 17,3–21,1 s (texto 1, 5 seguidas); 12,1–16,6 s (`ai:eval` com 120 s) | 21,9 s | 0 de 10 (com 120 s: 10 de 10) | boa: etapas específicas; um prazo errado e uma etapa em inglês |
+    | `qwen2.5:3b` | 5,6–9,0 s (texto 1); 5,8–12,2 s (`ai:eval`) | 9,7 s | 7 de 10 (3 estouram o orçamento) | fraca: título vazio em 4 de 7, um prazo errado, etapas inventadas |
 
-    O 3b, em alguns textos, entra em repetição: gera a mesma etapa de novo e de novo e não fecha o JSON (no texto "Prova de Cálculo 1 na sexta…", 3 de 4 tentativas não terminaram nem em 120 s). Exemplo real: `{"title": "Estudar respostas", "estimatedMinutes": 30, "microSteps": ["Estudar respostas da prova anterior", "Estudar respostas da prova do colega"]}` repetido até o fim. O 7b no mesmo texto fechou o JSON em 3 de 3. A velocidade de geração medida é de 18,9 tokens/s no 7b e 38,6 no 3b; o `suggestSteps` do 7b gera cerca de 300 tokens.
+    O 3b, em alguns textos, entra em repetição: gera a mesma etapa de novo e de novo e não fecha o JSON (no texto "Prova de Cálculo 1 na sexta…", 3 de 4 tentativas não terminaram nem em 120 s). Exemplo real: `{"title": "Estudar respostas", "estimatedMinutes": 30, "microSteps": ["Estudar respostas da prova anterior", "Estudar respostas da prova do colega"]}` repetido até o fim. O 7b no mesmo texto fechou o JSON em 3 de 3. A velocidade de geração do 7b nas chamadas reais ficou em 20–21,5 tokens/s (18,9 num teste curto) e a do 3b em 38,6; o `suggestSteps` do 7b gera cerca de 300 tokens.
   - **Alternativas:**
-    1. **`qwen2.5:3b` com 15 s (como está hoje no seu `.env`, provisório).** Código: nada. Telas: nada. Vantagem: responde em 6–10 s. Desvantagem: qualidade fraca; cerca de 3 em 10 textos esperam 15 s e caem nas regras.
-    2. **`qwen2.5:7b` com `AI_TIMEOUT_MS="23000"` só no seu `.env` local.** Código: nada; o padrão do projeto continua 15 s. Telas: o "analisando…" dura 17–21 s. Vantagem: a melhor qualidade medida, sem nada sair da máquina. Desvantagem: espera longa; o limite de 23 s fica abaixo dos 25 s dos apps, com pouca folga (o maior tempo medido foi 21,9 s); acima de 25 s precisaria mudar os apps.
-    3. **Prompt `suggest-steps@v2` mais curto** (3 a 6 etapas, 1 micro-passo) e, no adaptador, um teto de tokens (`max_tokens`) e uma penalidade de repetição (`frequency_penalty`). Código: prompt novo (IA5) e 2 parâmetros, com testes e um `ai:eval` novo (≈ 2 h). Vantagem: o 7b pode caber nos 15 s (cerca de 180 tokens ≈ 10 s mais 2,5 s do `parseGoal`), e o 3b para de repetir sem fim. Desvantagem: menos detalhe por etapa; o resultado precisa ser medido, não é garantido.
-    4. **Testar outro modelo local** (ex.: `llama3.2:3b`, `gemma3:4b`; download de 2–3 GB cada). Código: nada. Vantagem: pode haver um modelo rápido sem repetição. Desvantagem: mais downloads e outra rodada de `ai:eval`; nenhum foi testado.
-    5. **Fornecedor hospedado** (Groq ou outro, IA6). Código: só `.env`. Vantagem: modelo grande e rápido. Desvantagem: o texto sai da máquina; chave e conta.
+    1. **`qwen2.5:3b` com 15 s (como está hoje no seu `.env`, provisório).** Código: nada. Telas: nada. Vantagem: responde em 6–12 s. Desvantagem: qualidade fraca; cerca de 3 em 10 textos esperam 15 s e caem nas regras.
+    2. **`qwen2.5:7b` com `AI_TIMEOUT_MS="23000"` só no seu `.env` local.** Código: nada; o padrão do projeto continua 15 s. Telas: o "analisando…" dura 12–21 s. Vantagem: a melhor qualidade medida, sem nada sair da máquina. Desvantagem: espera longa; o limite de 23 s fica abaixo dos 25 s dos apps, com pouca folga (o maior tempo medido foi 21,9 s); acima de 25 s precisaria mudar os apps.
+    3. **Prompt `suggest-steps@v2` mais curto** (3 a 6 etapas, 1 micro-passo) e, no adaptador, um teto de tokens (`max_tokens`) e uma penalidade de repetição (`frequency_penalty`). Código: prompt novo (IA5) e 2 parâmetros, com testes e um `ai:eval` novo (≈ 2 h). Telas: nenhuma nova; a W30/M15 chega com menos etapas e um micro-passo por etapa. Vantagem: o 7b pode caber nos 15 s (cerca de 180 tokens a 20 tokens/s ≈ 9 s, mais 2,5 s do `parseGoal`), e o 3b para de repetir sem fim. Desvantagem: menos detalhe por etapa; o resultado precisa ser medido, não é garantido.
+    4. **Testar outro modelo local** (ex.: `llama3.2:3b`, `gemma3:4b`; download de 2–3 GB cada). Código: nada. Telas: nada. Prazo: ≈ 1 h por modelo (download e `ai:eval`). Vantagem: pode haver um modelo rápido sem repetição. Desvantagem: mais downloads e outra rodada de `ai:eval`; nenhum foi testado.
+    5. **Fornecedor hospedado** (Groq ou outro, IA6). Código: só `.env`. Telas: nada. Prazo: o da decisão da IA6 (conta e chave). Vantagem: modelo grande e rápido. Desvantagem: o texto sai da máquina; chave e conta.
   - **Recomendação:** 2 para os seus testes locais agora (a melhor qualidade, só no `.env`), e 3 como próxima tarefa, porque também resolve a repetição do 3b e pode trazer o 7b para dentro dos 15 s. O fornecedor do projeto segue na IA6.
 
 - [ ] [DECIDIR] Prazo relativo errado quando o LLM responde — (origem: `ai:eval` com o Ollama, 16/11/2026, `docs/8-avaliacao-ia.md`)
@@ -795,7 +801,7 @@ Origem comum: `docs/7-proposta-ia.md` (rodada de análise, sem implementação).
   - **Problema:** o `qwen2.5:7b` leu "sexta" (hoje = segunda, 16/11) como 17/11 em vez de 20/11; o `qwen2.5:3b` leu "dia 30" como 30/12 em vez de 30/11. Prazo errado em silêncio leva o plano a encaixar as etapas cedo demais ou tarde demais; o usuário só percebe se conferir a data na M15/W30.
   - **Alternativas:**
     1. **Prazo pelo analisador de datas quando ele reconhecer uma expressão; o LLM só preenche o prazo quando o analisador não achar nada.** Código: o orquestrador do rascunho (`goal-draft.orchestrator.ts`) ou o `DraftGoal` passa a consultar o analisador; testes de unidade e de integração (≈ 1–2 h). Telas: nada. Vantagem: determinístico, já testado e já medido. Desvantagem: herda os erros do analisador (ver "Regras de data, título e categoria do motor de regras").
-    2. **Prompt `parse-goal@v2` com o dia da semana de hoje e exemplos** ("hoje é segunda-feira, 2026-11-16; 'sexta' = 2026-11-20"). Código: prompt novo (IA5) e um `ai:eval` (≈ 1 h). Vantagem: sem lógica nova. Desvantagem: modelos pequenos podem continuar errando; precisa medir.
+    2. **Prompt `parse-goal@v2` com o dia da semana de hoje e exemplos** ("hoje é segunda-feira, 2026-11-16; 'sexta' = 2026-11-20"). Código: prompt novo (IA5) e um `ai:eval` (≈ 1 h). Telas: nada. Vantagem: sem lógica nova. Desvantagem: modelos pequenos podem continuar errando; precisa medir.
     3. **Manter** (o usuário confere o prazo na tela). Vantagem: nada a fazer. Desvantagem: erro silencioso.
   - **Recomendação:** 1: o analisador já acerta mais que os dois modelos medidos e não depende do modelo escolhido.
 

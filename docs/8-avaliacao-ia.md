@@ -2,7 +2,7 @@
 
 **Última rodada:** 16/11/2026 (segunda), com o Ollama local e modelos instalados. A rodada de 12/11 (Ollama sem modelo) está no fim da página.
 **Como foi gerado:** `npm --workspace apps/backend run ai:eval` (tarefa 10 da `docs/7-proposta-ia.md` §g), com os 10 textos de referência do script `apps/backend/scripts/ai-eval.ts`, fuso `America/Sao_Paulo`, hoje = 16/11/2026, reserva `rules` (`AI_FALLBACK`). O orçamento é de 15 s (`AI_TIMEOUT_MS`), salvo onde a tabela diz outro valor.
-**Máquina:** Mac com Apple M4 Pro e 48 GB de RAM, Ollama 0.40.16 (Homebrew, serviço `brew services`, `OLLAMA_KEEP_ALIVE=24h`). Velocidade de geração medida: `qwen2.5:3b` 38,6 tokens/s e `qwen2.5:7b` 18,9 tokens/s.
+**Máquina:** Mac com Apple M4 Pro e 48 GB de RAM, Ollama 0.40.16 (Homebrew, serviço `brew services`, `OLLAMA_KEEP_ALIVE=24h`). Velocidade de geração: `qwen2.5:3b` 38,6 tokens/s e `qwen2.5:7b` 18,9 tokens/s num teste curto pela API nativa; nas chamadas reais do `suggestSteps`, o 7b ficou em cerca de 20–21,5 tokens/s (ex.: 301 tokens em 14,0 s).
 
 ---
 
@@ -11,12 +11,12 @@
 | Motor | Respostas do LLM (10 textos, 15 s) | Rascunho com o modelo carregado | Primeiro rascunho (frio) | Qualidade | Situação |
 |---|---|---|---|---|---|
 | **Motor de regras** (`rules`) | — (não é LLM) | 0–2 ms | 0–2 ms | Prazo certo nos 8 textos com data; etapas genéricas, um modelo por categoria; o título leva a expressão de data (5 de 10) | padrão do projeto |
-| **Ollama `qwen2.5:3b`** | **7 de 10**; 3 caem nas regras por tempo | 5,6–9,0 s (5 chamadas) | 9,7 s | Etapas mais específicas que as regras, mas fracas: título vazio em 4 de 7, um prazo errado ("dia 30" → 30/12), etapas inventadas ("mecânica", "elétrica") e totais de até 11,5 h | **em uso provisório** no `.env` local |
-| **Ollama `qwen2.5:7b`** | **0 de 10**: todas passam de 15 s | 17,3–21,1 s (5 chamadas) | 21,9 s | Com o orçamento aberto (120 s), 10 de 10: etapas específicas e úteis (cita QuickSort, MergeSort e BubbleSort; separa derivadas e limites), totais de 3,2 a 7 h; um prazo errado ("sexta" → 17/11) e uma etapa em inglês | **não cabe nos 15 s** |
+| **Ollama `qwen2.5:3b`** | **7 de 10**; 3 caem nas regras por tempo (no texto 2, por repetição) | 5,6–9,0 s no texto 1 (5 chamadas); 5,8–12,2 s nos 7 textos do `ai:eval` | 9,7 s | Etapas mais específicas que as regras, mas fracas: título vazio em 4 de 7, um prazo errado ("dia 30" → 30/12), etapas inventadas ("mecânica", "elétrica") e totais de até 11,5 h | **em uso provisório** no `.env` local |
+| **Ollama `qwen2.5:7b`** | **0 de 10**: todas passam de 15 s | 17,3–21,1 s no texto 1 (5 chamadas seguidas); 12,1–16,6 s no `ai:eval` com 120 s | 21,9 s | Com o orçamento aberto (120 s), 10 de 10: etapas específicas e úteis (cita QuickSort, MergeSort e BubbleSort; separa derivadas e limites), totais de 3,2 a 7 h; um prazo errado ("sexta" → 17/11) e uma etapa em inglês | **não cabe nos 15 s** |
 
 **O que dá para afirmar hoje:**
 1. **A IA real responde de ponta a ponta.** Com o `qwen2.5:3b`, o `POST /goals/assistant/draft` devolve `engine: "llm"` e o log mostra `outcome=ok` nas duas chamadas (seção "Prova da IA real").
-2. **Nenhum dos dois modelos locais atende ao mesmo tempo ao orçamento e à qualidade.** O 7b escreve bem, mas leva de 17 a 21 s. O 3b cabe nos 15 s, mas erra mais e, em alguns textos, repete etapas sem parar até o orçamento estourar. A escolha está no [DECIDIR] "Modelo local do Ollama" do `afazeres.md`.
+2. **Nenhum dos dois modelos locais atende ao mesmo tempo ao orçamento e à qualidade.** O 7b escreve bem, mas leva de 12 a 21 s (passa de 15 s na maioria das medições e em todas as do orçamento de 15 s). O 3b cabe nos 15 s, mas erra mais e, em alguns textos, repete etapas sem parar até o orçamento estourar. A escolha está no [DECIDIR] "Modelo local do Ollama" do `afazeres.md`.
 3. **A reserva funciona com um LLM de verdade.** Nos textos em que o modelo estoura o orçamento, o rascunho sai das regras em 15 s, com `engine: "rules"`. O tempo limite não foi aumentado e a validação não foi afrouxada.
 4. **O Ollama aceita `response_format: {type: "json_object"}` e devolve `usage`** com `prompt_tokens` e `completion_tokens`. Nenhuma resposta foi recusada pela validação; as falhas foram só de tempo.
 5. **Prazo relativo é o ponto fraco dos LLMs:** o 7b leu "sexta" como 17/11 e o 3b leu "dia 30" como 30/12. O motor de regras acertou os dois.
@@ -27,7 +27,7 @@
 
 ## Tempo de resposta (texto de referência 1, as duas chamadas)
 
-Medido pelo `GoalDraftRunner` com o adaptador real, orçamento aberto só na medição (para ver o tempo bruto). "Frio" é logo depois de `ollama stop <modelo>`.
+Medido pelo `GoalDraftRunner` com o adaptador real, orçamento aberto só na medição (para ver o tempo bruto). "Frio" é logo depois de `ollama stop <modelo>`. As 5 chamadas do 7b foram seguidas, logo depois da fria; no `ai:eval` de 120 s, mais tarde, o mesmo texto 1 levou 16,2 s. A diferença entre as rodadas (17–21 s contra 12–17 s) não foi investigada; os dois números ficam registrados.
 
 | Modelo | Frio | Carregado, 5 chamadas seguidas | `parseGoal` (carregado) | `suggestSteps` (carregado) | Tokens gerados no `suggestSteps` |
 |---|---|---|---|---|---|
@@ -128,7 +128,12 @@ Com o orçamento de 15 s, **os 10 textos caíram nas regras** (`assistant.timeou
 
 ## Rodada de 12/11/2026 (Ollama sem modelo)
 
-Hoje = 12/11/2026 (quinta): os prazos relativos ("sexta", "amanhã", "em 10 dias") contam a partir dessa data. Resumo da época: o motor de regras foi medido; o Ollama respondia sem modelo instalado (HTTP 404, tudo caiu nas regras); o Groq não foi rodado (sem chave).
+Hoje = 12/11/2026 (quinta): os prazos relativos ("sexta", "amanhã", "em 10 dias") contam a partir dessa data. A tabela de custo e privacidade dos fornecedores hospedados continua valendo como insumo da IA6.
+
+### Resumo da rodada de 12/11 (para a reunião de sexta)
+
+| Motor | Qualidade (10 textos) | Latência por rascunho | Custo | Privacidade | Situação |
+|
 
 ### (a) Motor de regras (`AI_PROVIDER=rules`)
 

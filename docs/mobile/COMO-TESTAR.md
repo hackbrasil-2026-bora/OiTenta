@@ -88,7 +88,7 @@ Desde 12/11/2026, **Novo objetivo** (em Objetivos) abre o **chat** (decisão IA4
 3. Para o caminho manual, toque em **Preencher à mão** no chat: abre a M15 vazia, como antes.
 4. Se a IA falhar e o backend estiver com `AI_FALLBACK=none`, a M15 abre vazia (formulário manual, 4f).
 
-No modo `http`, quem responde é o backend (`POST /goals/assistant/draft`): com `AI_PROVIDER=rules` (padrão), o motor de regras; com o Ollama, o modelo local. Com o Ollama, o "analisando" dura de 6 a 10 s com o `qwen2.5:3b` (até 15 s, quando o rascunho cai nas regras); para saber qual motor respondeu, veja o log do backend (`docs/backend/COMO-TESTAR.md`, seção 8b, "Saber qual motor respondeu"). **Para trocar o motor, só o `apps/backend/.env` muda** (ver `docs/backend/COMO-TESTAR.md`, seção 8b) e o backend é reiniciado; o app não muda. No modo `sample`, o rascunho é o fixo do protótipo.
+No modo `http`, quem responde é o backend (`POST /goals/assistant/draft`): com `AI_PROVIDER=rules` (padrão), o motor de regras; com o Ollama, o modelo local. Com o Ollama, o "analisando" dura de 6 a 12 s com o `qwen2.5:3b` (até 15 s, quando o rascunho cai nas regras); para saber qual motor respondeu, veja o log do backend (`docs/backend/COMO-TESTAR.md`, seção 8b, "Saber qual motor respondeu"). **Para trocar o motor, só o `apps/backend/.env` muda** (ver `docs/backend/COMO-TESTAR.md`, seção 8b) e o backend é reiniciado; o app não muda. No modo `sample`, o rascunho é o fixo do protótipo.
 
 Ponta a ponta do assistente (tarefa 11): com o backend no ar com `AI_PROVIDER=rules AI_FALLBACK=rules` (seção 2, passo 1) e o simulador ligado, zere o demo e rode:
 
