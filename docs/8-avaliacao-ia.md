@@ -132,8 +132,21 @@ Hoje = 12/11/2026 (quinta): os prazos relativos ("sexta", "amanhã", "em 10 dias
 
 ### Resumo da rodada de 12/11 (para a reunião de sexta)
 
+Texto de 12/11, mantido como estava; os números de 16/11 estão no topo da página.
+
 | Motor | Qualidade (10 textos) | Latência por rascunho | Custo | Privacidade | Situação |
-|
+|---|---|---|---|---|---|
+| **Motor de regras** (`AI_PROVIDER=rules`) | Prazo certo em 8 de 8 textos com data; categoria aceitável em 9 de 10; **títulos levam junto a expressão de data** (4 de 10) e **as etapas são genéricas**, o mesmo modelo para todo texto da categoria | 0–2 ms | zero | nada sai do backend | **medido** |
+| **Ollama local** (`openai-compatible`, `http://localhost:11434/v1`) | **não medido**: o Ollama responde, mas não há modelo instalado (`ollama list` vazio); as 10 chamadas deram HTTP 404 e caíram no motor de regras | reserva em 1–71 ms (o 404 é imediato) | zero | nada sai da máquina | **bloqueado** (ver [DECIDIR] "Ollama local sem modelo instalado") |
+| **Groq** (`https://api.groq.com/openai/v1`) | **não medido**: não há `AI_API_KEY` do Groq no `apps/backend/.env` | — | plano gratuito (limites "a confirmar", `docs/7` §f) | o texto sai para o fornecedor; política "a confirmar" | **não rodado** |
+| Gemini, GitHub Models, OpenRouter | não medidos (`docs/7` §f) | — | — | Gemini gratuito pode usar o conteúdo para melhorar produtos | — |
+
+**O que dá para afirmar hoje:**
+1. O fluxo funciona de ponta a ponta com o motor de regras: rascunho instantâneo, prazo e categoria corretos na maioria dos casos, etapas coerentes mas genéricas.
+2. A reserva funciona: com o LLM indisponível (modelo inexistente), o rascunho sai do motor de regras em menos de 0,1 s e a resposta diz `engine: 'rules'`.
+3. **A qualidade de um LLM ainda não foi medida.** Para a reunião ter esse número, falta um modelo no Ollama ou uma chave do Groq (comandos em `docs/backend/COMO-TESTAR.md`, seção "Assistente do novo objetivo (IA)").
+
+**Para decidir na sexta (IA6):** fornecedor e modelo, chave e custo, limite de uso, privacidade e política de falha (`AI_FALLBACK`). Os números do LLM entram nesta página quando o `ai:eval` for rodado com ele.
 
 ### (a) Motor de regras (`AI_PROVIDER=rules`)
 
