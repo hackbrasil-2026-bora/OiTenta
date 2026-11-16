@@ -78,7 +78,7 @@ Desde 12/11/2026 o **Novo objetivo** abre na W27 (decisões IA1 e IA3):
 3. Para o caminho manual, clique em **Prefiro preencher à mão**, abaixo do botão: abre a W30 vazia, como antes.
 4. Se a IA falhar e o backend estiver com `AI_FALLBACK=none`, a W30 abre vazia (formulário manual, 4f).
 
-Quem responde é o backend: com `AI_PROVIDER=rules` (padrão) as etapas vêm do motor de regras; com o Ollama, do modelo local. **Para trocar o motor, só o `apps/backend/.env` muda** (ver `docs/backend/COMO-TESTAR.md`, seção 8b) e o backend é reiniciado; o web não muda. No modo `example`, o rascunho é o fixo do protótipo.
+Quem responde é o backend: com `AI_PROVIDER=rules` (padrão) as etapas vêm do motor de regras; com o Ollama, do modelo local. Com o Ollama, o "IA analisando…" dura de 6 a 10 s com o `qwen2.5:3b` (até 15 s, quando o rascunho cai nas regras); para saber qual motor respondeu, veja o log do backend (`docs/backend/COMO-TESTAR.md`, seção 8b, "Saber qual motor respondeu"). **Para trocar o motor, só o `apps/backend/.env` muda** (ver `docs/backend/COMO-TESTAR.md`, seção 8b) e o backend é reiniciado; o web não muda. No modo `example`, o rascunho é o fixo do protótipo.
 
 Ponta a ponta do assistente (tarefa 11, usuário próprio, motor de regras; o Postgres precisa estar no ar):
 

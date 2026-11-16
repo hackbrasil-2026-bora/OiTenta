@@ -76,6 +76,46 @@ Nas próximas: `[seed] usuário demo já existe (demo@bora.app), nada a fazer.` 
 
 ## 6. Subir o backend
 
+### 6a. Se o `.env` usa o Ollama: conferir, subir e aquecer
+
+Veja qual motor de IA o seu `.env` usa:
+
+```bash
+grep -E '^AI_(PROVIDER|BASE_URL|MODEL)=' apps/backend/.env
+```
+
+Se aparecer `AI_PROVIDER="rules"` (ou nenhuma linha `AI_PROVIDER`), **pule para o comando de subir, abaixo**. Se aparecer `AI_PROVIDER="openai-compatible"` com `AI_BASE_URL="http://localhost:11434/v1"`, faça antes estes três passos (instalação do Ollama, uma vez só, na seção 8b):
+
+1. **O Ollama está no ar?**
+
+   ```bash
+   curl -s http://localhost:11434/api/tags
+   ```
+
+   Esperado: um JSON com `"models":[...]`. Se não responder ("Connection refused" ou saída vazia), suba o serviço e repita o `curl` depois de alguns segundos:
+
+   ```bash
+   brew services start ollama
+   ```
+
+2. **O modelo do `.env` está instalado?**
+
+   ```bash
+   ollama list
+   ```
+
+   O valor de `AI_MODEL` precisa aparecer na coluna `NAME`. Se não aparecer, o modelo não foi baixado: veja "Instalar e configurar o Ollama" na seção 8b.
+
+3. **Aqueça o modelo** (carrega na memória; sem isso, o primeiro rascunho demora mais):
+
+   ```bash
+   MODEL=$(grep -E '^AI_MODEL=' apps/backend/.env | cut -d'"' -f2); curl -s http://localhost:11434/api/generate -d "{\"model\":\"$MODEL\",\"keep_alive\":\"24h\"}"
+   ```
+
+   Esperado: `"done":true` e `"done_reason":"load"` (cerca de 1 s).
+
+Para subir o backend:
+
 ```bash
 npx turbo run dev --filter=@oitenta/backend
 ```
@@ -242,53 +282,100 @@ Esperado: `{"draft":{"title":"Trabalho de Algoritmos","deadline":"2026-11-24",..
 
 ### Testar com o Ollama (IA local, nada sai da sua máquina)
 
-1. **Confira que o Ollama está no ar:**
+Testado em 16/11/2026 num Mac com Apple M4 Pro e 48 GB de RAM, Ollama 0.40.16 instalado pelo Homebrew.
+
+#### Instalar e configurar o Ollama (uma vez)
+
+1. **Instale e deixe o serviço subindo sozinho** (a cada login, sem terminal aberto):
 
    ```bash
-   curl -s http://localhost:11434/api/tags
+   brew install ollama
    ```
-
-   Esperado: um JSON com `"models":[...]`. Se der "Connection refused", abra o app do Ollama (ou rode `ollama serve` em outro terminal).
-
-2. **Veja qual modelo usar:**
 
    ```bash
-   ollama list
+   brew services start ollama
    ```
 
-   Use o nome da coluna `NAME` (ex.: `llama3.2:3b`). Se houver mais de um, prefira o menor (coluna `SIZE`). **Se a lista estiver vazia**, não há modelo: baixar um é uma decisão em aberto no `afazeres.md` ("Ollama local sem modelo instalado"). Sem modelo, todo pedido cai no motor de regras.
+2. **Mantenha o modelo carregado por 24 h.** Sem isso, o Ollama tira o modelo da memória depois de 5 min parado, e o próximo rascunho fica mais lento. Acrescente a variável ao serviço e recarregue-o:
 
-3. **Configure o `apps/backend/.env`** (troque `<modelo>` pelo nome do passo 2):
+   ```bash
+   /usr/libexec/PlistBuddy -c "Add :EnvironmentVariables:OLLAMA_KEEP_ALIVE string 24h" ~/Library/LaunchAgents/sh.brew.ollama.plist
+   ```
+
+   ```bash
+   launchctl bootout gui/$(id -u)/sh.brew.ollama; launchctl bootstrap gui/$(id -u) ~/Library/LaunchAgents/sh.brew.ollama.plist
+   ```
+
+   Confira com `launchctl print gui/$(id -u)/sh.brew.ollama | grep OLLAMA_KEEP_ALIVE` (esperado: `OLLAMA_KEEP_ALIVE => 24h`) e, depois de um rascunho, com `ollama ps` (coluna `UNTIL`: `24 hours from now`). **Atenção:** `brew services restart ollama` e `brew upgrade ollama` recriam esse arquivo sem a variável; depois deles, repita os dois comandos.
+
+3. **Baixe o modelo** (1,9 GB):
+
+   ```bash
+   ollama pull qwen2.5:3b
+   ```
+
+   O `qwen2.5:7b` (4,7 GB, `ollama pull qwen2.5:7b`) escreve etapas melhores, mas passa dos 15 s do orçamento. A escolha está em aberto no `afazeres.md` ([DECIDIR] "Modelo local do Ollama"); os números estão em `docs/8-avaliacao-ia.md`:
+
+   | Modelo | Rascunho com o modelo carregado | Primeiro rascunho (modelo frio) | Respostas do LLM no `ai:eval` (orçamento de 15 s) |
+   |---|---|---|---|
+   | `qwen2.5:3b` | 5,6–9,0 s | 9,7 s | 7 de 10 (3 caem nas regras: o modelo repete etapas sem parar) |
+   | `qwen2.5:7b` | 17,3–21,1 s | 21,9 s | 0 de 10 (todas passam de 15 s) |
+
+#### Usar o Ollama no backend
+
+1. **Configure o `apps/backend/.env`**:
 
    ```
    AI_PROVIDER="openai-compatible"
    AI_BASE_URL="http://localhost:11434/v1"
-   AI_MODEL="<modelo>"
+   AI_MODEL="qwen2.5:3b"
    AI_API_KEY=""
    ```
 
-4. **Reinicie o backend** (passo 6) e repita o `curl` do rascunho acima.
-   - Esperado com o modelo respondendo bem: `"engine":"llm"`. No terminal do backend aparece `assistant op=parseGoal provider=openai-compatible model=<modelo> prompt=parse-goal@v1 ms=... outcome=ok` e o mesmo para `suggestSteps`.
-   - Se o modelo demorar mais de 15 s no total, devolver JSON inválido ou o modelo não existir, a resposta vem com `"engine":"rules"` e o log mostra `outcome=timeout`, `invalid_json`, `invalid_output` ou `http_404`, seguido de `assistant op=draft ... fallback=rules`. Isso é a reserva funcionando, não um erro.
-   - Para ver o texto e a resposta no log, acrescente `AI_LOG_CONTENT="true"` (só na sua máquina).
+   Mantenha `AI_FALLBACK="rules"` e `AI_TIMEOUT_MS="15000"`. Não ponha chave: o Ollama não pede.
 
-5. **Comparar os motores** com os 10 textos de referência (não grava nada):
+2. **Confira, suba e aqueça o Ollama** (passo 6a) e **reinicie o backend** (passo 6). O `.env` só é lido na subida.
 
-   ```bash
-   npm --workspace apps/backend run ai:eval
-   ```
+3. **Repita o `curl` do rascunho** (acima). Com o `qwen2.5:3b`, ele leva de 6 a 10 s.
 
-   Ele usa o motor do `.env`. Para rodar outro motor sem editar o arquivo, ponha as variáveis na frente do comando (elas têm prioridade sobre o `.env`):
+#### Saber qual motor respondeu
 
-   ```bash
-   AI_PROVIDER=openai-compatible AI_BASE_URL=http://localhost:11434/v1 AI_MODEL=<modelo> AI_API_KEY= npm --workspace apps/backend run ai:eval
-   ```
+- **Na resposta:** `"engine":"llm"` (o modelo respondeu) ou `"engine":"rules"` (motor de regras).
+- **No terminal do backend** (sem a chave e sem o texto do usuário):
+  - o LLM respondeu: duas linhas `outcome=ok`, uma por chamada:
 
-   Resultado da rodada de 12/11/2026 em `docs/8-avaliacao-ia.md`.
+    ```
+    assistant op=parseGoal provider=openai-compatible model=qwen2.5:3b prompt=parse-goal@v1 ms=2660 outcome=ok tokens_in=429 tokens_out=54
+    assistant op=suggestSteps provider=openai-compatible model=qwen2.5:3b prompt=suggest-steps@v1 ms=5750 outcome=ok tokens_in=434 tokens_out=215
+    ```
+
+  - o LLM falhou e a reserva respondeu: `assistant op=draft ... outcome=assistant.timeout fallback=rules` (ou `assistant.unavailable`, `assistant.invalid-output`), e a linha da chamada mostra o motivo (`outcome=timeout`, `http_404`, `invalid_json`, `invalid_output`). Isso é a reserva funcionando, não um erro;
+  - com `AI_PROVIDER="rules"`: nenhuma linha `assistant`.
+- Para ver o texto e a resposta do modelo no log, acrescente `AI_LOG_CONTENT="true"` (só na sua máquina).
+
+#### Comparar os motores
+
+Com os 10 textos de referência (não grava nada):
+
+```bash
+npm --workspace apps/backend run ai:eval
+```
+
+Ele usa o motor do `.env`. Para rodar outro motor sem editar o arquivo, ponha as variáveis na frente do comando (elas têm prioridade sobre o `.env`):
+
+```bash
+AI_PROVIDER=rules AI_MODEL= AI_BASE_URL= npm --workspace apps/backend run ai:eval
+```
+
+```bash
+AI_PROVIDER=openai-compatible AI_BASE_URL=http://localhost:11434/v1 AI_MODEL=qwen2.5:7b AI_API_KEY= npm --workspace apps/backend run ai:eval
+```
+
+Resultados de 12/11 e 16/11/2026 em `docs/8-avaliacao-ia.md`.
 
 ### Voltar para o motor de regras
 
-No `apps/backend/.env`, ponha `AI_PROVIDER="rules"` (ou apague as linhas `AI_*`) e reinicie o backend. Os testes automáticos (unitários, integração, Playwright e `integration_test`) usam sempre o motor de regras, sem rede.
+No `apps/backend/.env`, ponha `AI_PROVIDER="rules"` (ou apague as linhas `AI_*`) e reinicie o backend. As linhas `AI_BASE_URL` e `AI_MODEL` podem ficar: o motor de regras as ignora. O Ollama pode continuar no ar. Os testes automáticos (unitários, integração, Playwright e `integration_test`) usam sempre o motor de regras, sem rede.
 
 ## 9. Rodar os testes
 
@@ -336,3 +423,6 @@ Os dados do banco continuam guardados para a próxima vez.
 | Erro 500 logo depois de uma migration nova | Cliente do Prisma desatualizado | Rode `prisma:generate` e `npm run build` de novo |
 | O backend não sobe e diz `AI_PROVIDER inválido` ou `exige AI_BASE_URL e AI_MODEL` | Variável `AI_*` errada ou faltando | Corrija o `apps/backend/.env` (seção 8b) |
 | O rascunho sempre volta com `"engine":"rules"` com o Ollama | Modelo inexistente, Ollama fora do ar ou resposta lenta/inválida | Veja o `outcome=` no log do backend e confira `ollama list` (seção 8b) |
+| `curl http://localhost:11434/api/tags` não responde | Serviço do Ollama parado | `brew services start ollama` (passo 6a) |
+| Com o Ollama, um texto leva 15 s e volta `"engine":"rules"` com `outcome=timeout` | Modelo frio, modelo grande demais para 15 s (`qwen2.5:7b`) ou o `qwen2.5:3b` repetindo etapas sem parar | Aqueça o modelo (passo 6a). Se repetir sempre no mesmo texto, é o limite conhecido do `qwen2.5:3b` (`docs/8-avaliacao-ia.md`) |
+| `ollama ps` mostra `UNTIL` em 5 minutos, e não em 24 horas | O `OLLAMA_KEEP_ALIVE` saiu do serviço (`brew services restart` ou `brew upgrade`) | Repita o passo 2 de "Instalar e configurar o Ollama" (seção 8b) |

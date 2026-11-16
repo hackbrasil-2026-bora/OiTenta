@@ -84,7 +84,8 @@ Antes de subir qualquer servidor, siga as seções de instalação, configuraç�
 ### 7. Backend
 
 - Siga os passos do tutorial do backend que aplicam as migrations (com a geração do cliente que vem junto) e o seed, conferindo as mensagens esperadas.
-- Se a porta do backend estiver ocupada: reaproveite. Senão, suba o servidor com o comando do tutorial, **em segundo plano**, log em `backend.log`.
+- Siga os passos do tutorial do backend que vêm antes do comando de subir e dependem do motor de IA do `.env` (com o Ollama: conferir se está no ar, subir o serviço se não estiver, conferir o modelo e aquecer). Eles fazem parte da subida: **não** os pule. Faça-os também quando o backend for reaproveitado. Se o tutorial disser que falta algo que exige instalação (ex.: o modelo não está baixado), pare e reporte.
+- Se a porta do backend estiver ocupada: reaproveite e avise no relatório que o backend reaproveitado só usa o `.env` atual se tiver subido depois da última alteração dele. Senão, suba o servidor com o comando do tutorial, **em segundo plano**, log em `backend.log`.
 - Espere a mensagem que o tutorial indica e a URL do Swagger do tutorial responder 200.
 
 ### 8. Web
@@ -111,6 +112,7 @@ Branch: <branch> (<commit>)
 |---|---|---|---|
 | Banco | ✅ healthy (subiu agora | reaproveitado) | porta <porta> | — |
 | Backend | ✅ ... | <url do Swagger> | /tmp/oitenta-teste-manual/backend.log |
+| IA | ✅ <motor do `.env`: regras, ou Ollama com o modelo (no ar e aquecido)> | <url do Ollama, se usado> | — |
 | Web | ✅ ... (aberto no navegador) | <url de entrada> | /tmp/oitenta-teste-manual/frontend.log |
 | Mobile | ✅ ... | <aparelho do simulador> | /tmp/oitenta-teste-manual/mobile.log |
 

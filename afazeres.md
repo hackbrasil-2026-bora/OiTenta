@@ -732,7 +732,9 @@ Origem comum: `docs/7-proposta-ia.md` (rodada de análise, sem implementação).
     3. **Sessão no backend** (tabela de conversas). Código: 2 dias (migration, posse, expiração, endpoints). Vantagem: histórico guardado. Desvantagem: o mais caro, sem ganho para a demo.
   - **Recomendação:** 1 no MVP; 2 depois que o design do balão existir. A 3 não compensa.
 
-- [ ] [DECIDIR] Ollama local sem modelo instalado — (origem: rodada de execução da IA, 12/11/2026)
+- [x] [EXECUTAR] Ollama local sem modelo instalado — (origem: rodada de execução da IA, 12/11/2026) — **decidido e feito em 16/11/2026 (IA8):** você autorizou instalar (alternativa 1).
+  - **Fechado com:** Ollama 0.40.16 como serviço do Homebrew (`brew services start ollama`, sobe a cada login) com `OLLAMA_KEEP_ALIVE=24h`; `ollama pull qwen2.5:7b` (4,7 GB, a regra para 48 GB de RAM) e `ollama pull qwen2.5:3b` (1,9 GB); `ollama list` mostra os dois. O `POST /goals/assistant/draft` respondeu `engine: "llm"` com `outcome=ok` no log, e o `ai:eval` mediu os dois modelos (`docs/8-avaliacao-ia.md`, 16/11). O seu `apps/backend/.env` aponta para o `qwen2.5:3b` (provisório; ver "Modelo local do Ollama" abaixo). Comandos em `docs/backend/COMO-TESTAR.md` (passo 6a e seção 8b).
+  - **Causa confirmada de 12/11:** só a falta de modelo. O 404 vinha do próprio Ollama em `/v1/chat/completions` (`model 'llama3.2' not found`), então endereço, porta, rota e formato do pedido estavam certos. Em 16/11 o servidor estava parado (o de 12/11 era um `ollama serve` aberto à mão); agora é serviço.
   - **Contexto:** você pediu o teste manual do adaptador e a linha (b) do `ai:eval` com o Ollama do seu Mac. Ele responde em `http://localhost:11434` (`curl http://localhost:11434/api/tags` → `{"models":[]}`), mas `ollama list` está vazio. A instrução foi não baixar nem instalar nada.
   - **Problema:** sem modelo, toda chamada do adaptador ao Ollama falha; o rascunho cai no motor de regras (`engine: 'rules'`) e o `ai:eval` não mede a qualidade de um LLM local.
   - **Alternativas:**
@@ -763,10 +765,47 @@ Origem comum: `docs/7-proposta-ia.md` (rodada de análise, sem implementação).
     2. **Tempo por chamada menor** (ex.: metade do orçamento). Vantagem: 1 linha. Desvantagem: corta respostas boas na primeira chamada.
     3. **Manter** (o usuário não espera; só a cota sofre).
   - **Recomendação:** 3 até a escolha do fornecedor; 1 se o plano gratuito escolhido tiver limite por minuto apertado.
+  - **Observação com o Ollama local (16/11/2026):** com um modelo local, a chamada órfã não gasta cota, mas continua ocupando o modelo por alguns segundos depois da reserva (no log: `op=draft … ms=15003 outcome=assistant.timeout` e, depois, `op=suggestSteps … ms=15003 outcome=timeout`). No `ai:eval` do `qwen2.5:7b`, com 120 s, 3 dos 10 rascunhos ficaram abaixo de 15 s; com 15 s, nenhum passou. Uma explicação plausível, **não confirmada**, é a chamada órfã de um texto atrasar o seguinte. Pesa a favor da alternativa 1 se o Ollama local for o motor da demo.
 
-- [ ] [INVESTIGAR] O fornecedor escolhido aceita `response_format: { type: 'json_object' }` e devolve `usage`? — (origem: tarefa 9, `docs/7` §c.3 "a confirmar", 12/11/2026)
+- [x] [INVESTIGAR] O fornecedor escolhido aceita `response_format: { type: 'json_object' }` e devolve `usage`? — (origem: tarefa 9, `docs/7` §c.3 "a confirmar", 12/11/2026) — **resolvido para o Ollama em 16/11/2026:** aceita e devolve.
+  - **Evidência:** `curl http://localhost:11434/v1/chat/completions` com `response_format: {"type":"json_object"}` (`qwen2.5:7b`) devolveu JSON puro e válido, sem cercas de markdown, com `finish_reason: stop` e `usage: {"prompt_tokens": 82, "completion_tokens": 46, ...}`, os campos que o adaptador lê. Nas chamadas reais do backend, o log mostra `tokens_in` e `tokens_out` preenchidos (ex.: `outcome=ok tokens_in=429 tokens_out=54`), e nenhuma resposta caiu em `invalid_json` ou `invalid_output` (as falhas foram só de tempo). Nenhuma mudança no adaptador. Detalhes em `docs/8-avaliacao-ia.md`. Para um fornecedor hospedado (IA6), repetir o mesmo `curl` quando ele for escolhido.
   - **Sintoma possível:** fornecedor que ignora `response_format` pode responder com texto em volta do JSON (`outcome=invalid_json` → reserva). Cercas de markdown (```json) já são aceitas. `tokens_in`/`tokens_out` aparecem como `-` se o fornecedor não mandar `usage`.
   - **Onde olhar:** rodar o `ai:eval` com o fornecedor escolhido e conferir os `outcome=` no log. Nada foi testado contra fornecedor real (o Ollama local não tem modelo).
+
+- [ ] [DECIDIR] Modelo local do Ollama: o `qwen2.5:7b` passa de 15 s e o `qwen2.5:3b` repete etapas — (origem: rodada do Ollama local, 16/11/2026, `docs/8-avaliacao-ia.md`) — também afeta Frontend e Mobile (tempo limite de 25 s dos apps)
+  - **Contexto:** com o Ollama instalado (IA8), a regra combinada foi `qwen2.5:7b` para 16 GB de RAM ou mais (o Mac tem 48 GB) e, se o rascunho com o modelo carregado passasse de 15 s, não mexer no código nem no padrão e trazer a decisão para cá. O orçamento `AI_TIMEOUT_MS` (15 s) cobre as duas chamadas (`parseGoal` + `suggestSteps`). Os dois apps desistem do rascunho aos 25 s (`HttpGoalAssistantRepository`, web e mobile) e abrem o formulário manual.
+  - **Problema:** nenhum dos dois modelos atende ao mesmo tempo ao tempo e à qualidade:
+
+    | Modelo | Rascunho carregado | Frio | Respostas do LLM no `ai:eval` (15 s) | Qualidade |
+    |---|---|---|---|---|
+    | `qwen2.5:7b` | 17,3–21,1 s | 21,9 s | 0 de 10 (com 120 s: 10 de 10, 12,1–16,6 s) | boa: etapas específicas; um prazo errado e uma etapa em inglês |
+    | `qwen2.5:3b` | 5,6–9,0 s | 9,7 s | 7 de 10 (3 estouram o orçamento) | fraca: título vazio em 4 de 7, um prazo errado, etapas inventadas |
+
+    O 3b, em alguns textos, entra em repetição: gera a mesma etapa de novo e de novo e não fecha o JSON (no texto "Prova de Cálculo 1 na sexta…", 3 de 4 tentativas não terminaram nem em 120 s). Exemplo real: `{"title": "Estudar respostas", "estimatedMinutes": 30, "microSteps": ["Estudar respostas da prova anterior", "Estudar respostas da prova do colega"]}` repetido até o fim. O 7b no mesmo texto fechou o JSON em 3 de 3. A velocidade de geração medida é de 18,9 tokens/s no 7b e 38,6 no 3b; o `suggestSteps` do 7b gera cerca de 300 tokens.
+  - **Alternativas:**
+    1. **`qwen2.5:3b` com 15 s (como está hoje no seu `.env`, provisório).** Código: nada. Telas: nada. Vantagem: responde em 6–10 s. Desvantagem: qualidade fraca; cerca de 3 em 10 textos esperam 15 s e caem nas regras.
+    2. **`qwen2.5:7b` com `AI_TIMEOUT_MS="23000"` só no seu `.env` local.** Código: nada; o padrão do projeto continua 15 s. Telas: o "analisando…" dura 17–21 s. Vantagem: a melhor qualidade medida, sem nada sair da máquina. Desvantagem: espera longa; o limite de 23 s fica abaixo dos 25 s dos apps, com pouca folga (o maior tempo medido foi 21,9 s); acima de 25 s precisaria mudar os apps.
+    3. **Prompt `suggest-steps@v2` mais curto** (3 a 6 etapas, 1 micro-passo) e, no adaptador, um teto de tokens (`max_tokens`) e uma penalidade de repetição (`frequency_penalty`). Código: prompt novo (IA5) e 2 parâmetros, com testes e um `ai:eval` novo (≈ 2 h). Vantagem: o 7b pode caber nos 15 s (cerca de 180 tokens ≈ 10 s mais 2,5 s do `parseGoal`), e o 3b para de repetir sem fim. Desvantagem: menos detalhe por etapa; o resultado precisa ser medido, não é garantido.
+    4. **Testar outro modelo local** (ex.: `llama3.2:3b`, `gemma3:4b`; download de 2–3 GB cada). Código: nada. Vantagem: pode haver um modelo rápido sem repetição. Desvantagem: mais downloads e outra rodada de `ai:eval`; nenhum foi testado.
+    5. **Fornecedor hospedado** (Groq ou outro, IA6). Código: só `.env`. Vantagem: modelo grande e rápido. Desvantagem: o texto sai da máquina; chave e conta.
+  - **Recomendação:** 2 para os seus testes locais agora (a melhor qualidade, só no `.env`), e 3 como próxima tarefa, porque também resolve a repetição do 3b e pode trazer o 7b para dentro dos 15 s. O fornecedor do projeto segue na IA6.
+
+- [ ] [DECIDIR] Prazo relativo errado quando o LLM responde — (origem: `ai:eval` com o Ollama, 16/11/2026, `docs/8-avaliacao-ia.md`)
+  - **Contexto:** no `parseGoal`, o LLM recebe só a data de hoje (`Hoje é 2026-11-16`) e converte sozinho "sexta", "dia 30" e "semana que vem". O motor de regras tem um analisador de datas determinístico (`pt-br-date.parser.ts`), que acertou os 8 textos com data no `ai:eval`.
+  - **Problema:** o `qwen2.5:7b` leu "sexta" (hoje = segunda, 16/11) como 17/11 em vez de 20/11; o `qwen2.5:3b` leu "dia 30" como 30/12 em vez de 30/11. Prazo errado em silêncio leva o plano a encaixar as etapas cedo demais ou tarde demais; o usuário só percebe se conferir a data na M15/W30.
+  - **Alternativas:**
+    1. **Prazo pelo analisador de datas quando ele reconhecer uma expressão; o LLM só preenche o prazo quando o analisador não achar nada.** Código: o orquestrador do rascunho (`goal-draft.orchestrator.ts`) ou o `DraftGoal` passa a consultar o analisador; testes de unidade e de integração (≈ 1–2 h). Telas: nada. Vantagem: determinístico, já testado e já medido. Desvantagem: herda os erros do analisador (ver "Regras de data, título e categoria do motor de regras").
+    2. **Prompt `parse-goal@v2` com o dia da semana de hoje e exemplos** ("hoje é segunda-feira, 2026-11-16; 'sexta' = 2026-11-20"). Código: prompt novo (IA5) e um `ai:eval` (≈ 1 h). Vantagem: sem lógica nova. Desvantagem: modelos pequenos podem continuar errando; precisa medir.
+    3. **Manter** (o usuário confere o prazo na tela). Vantagem: nada a fazer. Desvantagem: erro silencioso.
+  - **Recomendação:** 1: o analisador já acerta mais que os dois modelos medidos e não depende do modelo escolhido.
+
+- [ ] [DECIDIR] O `ai:eval` com `AI_PROVIDER=rules` mostra o modelo e o endereço do `.env` no cabeçalho — (origem: rodada do Ollama local, 16/11/2026, `apps/backend/scripts/ai-eval.ts`)
+  - **Contexto:** com o `.env` apontando para o Ollama, `AI_PROVIDER=rules npm --workspace apps/backend run ai:eval` imprime `Motor: rules (qwen2.5:3b) em http://localhost:11434/v1`, embora o motor de regras não use nenhum dos dois.
+  - **Problema:** o cabeçalho engana quem lê a tabela. Hoje o contorno documentado é zerar as duas variáveis na linha de comando (`AI_MODEL= AI_BASE_URL=`).
+  - **Alternativas:**
+    1. **Mostrar modelo e endereço só quando o motor não for `rules`.** Código: uma condição no script e um teste, se houver teste do script (≈ 15 min). Vantagem: cabeçalho certo. Desvantagem: nenhuma real.
+    2. **Manter, com o contorno documentado.** Vantagem: nada a fazer. Desvantagem: o cabeçalho continua enganando sem o contorno.
+  - **Recomendação:** 1, numa tarefa pequena.
 
 - [ ] [EXECUTAR] Preparo das worktrees dos subagentes de backend inclui `prisma:generate` e o build dos módulos — (origem: relatórios das tarefas 4 e 9, 12/11/2026)
   - **O que fazer:** acrescentar à P28 (preparo das worktrees) `npm --workspace apps/backend run prisma:generate` e `npx turbo run build --filter='./modules/*' --filter='./packages/*'`. Sem isso, o `nest build` e os testes de integração falham na worktree nova (`has no exported member 'PrismaClient'`, `Cannot find module '@oitenta/auth'`).

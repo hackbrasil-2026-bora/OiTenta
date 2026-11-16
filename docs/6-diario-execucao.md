@@ -219,3 +219,16 @@ Achados da sessão (todos no `afazeres.md`):
 - Testes existentes alterados: os 2 autorizados na IA4 (mobile), mais o do modo `http` do mobile e a espera de 1 s no ponta a ponta do mobile, e os do web pelo clique em "Prefiro preencher à mão" (três [DECIDIR] "Validar decisão já implementada").
 
 Worktrees `/Users/arthursetragni/Hackaton/wt-orq`, `wt-w1`, `wt-w2`, `wt-m1`, `wt-m2`: branches já integradas; podem ser removidas (`git worktree remove`).
+
+## Sessão 4 — 16/11/2026: Ollama local de verdade (IA8)
+
+Pedido: fazer o backend usar o Ollama local no rascunho do objetivo, com autorização para instalar e configurar no Mac. Decisão registrada em `docs/2-decisoes-mvp.md` (IA8).
+
+- **Diagnóstico:** a causa de 12/11 era só a falta de modelo (o 404 vinha do próprio Ollama, `model 'llama3.2' not found`). Em 16/11 o servidor estava parado; agora é serviço do Homebrew com `OLLAMA_KEEP_ALIVE=24h`.
+- **Instalado:** `qwen2.5:7b` (regra para 48 GB) e `qwen2.5:3b`. O 7b leva 17–21 s por rascunho mesmo carregado (passa dos 15 s); o 3b leva 6–10 s, mas repete etapas sem parar em alguns textos. Nada no código nem no padrão mudou; a escolha virou [DECIDIR] ("Modelo local do Ollama"), e o `.env` local ficou com o 3b, provisório.
+- **IA real provada:** `POST /goals/assistant/draft` com `engine: "llm"` e `outcome=ok` no log; `response_format` e `usage` conferidos (fecha o [INVESTIGAR]). Números em `docs/8-avaliacao-ia.md`.
+- **Docs:** `docs/backend/COMO-TESTAR.md` ganhou o passo 6a (conferir, subir e aquecer o Ollama antes do backend) e a seção 8b reescrita; a skill `teste-manual-local` passou a tratar o 6a como parte da subida do backend.
+
+| Id | Branch | Status | TDD | Verificação | Revisor |
+|---|---|---|---|---|---|
+| docs | `docs/ollama-local` | ver o relatório da sessão | n/a (só docs; nenhum código mudou) | ver o relatório | subagente revisor |

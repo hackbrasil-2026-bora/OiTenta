@@ -81,7 +81,7 @@ Aceito como proposto: estrutura própria `{ diasDaSemana[], horaInicio, duracaoM
 - **Estimativa:** a IA sugere e o usuário confirma; `aiEstimate` e `estimate` ficam salvos separadamente.
 - **O motor do calendário nunca usa IA.**
 - O fornecedor está em aberto (5.8). O `GoalAssistantProvider` é neutro.
-- Detalhada em **IA1–IA7** (12/11/2026, abaixo): arquitetura, contrato, motor de regras e o que fica para sexta.
+- Detalhada em **IA1–IA7** (12/11/2026, abaixo): arquitetura, contrato, motor de regras e o que fica para sexta. **IA8** (16/11/2026): Ollama local com modelo instalado para os testes.
 
 ## 4g. Motor do calendário
 
@@ -548,6 +548,14 @@ Dependências técnicas indispensáveis para as aprovadas funcionarem (ex.: `@vi
 - **Decisão:** fora por enquanto.
 - **Status:** adiada.
 - **Data:** 12/11/2026.
+
+### IA8 — Ollama local com modelo instalado para os testes
+
+- **Contexto:** em 12/11 o Ollama do Mac de desenvolvimento não tinha modelo ([DECIDIR] "Ollama local sem modelo instalado"), e todo pedido caía no motor de regras.
+- **Decisão:** o dono do produto autorizou instalar e configurar o Ollama no Mac (alternativa 1 do item). Ficou como serviço do Homebrew (`brew services`) com `OLLAMA_KEEP_ALIVE=24h` e os modelos `qwen2.5:3b` e `qwen2.5:7b`. Só o `apps/backend/.env` local aponta para ele; o `.env.example` e os testes automáticos continuam com `AI_PROVIDER=rules` (IA6).
+- **Consequências:** o 7b não cabe nos 15 s e o 3b repete etapas em alguns textos (`docs/8-avaliacao-ia.md`); o modelo a usar é um [DECIDIR] novo ("Modelo local do Ollama"), e o `.env` local fica com o 3b até lá. Comandos em `docs/backend/COMO-TESTAR.md` (passo 6a e seção 8b).
+- **Status:** valendo para o ambiente local; não muda o fornecedor do projeto (IA6).
+- **Data:** 16/11/2026.
 
 ---
 
