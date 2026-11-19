@@ -139,10 +139,13 @@ void main() {
         dailyLimitMinutes: 180,
       ),
     );
+    // A tela de rotina também lê a disponibilidade ao abrir (S4); o que
+    // importa aqui é que o Perfil lê de novo ao voltar.
+    final beforeBack = scheduling.availabilityCalls;
     GoRouter.of(tester.element(find.byType(RoutinePage))).pop();
     await tester.pumpAndSettle();
     expect(find.byType(ProfilePage), findsOneWidget);
-    expect(scheduling.availabilityCalls, 2);
+    expect(scheduling.availabilityCalls, beforeBack + 1);
     expect(find.text('3h'), findsOneWidget);
   });
 }
