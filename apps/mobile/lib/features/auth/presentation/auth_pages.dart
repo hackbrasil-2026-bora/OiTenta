@@ -3,6 +3,7 @@ import 'package:go_router/go_router.dart';
 
 import '../../../core/di/app_dependencies.dart';
 import '../../../core/routes/app_routes.dart';
+import '../../../core/widgets/bora_scaffold.dart';
 import '../../../core/widgets/controller_host.dart';
 import 'login_controller.dart';
 import 'login_screen.dart';
@@ -33,12 +34,29 @@ class LoginPage extends StatelessWidget {
 }
 
 class RegisterPage extends StatelessWidget {
-  const RegisterPage({super.key});
+  const RegisterPage({super.key, required this.deps});
+
+  final AppDependencies deps;
 
   @override
   Widget build(BuildContext context) => RegisterScreen(
     onBack: () =>
         context.canPop() ? context.pop() : context.go(AppRoutes.login),
     onContinue: () => context.go(AppRoutes.onboarding),
+  );
+}
+
+/// Esqueci minha senha: placeholder (MP4, regra 4i) até existir backend de
+/// recuperação; as telas M36–M38 entram depois.
+class ForgotPasswordPage extends StatelessWidget {
+  const ForgotPasswordPage({super.key});
+
+  @override
+  Widget build(BuildContext context) => PlaceholderScreen(
+    title: 'Esqueci minha senha',
+    description: 'A recuperação de senha ainda não está disponível.',
+    actionLabel: 'Voltar pro login',
+    onAction: () =>
+        context.canPop() ? context.pop() : context.go(AppRoutes.login),
   );
 }

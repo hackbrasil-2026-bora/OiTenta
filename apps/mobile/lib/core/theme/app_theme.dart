@@ -36,4 +36,7 @@ class AppTheme {
       extensions: const [c],
     );
   }
+
+  /// Tema escuro (MP7). Provisório: o S6 troca pela paleta escura do design.
+  static ThemeData dark() => light();
 }

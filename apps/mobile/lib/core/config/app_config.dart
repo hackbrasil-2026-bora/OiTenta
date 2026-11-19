@@ -21,4 +21,8 @@ class AppConfig {
     'DATA_SOURCE',
     defaultValue: 'http',
   );
+
+  /// Mostra "Entrar direto como Arthur (demo)" no login (MP5): `true` em
+  /// `local-*` e `developer`, `false` em `prod`.
+  static const bool showDemo = bool.fromEnvironment('SHOW_DEMO');
 }

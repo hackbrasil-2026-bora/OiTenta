@@ -96,7 +96,8 @@ class TodayPage extends StatelessWidget {
       state: c,
       onStart: () => _openCheckin(context, c),
       onToggleLight: c.toggleLightTask,
-      onProfile: null,
+      onProfile: () => context.push(AppRoutes.profile),
+      onBroto: () => context.go(AppRoutes.garden),
     ),
   );
 }

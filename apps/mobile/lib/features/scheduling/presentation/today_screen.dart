@@ -5,8 +5,7 @@ import '../../../core/theme/bora_colors.dart';
 import '../../../core/theme/bora_text.dart';
 import '../../../core/widgets/bora_scaffold.dart';
 import '../../../core/widgets/bora_widgets.dart';
-import '../../../core/widgets/broto.dart';
-import '../../gamification/presentation/gamified_bar.dart';
+import '../../gamification/presentation/home_top_bar.dart';
 import 'today_controller.dart';
 
 /// Hoje (M01).
@@ -17,51 +16,29 @@ class TodayScreen extends StatelessWidget {
     required this.onStart,
     required this.onToggleLight,
     required this.onProfile,
+    this.onBroto,
   });
 
   final TodayController state;
   final VoidCallback onStart;
   final ValueChanged<String> onToggleLight;
 
-  /// Perfil está fora da fatia: o botão fica sem destino.
+  /// Botão com a inicial: abre o Perfil (M26).
   final VoidCallback? onProfile;
+
+  /// Broto do topo: abre o Jardim (M39).
+  final VoidCallback? onBroto;
 
   @override
   Widget build(BuildContext context) {
     final c = context.bora;
     final items = state.items;
     return BoraPage(
-      topBar: BoraTopBar(
-        leading: const Broto(mood: BrotoMood.ok, size: 40),
-        center: state.gamification == null
-            ? null
-            : GamifiedBar(data: state.gamification!),
-        trailing: Semantics(
-          button: true,
-          label: 'Perfil',
-          child: GestureDetector(
-            onTap: onProfile,
-            child: Container(
-              width: 44,
-              height: 44,
-              decoration: BoxDecoration(
-                shape: BoxShape.circle,
-                color: c.surface,
-                border: Border.all(color: c.border),
-              ),
-              alignment: Alignment.center,
-              child: Text(
-                state.userName.isEmpty ? '' : state.userName[0],
-                style: BoraText.fredoka(
-                  16,
-                  16,
-                  weight: FontWeight.w700,
-                  color: c.pri,
-                ),
-              ),
-            ),
-          ),
-        ),
+      topBar: HomeTopBar(
+        gamification: state.gamification,
+        userName: state.userName,
+        onBroto: onBroto,
+        onProfile: onProfile,
       ),
       children: [
         Text(

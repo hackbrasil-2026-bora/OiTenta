@@ -1,5 +1,6 @@
 {
   "ENV_NAME": "local-iphone",
   "API_URL": "http://IP-DO-SEU-MAC:4000",
-  "DATA_SOURCE": "http"
+  "DATA_SOURCE": "http",
+  "SHOW_DEMO": true
 }

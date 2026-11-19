@@ -3,9 +3,11 @@ import 'package:go_router/go_router.dart';
 
 import '../../features/activation/presentation/activation_pages.dart';
 import '../../features/auth/presentation/auth_pages.dart';
-import '../../features/gamification/presentation/garden_screen.dart';
+import '../../features/gamification/presentation/garden_pages.dart';
 import '../../features/goals/domain/goal_suggestion.dart';
 import '../../features/goals/presentation/goals_pages.dart';
+import '../../features/profile/presentation/profile_pages.dart';
+import '../../features/profile/presentation/routine_suggestion_pages.dart';
 import '../../features/scheduling/presentation/scheduling_pages.dart';
 import '../di/app_dependencies.dart';
 import '../widgets/app_shell.dart';
@@ -16,6 +18,8 @@ AppTab tabFor(String location) {
   if (location.startsWith(AppRoutes.goals)) return AppTab.goals;
   if (location.startsWith(AppRoutes.week)) return AppTab.week;
   if (location.startsWith(AppRoutes.garden)) return AppTab.garden;
+  // O Perfil pertence ao grupo do Jardim, como no protótipo (MP10).
+  if (location.startsWith(AppRoutes.profile)) return AppTab.garden;
   return AppTab.today;
 }
 
@@ -49,7 +53,11 @@ GoRouter createRouter(
       ),
       GoRoute(
         path: AppRoutes.register,
-        builder: (_, _) => const RegisterPage(),
+        builder: (_, _) => RegisterPage(deps: deps),
+      ),
+      GoRoute(
+        path: AppRoutes.forgotPassword,
+        builder: (_, _) => const ForgotPasswordPage(),
       ),
       GoRoute(
         path: AppRoutes.onboarding,
@@ -98,7 +106,19 @@ GoRouter createRouter(
           ),
           GoRoute(
             path: AppRoutes.garden,
-            pageBuilder: (_, s) => page(s, const GardenScreen()),
+            pageBuilder: (_, s) => page(s, GardenPage(deps: deps)),
+          ),
+          GoRoute(
+            path: AppRoutes.profile,
+            builder: (_, _) => ProfilePage(deps: deps),
+          ),
+          GoRoute(
+            path: AppRoutes.profileRoutine,
+            builder: (_, _) => RoutinePage(deps: deps),
+          ),
+          GoRoute(
+            path: AppRoutes.profileSuggestion,
+            builder: (_, _) => SuggestionPage(deps: deps),
           ),
           GoRoute(
             path: AppRoutes.ramp,
