@@ -61,7 +61,8 @@ void main() {
     testWidgets('topo: Broto, barra gamificada e o botão "A"', (tester) async {
       await _pumpScreen(tester, await _loaded());
       expect(find.byType(HomeTopBar), findsOneWidget);
-      expect(find.bySemanticsLabel('Abrir Jardim'), findsOneWidget);
+      // No Jardim o Broto não tem ação: é anunciado só como "Mascote Broto".
+      expect(find.bySemanticsLabel('Mascote Broto'), findsOneWidget);
       expect(find.text('340'), findsOneWidget);
       expect(find.text('Nv 7'), findsOneWidget);
       expect(find.text('A'), findsOneWidget);
@@ -312,7 +313,7 @@ void main() {
       await pumpApp(tester, location: AppRoutes.garden);
       final top = tester.widget<HomeTopBar>(find.byType(HomeTopBar));
       expect(top.onBroto, isNull);
-      await tester.tap(find.bySemanticsLabel('Abrir Jardim'));
+      await tester.tap(find.bySemanticsLabel('Mascote Broto'));
       await tester.pumpAndSettle();
       expect(find.byType(GardenPage), findsOneWidget);
       expect(find.byType(ProfilePage), findsNothing);

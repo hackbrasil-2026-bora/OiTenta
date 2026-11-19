@@ -132,6 +132,41 @@ void main() {
     });
   });
 
+  group('HomeTopBar sem ação no Broto (revisor, item 6)', () {
+    testWidgets('sem onBroto, o Broto não é anunciado como botão', (
+      tester,
+    ) async {
+      await tester.pumpWidget(
+        themed(
+          HomeTopBar(
+            gamification: null,
+            userName: 'Ana',
+            onBroto: null,
+            onProfile: () {},
+          ),
+        ),
+      );
+      expect(find.bySemanticsLabel('Abrir Jardim'), findsNothing);
+      final broto = tester.getSemantics(find.bySemanticsLabel('Mascote Broto'));
+      expect(broto.flagsCollection.isButton, isFalse);
+    });
+
+    testWidgets('com onBroto, continua botão "Abrir Jardim"', (tester) async {
+      await tester.pumpWidget(
+        themed(
+          HomeTopBar(
+            gamification: null,
+            userName: 'Ana',
+            onBroto: () {},
+            onProfile: () {},
+          ),
+        ),
+      );
+      final broto = tester.getSemantics(find.bySemanticsLabel('Abrir Jardim'));
+      expect(broto.flagsCollection.isButton, isTrue);
+    });
+  });
+
   group('ThemeController (MP7, só em memória)', () {
     test('começa claro', () {
       final t = ThemeController();

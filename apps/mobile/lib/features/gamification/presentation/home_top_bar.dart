@@ -28,9 +28,12 @@ class HomeTopBar extends StatelessWidget {
     final c = context.bora;
     final name = userName.trim();
     return BoraTopBar(
+      // Sem ação (no próprio Jardim), o Broto é só imagem: não é anunciado
+      // como botão para o leitor de tela.
       leading: Semantics(
-        button: true,
-        label: 'Abrir Jardim',
+        button: onBroto != null,
+        image: onBroto == null,
+        label: onBroto == null ? 'Mascote Broto' : 'Abrir Jardim',
         excludeSemantics: true,
         child: GestureDetector(
           behavior: HitTestBehavior.opaque,
