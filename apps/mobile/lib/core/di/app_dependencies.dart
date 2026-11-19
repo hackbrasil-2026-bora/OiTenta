@@ -16,6 +16,8 @@ import '../../features/goals/data/http_goal_assistant_repository.dart';
 import '../../features/goals/data/http_goals_repository.dart';
 import '../../features/goals/data/sample_goal_assistant_repository.dart';
 import '../../features/goals/data/sample_goals_repository.dart';
+import '../../features/profile/data/feedback_repository.dart';
+import '../../features/profile/data/sample_feedback_repository.dart';
 import '../../features/scheduling/data/http_scheduling_repository.dart';
 import '../../features/scheduling/data/sample_scheduling_repository.dart';
 import '../../features/scheduling/data/scheduling_repository.dart';
@@ -23,6 +25,7 @@ import '../clock/clock.dart';
 import '../config/app_config.dart';
 import '../http/api_client.dart';
 import '../sample/bora_sample_data.dart';
+import '../theme/theme_controller.dart';
 
 /// Raiz de composição: os repositórios e o estado compartilhado do app.
 /// `DATA_SOURCE` (`http` | `sample`) escolhe a implementação.
@@ -37,7 +40,12 @@ class AppDependencies {
     GoalAssistantRepository? goalAssistant,
     SessionStore? session,
     RampSession? rampSession,
-  }) : goalAssistant =
+    ThemeController? theme,
+    FeedbackRepository? feedback,
+    this.showDemo = true,
+  }) : theme = theme ?? ThemeController(),
+       feedback = feedback ?? SampleFeedbackRepository(),
+       goalAssistant =
            goalAssistant ?? SampleGoalAssistantRepository(clock: clock),
        session = session ?? SessionStore(),
        rampSession = rampSession ?? RampSession();
@@ -47,8 +55,8 @@ class AppDependencies {
       AppDependencies.forDataSource(AppConfig.dataSource);
 
   factory AppDependencies.forDataSource(String source) => switch (source) {
-    'http' => AppDependencies.http(),
-    'sample' => AppDependencies.sample(),
+    'http' => AppDependencies.http(showDemo: AppConfig.showDemo),
+    'sample' => AppDependencies.sample(showDemo: AppConfig.showDemo),
     _ => throw ArgumentError.value(
       source,
       'DATA_SOURCE',
@@ -57,7 +65,8 @@ class AppDependencies {
   };
 
   /// Dados de exemplo do protótipo, com o "hoje" em 6/11/2025.
-  factory AppDependencies.sample() => AppDependencies(
+  factory AppDependencies.sample({bool showDemo = true}) => AppDependencies(
+    showDemo: showDemo,
     auth: SampleAuthRepository(),
     scheduling: SampleSchedulingRepository(),
     goals: SampleGoalsRepository(),
@@ -72,7 +81,11 @@ class AppDependencies {
   /// Backend real em [baseUrl] (padrão `API_URL`). O token fica só em memória
   /// na [SessionStore]; um 401 de rota autenticada expira a sessão.
   /// A gamificação continua fixa (P18).
-  factory AppDependencies.http({String? baseUrl, http.Client? client}) {
+  factory AppDependencies.http({
+    String? baseUrl,
+    http.Client? client,
+    bool showDemo = true,
+  }) {
     final session = SessionStore();
     final api = ApiClient(
       baseUrl: baseUrl ?? AppConfig.apiUrl,
@@ -89,6 +102,7 @@ class AppDependencies {
       clock: const SystemClock(),
       goalAssistant: HttpGoalAssistantRepository(api),
       session: session,
+      showDemo: showDemo,
     );
   }
 
@@ -105,4 +119,13 @@ class AppDependencies {
   final GoalAssistantRepository goalAssistant;
   final SessionStore session;
   final RampSession rampSession;
+
+  /// Tema claro/escuro do app (MP7).
+  final ThemeController theme;
+
+  /// Sugestões do Perfil (M29): só exemplo nos dois modos (MP9).
+  final FeedbackRepository feedback;
+
+  /// Mostra o botão de demo no login (MP5, `SHOW_DEMO`).
+  final bool showDemo;
 }

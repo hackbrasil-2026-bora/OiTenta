@@ -569,3 +569,60 @@ Dependências técnicas indispensáveis para as aprovadas funcionarem (ex.: `@vi
 6. Divergências de tokens (`design/tokens.md`): decidir a cor de fundo do mobile (`#FFFFFF` × `#F6FAF8`), a cor do 4º objetivo (roxo na web × verde no mobile), os estágios do Broto e o check-in de 3 × 4 níveis na web.
 7. Mobile: login, cadastro e os blocos 2 e 3 do onboarding não têm design; ficam como placeholder (4i) até o design ser feito no Claude Design.
 8. Cronograma revisado e divisão de tarefas entre as 4 pessoas.
+
+---
+
+## Decisões da rodada mobile Acesso/Perfil/Jardim (MP1–MP14) — 19/11/2026
+
+**Origem:** o zip novo do Bora App (19/11/2026) trouxe as telas de acesso (login, criar conta, recuperação de senha) e mudou a navegação (Jardim pelo Broto, aba Compromissos). As opções estão em `plano-mobile-acesso-perfil-jardim.md` (seção 2, D1–D14); o usuário marcou as escolhas abaixo em 19/11/2026. MPn = Dn do plano.
+
+### MP1 — Regra da senha no cadastro
+- **Contexto:** o design diz "Mínimo de 6 caracteres"; o backend exige 8 ou mais, com maiúscula, minúscula, número e símbolo (`StrongPasswordRule`).
+- **Decisão:** manter a regra do backend. A dica da tela vira "Mínimo de 8 caracteres, com maiúscula, minúscula, número e símbolo", e o app confere a mesma regra antes de enviar.
+- **Consequência:** diferença de texto em relação ao design (M34/M35). **Status:** definitiva.
+
+### MP2 — Nome com uma palavra só
+- **Contexto:** o design pede "Como quer ser chamado? Ex.: Arthur"; o `User` exigia nome e sobrenome (`PersonNameRule`) e 3 caracteres.
+- **Decisão:** o nome aceita uma palavra ou mais, só com letras (acentos, hífen e apóstrofo valem), de 2 a 80 caracteres: regra nova `DisplayNameRule` no `packages/shared`, no lugar de `PersonNameRule` + `MinLengthRule(3)`.
+- **Consequência:** o web também passa a aceitar um nome só; 422 com o código `display.name`. **Status:** definitiva.
+
+### MP3 — "Entrar com Google"
+- **Decisão:** esconder o botão e o divisor "ou" até existir login com Google. **Status:** provisória.
+
+### MP4 — "Esqueci minha senha"
+- **Decisão:** o link aparece como no design e abre um **placeholder** "Esqueci minha senha" com "Voltar pro login" (regra 4i). As 3 telas do design (M36–M38) entram quando houver backend de recuperação. **Status:** provisória.
+
+### MP5 — Botão de demo
+- **Contexto:** a decisão 5.4 e os ponta a ponta usam "Entrar direto como Arthur (demo)"; o design novo do login não tem o botão.
+- **Decisão:** o botão aparece só quando `SHOW_DEMO=true` no `env/<ambiente>.json` (lido no `AppConfig`): ligado em `local-simulator`, `local-iphone` e `developer`, desligado em `prod`. **Status:** definitiva.
+
+### MP6 — Subtítulo do Perfil
+- **Decisão:** mostrar o e-mail do usuário (`GET /auth/me`) no lugar de "Ciência da Computação · 21 anos", que não existe no backend. **Status:** definitiva.
+
+### MP7 — Modo escuro
+- **Decisão:** o interruptor troca o tema de verdade, com a paleta escura do design (`[data-theme="dark"]`, M30), guardado só em memória (fechar o app volta ao claro). **Status:** provisória até a sessão persistir.
+
+### MP8 — Bloquear apps, Lembrete da rampa e Idioma
+- **Decisão:** visuais, como no protótipo: "Bloquear apps" liga e desliga em memória, sem efeito; "Lembrete da rampa" mostra 09:30 fixo; "Idioma" abre o sheet (M28) e muda o texto da linha, mas o app continua em português. **Status:** provisória.
+
+### MP9 — Enviar sugestão
+- **Decisão:** só visual. Um repositório de exemplo recebe o texto em memória e a tela mostra o toast "Sugestão enviada"; nada vai ao backend. **Status:** provisória (o usuário aceitou a desvantagem de dizer que enviou sem enviar).
+
+### MP10 — Tab bar
+- **Decisão:** manter **Hoje · Objetivos · Semana · Jardim** e também fazer o Broto do topo abrir o Jardim. Compromissos (M41–M42) e Tarefas únicas (M43) ficam para uma rodada própria (P8). **Status:** provisória.
+
+### MP11 — Grade do "Redefinir minha rotina"
+- **Decisão:** a grade do design (2 em 2 horas, 8h–22h, 7 dias). Ao abrir, uma célula aparece "Livre" se o intervalo inteiro dela estiver dentro de uma janela salva. Ao salvar, células vizinhas do mesmo dia viram uma janela só e a grade **substitui** a disponibilidade inteira (o que estava fora de 8h–22h deixa de valer). **Status:** definitiva.
+
+### MP12 — Sair da conta
+- **Decisão:** não criar agora; a sessão fica em memória e fechar o app desloga. **Status:** provisória, ligada ao [DECIDIR] do token.
+
+### MP13 — "Trocar por 50" no Jardim
+- **Decisão:** botão sem ação (como o "Comprar" do web). **Status:** provisória (gamificação fora do MVP, P18).
+
+### MP14 — `design/mobile/app/` atualizado com o zip
+- **Decisão:** substituir `source/Bora App.dc.html`, capturar as telas 33–43 e atualizar o `SCREENS.md`. Por pedido do usuário em 19/11/2026, o próprio zip também foi commitado (`design/mobile/Bora app anti-procrastinação telas principais.zip`).
+- **Status:** definitiva.
+
+### Atualização da P27
+- Login e cadastro mobile deixam de ser placeholder (MP1–MP5). Os passos sem design do onboarding continuam placeholder.

@@ -424,7 +424,114 @@ Siglas: W = tela do protótipo web (`design/web/SCREENS.md`); M = tela do mobile
 - Ver também no Backend, subseção "Proposta de IA (11/11/2026)": "Aprovar a proposta de IA" (traz a `HttpGoalAssistantRepository` e os campos novos do `GoalSuggestion`: `microSteps`, `aiEstimatedMinutes`, `requirements`, `missingFields`), "O que fazer quando a IA falha" (cruza com "Aviso quando a IA falha no chat", acima), "Leitura de link e anexo (UC03)" (cruza com "Anexo e áudio do chat (M13/M14) só visuais") e "Perguntas de esclarecimento no chat".
 - Ver também no Backend, rodada do Ollama local (16/11/2026): "Modelo local do Ollama" (o "analisando" do chat dura de 6 a 21 s conforme o modelo; o app desiste aos 25 s) e "Prazo relativo errado quando o LLM responde" (o prazo da M15 pode vir errado).
 
+- [ ] [DECIDIR] Recuperação de senha de verdade (M36–M38) — (origem: plano-mobile-acesso-perfil-jardim, 19/11/2026)
+  - **Contexto:** o design novo tem "Esqueci minha senha" em 3 passos (e-mail → código de 6 dígitos → nova senha). Pela MP4, o link abre só um placeholder.
+  - **Problema:** quem esquece a senha não consegue entrar; o backend não envia e-mail nem troca senha.
+  - **Alternativas:**
+    1. **Backend de recuperação com um provedor de e-mail** (Resend, SendGrid ou SMTP): código com validade de 10 min guardado com hash, `POST /auth/password/forgot`, `POST /auth/password/verify`, `POST /auth/password/reset`, as 3 telas no mobile e no web. Prazo: 1–2 dias. Vantagem: funciona. Desvantagem: dependência e chave de um serviço externo.
+    2. **Manter o placeholder até depois do hackathon.** Vantagem: zero trabalho. Desvantagem: sem saída para quem esqueceu.
+  - **Recomendação:** 2 até 30/11; 1 logo depois, se houver usuários reais.
+- [ ] [EXECUTAR] "Entrar com Google" no login mobile — (origem: plano-mobile-acesso-perfil-jardim, 19/11/2026)
+  - **Decisão (MP3):** o botão e o "ou" ficam escondidos até existir OAuth com Google. Pronto quando houver o fluxo no backend e o botão voltar, como em M33.
+- [ ] [DECIDIR] Preferências do Perfil só visuais (Bloquear apps, Lembrete da rampa, Idioma) — (origem: plano-mobile-acesso-perfil-jardim, 19/11/2026)
+  - **Contexto:** pela MP8 as três linhas do Perfil (M26/M28) são só visuais.
+  - **Problema:** "Bloquear apps" não bloqueia (no iOS exige a API Screen Time e permissão da Apple), o lembrete não notifica (notificações estão fora do MVP) e o idioma não traduz (o app não tem i18n).
+  - **Alternativas:** 1. **manter visual** (como está); 2. **esconder até existirem**; 3. **implementar cada um** (Screen Time: dias e conta Apple; notificação local: pacote novo e 1 dia; i18n: 1–2 dias).
+  - **Recomendação:** 1 até 30/11; depois, 3 começando pelo lembrete (é o que mais ajuda quem trava ao começar).
+- [ ] [DECIDIR] "Enviar sugestão" sem backend (M29) — (origem: plano-mobile-acesso-perfil-jardim, 19/11/2026)
+  - **Contexto:** pela MP9 a tela mostra "Sugestão enviada", mas o texto fica só em memória (repositório de exemplo); "Anexar print" está desabilitado.
+  - **Problema:** o usuário acha que mandou e ninguém recebe.
+  - **Alternativas:** 1. **módulo `feedback` com `POST /feedback`** (entidade, caso de uso, prisma, controller, e2e; meio dia); o anexo exige `image_picker` e armazenamento; 2. **abrir o app de e-mail** com `url_launcher` (pacote novo; 1 h); 3. **manter**.
+  - **Recomendação:** 1 sem anexo.
+- [ ] [DECIDIR] Compromissos e Tarefas únicas têm design novo (M41–M43) — (origem: plano-mobile-acesso-perfil-jardim, 19/11/2026) — ver também Backend, "Compromissos fixos (Aula/Estágio) fora do contrato"
+  - **Contexto:** o zip de 19/11 trouxe a aba Compromissos, o formulário de compromisso e Tarefas únicas. Pela MP10, a tab bar ficou com o Jardim e essas telas ficaram fora da rodada.
+  - **Alternativas:** 1. **rodada própria** com `Commitment` persistido (migration, CRUD, contrato) e as telas, trocando a 4ª aba conforme o design; 2. **manter fora do MVP** (P8).
+  - **Recomendação:** 1, porque agora existe design e o motor do calendário já usa compromissos no domínio.
+- [ ] [DECIDIR] Sair da conta no mobile — (origem: plano-mobile-acesso-perfil-jardim, 19/11/2026)
+  - **Contexto:** o design do Perfil não tem "Sair"; pela MP12 não foi criado (fechar o app desloga, porque o token fica em memória).
+  - **Problema:** se o token passar a persistir (item "Token do mobile só em memória"), não haverá como trocar de conta.
+  - **Alternativas:** 1. **criar "Sair da conta" no fim do Perfil junto com a persistência do token**; 2. **pedir o design**.
+  - **Recomendação:** 1, decidido junto com o item do token.
+- [ ] [DECIDIR] Fuso do usuário no cadastro mobile — (origem: plano-mobile-acesso-perfil-jardim, 19/11/2026)
+  - **Contexto:** o cadastro mobile não manda `timezone` (o Flutter não dá o nome IANA sem pacote), e vale `America/Sao_Paulo` (P1).
+  - **Alternativas:** 1. **aprovar `flutter_timezone`** (pacote nativo; 1 h); 2. **manter o padrão** (o público do MVP está no Brasil).
+  - **Recomendação:** 2 no MVP.
+- Ver também no Frontend (web): "Tarefas leves no menu e Comprar guarda-chuva no Jardim sem ação" — o "Trocar por 50" do Jardim mobile também ficou sem ação (MP13).
+
+- [ ] [DECIDIR] Toast "Sua rotina nova vale a partir de amanhã" não bate com o backend — (origem: S4 + orquestrador, rodada mobile acesso/perfil/jardim, 19/11/2026)
+  - **Contexto:** ao salvar "Redefinir minha rotina" (M27), o app mostra o toast do protótipo: "Plano recalculado" / "Sua rotina nova vale a partir de amanhã".
+  - **Problema:** o `PUT /scheduling/availability` recalcula o plano **a partir de agora** (`plan-regeneration.ts` usa `now: new Date()`), então a rotina nova já vale hoje. O texto promete algo diferente do que acontece.
+  - **Alternativas:**
+    1. **Trocar o subtítulo para "Sua rotina nova já vale a partir de hoje."** Código: um texto e um teste (15 min). Vantagem: verdadeiro. Desvantagem: foge do texto do protótipo.
+    2. **Fazer o backend recalcular só a partir de amanhã.** Código: orquestrador e e2e (2–3 h). Vantagem: texto do design. Desvantagem: os blocos de hoje ficam com a rotina antiga.
+    3. **Manter.**
+  - **Recomendação:** 1.
+- [ ] [DECIDIR] Limite diário quebrado (ex.: 3h30) no "Redefinir minha rotina" — (origem: S4, rodada mobile acesso/perfil/jardim, 19/11/2026)
+  - **Contexto:** o slider do M27 vai de 1h a 8h, de hora em hora; o backend aceita múltiplos de 30 min.
+  - **Problema:** um limite gravado como 210 min aparece como 4h e, se o usuário salvar, vira 240 sem ele perceber.
+  - **Alternativas:** 1. **manter o arredondamento**; 2. **slider de 30 em 30 min com rótulo "3h30"** (tela, controlador e testes; 1 h).
+  - **Recomendação:** 2, se o web grava meias horas; senão 1.
+- [ ] [EXECUTAR] Pintar a grade do "Redefinir minha rotina" arrastando o dedo — (origem: S4, rodada mobile acesso/perfil/jardim, 19/11/2026)
+  - O protótipo pinta células arrastando; o app só alterna com toque. Fazer: gesto de arrastar em `routine_screen.dart` que pinta com o estado da primeira célula. Pronto quando um widget test de arrastar sobre 3 células deixar as 3 pintadas.
+- [ ] [DECIDIR] Textos de erro sem design no Acesso, Perfil, Rotina e Sugestão — (origem: S2, S3, S4, rodada mobile acesso/perfil/jardim, 19/11/2026)
+  - **Contexto:** o design não define estados de erro. Os subagentes escreveram textos no tom do app:
+    - Cadastro, rede: "Não deu pra criar sua conta agora. Tenta de novo?";
+    - Cadastro criado mas login falhou: "Sua conta foi criada, mas não deu pra entrar agora. Tenta pelo login." (evita o usuário tentar de novo e cair num 409);
+    - Perfil: "Não deu pra carregar o seu perfil." / "Não deu pra carregar o máximo por dia." (linha pequena em `--danger`);
+    - Rotina: "Não deu pra carregar sua rotina. Tenta de novo?" / "Não deu pra salvar sua rotina. Tenta de novo?";
+    - Sugestão: "Não deu pra enviar agora. Tenta de novo?".
+  - **Alternativas:** 1. **aprovar os textos**; 2. **pedir os estados de erro ao design**.
+  - **Recomendação:** 1.
+- [ ] [DECIDIR] "Anexar print (opcional)" desabilitado em cinza — (origem: S4, rodada mobile acesso/perfil/jardim, 19/11/2026)
+  - **Contexto:** pela MP9 o anexo não funciona. O app mostra o botão em `--tx2` (cinza), anunciado como desabilitado; o design (M29) mostra em azul.
+  - **Alternativas:** 1. **cinza** (como está): deixa claro que não funciona; 2. **azul como no design**: fiel, mas parece tocável e não faz nada.
+  - **Recomendação:** 1.
+- [ ] [DECIDIR] Linhas do Perfil sem fundo ao toque — (origem: S3, rodada mobile acesso/perfil/jardim, 19/11/2026)
+  - **Contexto:** no design (M26), as linhas de Configurações escurecem para `--s2` ao toque; no app não mudam (os widgets de linha do app usam `GestureDetector`).
+  - **Alternativas:** 1. **manter**; 2. **criar um widget de linha tocável em `core/widgets` com o fundo ao toque** e usar no Perfil (1 h).
+  - **Recomendação:** 2 quando houver uma segunda tela com linhas tocáveis.
+- [ ] [DECIDIR] Humor do Broto grande do Jardim — (origem: S5, rodada mobile acesso/perfil/jardim, 19/11/2026)
+  - **Contexto:** no protótipo, o Broto do Jardim segue a energia do check-in; no app está fixo em "ok" (o Jardim não conhece o check-in).
+  - **Alternativas:** 1. **manter fixo**; 2. **ler a energia da sessão da rampa** (cria dependência entre gamification e activation).
+  - **Recomendação:** 1, até a gamificação sair da P18.
+- [ ] [EXECUTAR] Círculo do play do "Vamos começar?" no tema escuro — (origem: orquestrador, comparação visual, rodada mobile acesso/perfil/jardim, 19/11/2026)
+  - No escuro (M30), o círculo atrás do play é claro e translúcido; no app sai escuro (`docs/mobile/comparacoes/m30-hoje-escuro-r1.jpg`). O botão já existia antes desta rodada. Fazer: conferir no `.dc.html` a cor do círculo no escuro e usar o token certo. Pronto quando a captura do Hoje escuro bater com `screens/30`.
+- [ ] [EXECUTAR] Captura do Cadastro preenchido (M35) no simulador — (origem: orquestrador, comparação visual, rodada mobile acesso/perfil/jardim, 19/11/2026)
+  - Digitar pelo controle do simulador mandou o texto para o campo errado; o estado preenchido (dicas verdes e termos marcados) foi verificado pelo ponta a ponta `acesso_perfil_test.dart`, mas falta a imagem `m35-cadastro-preenchido-r1.jpg`. Pronto quando ela estiver em `docs/mobile/comparacoes/`.
+- [x] [INVESTIGAR] Ícones da barra de status do iOS no tema escuro — (origem: S6, rodada mobile acesso/perfil/jardim, 19/11/2026) — fechado na comparação visual: no simulador, com o app no escuro, a hora e a bateria ficam claras (`m26-perfil-escuro-r1.jpg`, `m30-hoje-escuro-r1.jpg`).
+- [ ] [EXECUTAR] Controladores avisam a tela depois de destruídos — (origem: revisor, rodada mobile acesso/perfil/jardim, 19/11/2026)
+  - Se o usuário sai da tela enquanto o `me()`, o `getAvailability` ou o `login` ainda respondem, o `notifyListeners()` do `finally` roda depois do `dispose` e, em debug, gera o erro "used after being disposed" (em release não acontece nada). Já corrigido no `RoutineController` e no `SuggestionController`. Fazer o mesmo guarda `_disposed` (padrão do `goal_chat_controller.dart`) em `ProfileController`, `GardenController`, `LoginController` e `RegisterController`, de preferência num mixin em `core/`. Pronto quando cada um tiver o teste "o Future que termina depois do dispose não avisa ninguém".
+- [ ] [DECIDIR] Mensagem genérica no 422 do cadastro — (origem: revisor, rodada mobile acesso/perfil/jardim, 19/11/2026)
+  - **Contexto:** no 422, o cadastro mostra a `message` do backend, que é "Dados inválidos.". Como o app confere as mesmas regras antes de enviar, é raro acontecer.
+  - **Alternativas:** 1. **manter**; 2. **traduzir os `details`** (`user.name.display.name`, `user.email.invalid.email`, `user.password.strong.password`) em mensagens por campo (1 h).
+  - **Recomendação:** 2, junto com o item "Textos de erro sem design".
+- [ ] [DECIDIR] Conta criada mas o login falhou: o usuário ainda pode reenviar o cadastro — (origem: revisor, rodada mobile acesso/perfil/jardim, 19/11/2026)
+  - **Contexto:** nesse caso a tela mostra "Sua conta foi criada, mas não deu pra entrar agora. Tenta pelo login." e mantém o botão "Criar conta" ativo; reenviar dá 409 "E-mail já cadastrado.".
+  - **Alternativas:** 1. **manter**; 2. **levar ao Login com o e-mail preenchido** (rota com parâmetro; 1 h); 3. **desabilitar "Criar conta" nesse estado** (30 min).
+  - **Recomendação:** 2.
+- [ ] [DECIDIR] Perfil aberto pelo Hoje destaca a aba Jardim — (origem: revisor, rodada mobile acesso/perfil/jardim, 19/11/2026)
+  - **Contexto:** pela MP10, o Perfil pertence ao grupo do Jardim (como no protótipo), então a aba Jardim fica ativa mesmo quando o Perfil foi aberto pelo Hoje; o "voltar" leva ao Hoje.
+  - **Alternativas:** 1. **manter** (igual ao protótipo); 2. **nenhuma aba ativa no Perfil**, como na tab bar nova do design (M40).
+  - **Recomendação:** 1 enquanto a aba Jardim existir.
+- [ ] [DECIDIR] "Tentar de novo" na falha de carga do Redefinir rotina não tem design — (origem: S4, correção do revisor, 19/11/2026)
+  - **Contexto:** se a rotina não carrega, a tela bloqueia a grade e mostra a mensagem com um botão terciário "Tentar de novo" logo abaixo (impede gravar uma grade vazia por cima da real).
+  - **Alternativas:** 1. **aprovar**; 2. **pedir o estado de erro ao design**.
+  - **Recomendação:** 1.
+
 ## Backend (inclui domínio modules/*, banco e contrato)
+
+- [ ] [DECIDIR] O mínimo de 2 caracteres do nome conta os espaços das pontas — (origem: S1, rodada mobile acesso/perfil/jardim, 19/11/2026)
+  - **Contexto:** pela MP2, o nome vai de 2 a 80 caracteres. O `RegisterUser` não apara o nome, e a `MinLengthRule(2)` mede o texto bruto: `" A"` passa no backend com uma letra só. O mobile apara antes de validar e de enviar.
+  - **Alternativas:** 1. **aparar o nome no `RegisterUser` antes de validar e gravar** (teste e ajuste; 30 min); 2. **aceitar como está**.
+  - **Recomendação:** 1, porque o backend fica igual ao mobile e não grava espaços.
+- [ ] [DECIDIR] Nome vazio na `DisplayNameRule` — (origem: S1, rodada mobile acesso/perfil/jardim, 19/11/2026)
+  - **Contexto:** o plano pedia que a regra recusasse `""` e `"   "`, mas também que seguisse o contrato das outras regras (`validateStringValues`), que deixa o vazio para a `RequiredRule`. Foi implementado o contrato: vazio dá só `user.name.required`.
+  - **Alternativas:** 1. **manter** (um erro por causa, igual às outras regras); 2. **a regra também recusa o vazio** (o vazio passa a gerar dois códigos e um teste do `User` muda).
+  - **Recomendação:** 1.
+- [ ] [INVESTIGAR] Testes e2e do backend estouram o tempo de 5 s com a máquina carregada — (origem: orquestrador, verificação completa, rodada mobile acesso/perfil/jardim, 19/11/2026)
+  - **Sintoma:** em 19/11, com o simulador, o app e dois backends extras no ar (e a máquina saindo do repouso), `npm --workspace apps/backend run test:e2e` falhou 4 vezes seguidas com "Exceeded timeout of 5000 ms for a hook/test", sempre em suítes diferentes (scheduling, goals-orchestrators, plan-views, goal-assistant) e com o `pg-pool` demorando para conectar. Com a máquina livre, passou inteiro (139/139, 71 s), e cada suíte sozinha passa.
+  - **Onde olhar:** o `testTimeout` padrão do Jest (5 s) em `apps/backend/test/jest-e2e.json`; o `beforeEach` da suíte de scheduling que cria usuários (bcrypt).
+  - **Possível saída:** `testTimeout: 15000` no e2e, se voltar a acontecer na CI.
 
 - [ ] [DECIDIR] Cor do objetivo (P4), leitura ambígua — (origem: diário, pergunta 1, B1, 10/11/2026)
   - **Contexto:** pela P4, cada objetivo recebe uma cor de 1 a 4, "o próximo índice entre os objetivos ativos, voltando ao 1 depois do 4". A B1 implementou `(nº de ativos % 4) + 1`.

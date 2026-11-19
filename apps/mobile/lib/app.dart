@@ -33,10 +33,15 @@ class _BoraAppState extends State<BoraApp> {
   }
 
   @override
-  Widget build(BuildContext context) => MaterialApp.router(
-    title: 'Bora',
-    debugShowCheckedModeBanner: false,
-    theme: AppTheme.light(),
-    routerConfig: _router,
+  Widget build(BuildContext context) => ListenableBuilder(
+    listenable: widget.deps.theme,
+    builder: (context, _) => MaterialApp.router(
+      title: 'Bora',
+      debugShowCheckedModeBanner: false,
+      theme: AppTheme.light(),
+      darkTheme: AppTheme.dark(),
+      themeMode: widget.deps.theme.mode,
+      routerConfig: _router,
+    ),
   );
 }

@@ -34,6 +34,8 @@ Em `apps/mobile/env/`, cada arquivo traz `API_URL` (o endereço do backend) e `D
 | `local-iphone.json` | iPhone físico (arquivo seu, fora do git; modelo em `local-iphone.example.json`) | `http://<IP do seu Mac>:4000` |
 | `developer.json`, `prod.json` | Backends hospedados | ainda exemplo |
 
+Cada arquivo também traz `SHOW_DEMO` (MP5): `true` mostra o botão "Entrar direto como Arthur (demo)" no login (`local-simulator`, `local-iphone` e `developer`); `false` esconde o botão (`prod`). Os ponta a ponta entram pelo demo, então precisam de um ambiente com `SHOW_DEMO=true`.
+
 O `DATA_SOURCE` aceita dois valores:
 - `http` (padrão): usa o backend real;
 - `sample`: usa os dados de exemplo do protótipo, sem backend. Para usá-lo, acrescente `--dart-define=DATA_SOURCE=sample` ao comando.
@@ -78,6 +80,18 @@ npm --workspace apps/backend run db:reset-demo
 
 **Limite conhecido:** no mobile, a rampa só abre pelo Hoje. Se o dia não tiver mais bloco (depois de cerca de 22h45, por exemplo), não dá para iniciar a rampa naquele dia.
 
+
+### Acesso, Perfil e Jardim (rodada de 19/11/2026)
+
+1. **Criar conta:** no login, toque em **Criar conta**. Nome com uma palavra só vale (ex.: "Arthur"). A senha precisa de 8 caracteres ou mais, com maiúscula, minúscula, número e símbolo (ex.: `Senha@123`); a dica fica verde quando vale. Confirme a senha, marque os termos e toque em **Criar conta**: o app cria a conta, entra e vai para o **onboarding**, com o toast "Conta criada!".
+2. **Entrar de verdade:** feche e abra o app (o token fica só em memória). Digite e-mail e senha e toque em **Entrar**. Senha errada mostra "E-mail ou senha inválidos"; com a rotina já salva, o app vai ao **Hoje**.
+3. **Esqueci minha senha:** abre só uma tela provisória com "Voltar pro login" (MP4).
+4. **Perfil:** no Hoje, toque na inicial no canto superior direito. Aparecem o nome, o e-mail e o "Máximo por dia" vindos do backend.
+   - **Modo escuro** troca o tema do app inteiro (volta ao claro ao fechar o app).
+   - **Bloquear apps**, **Lembrete da rampa** e **Idioma** são só visuais (MP8).
+   - **Redefinir minha rotina:** pinte ou despinte células (8h–22h) e toque em **Salvar e recalcular plano**; o plano é recalculado e o "Máximo por dia" do Perfil atualiza. A grade salva **substitui** a anterior (MP11).
+   - **Enviar sugestão:** é só visual (MP9): mostra "Sugestão enviada", mas nada vai ao backend.
+5. **Jardim:** toque no Broto do canto superior esquerdo do Hoje (ou na aba Jardim). Os números são fixos do protótipo (P18); "Trocar por 50" não faz nada (MP13).
 
 ### Novo objetivo com a IA (M13 → M15)
 
@@ -151,6 +165,14 @@ Esperado: `No issues found!` e `All tests passed!` (160 testes em 10/11).
    ```
 
 Esperado: `All tests passed!`, em cerca de 45 s mais o build do Xcode na primeira vez.
+
+**Acesso e Perfil** (`integration_test/acesso_perfil_test.dart`): cria uma conta nova a cada execução (não precisa do `db:reset-demo`) e percorre cadastro → onboarding → Perfil → Redefinir rotina (confere o `GET /scheduling/availability`) → modo escuro → sugestão → Jardim → reabrir o app → senha errada → login. Com o backend no ar:
+
+```bash
+cd apps/mobile && flutter test integration_test/acesso_perfil_test.dart -d <UDID> --dart-define-from-file=env/local-simulator.json
+```
+
+Esperado: `All tests passed!` em cerca de 30 s.
 
 **O teste depende do relógio real.** Ele precisa de um bloco no dia atual, então rode antes de cerca de 22h45 e fora da noite de domingo. Fora disso, ele falha com a mensagem "sem bloco hoje".
 

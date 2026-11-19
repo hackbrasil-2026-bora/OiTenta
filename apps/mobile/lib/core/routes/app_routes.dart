@@ -17,6 +17,14 @@ class AppRoutes {
   static const trail = '/objetivos/trilha';
   static const week = '/semana';
   static const garden = '/jardim';
+
+  /// Recuperação de senha (M36): placeholder pela MP4.
+  static const forgotPassword = '/entrar/esqueci';
+
+  /// Perfil (M26), aberto pela inicial do topo, e as subtelas (M27, M29).
+  static const profile = '/perfil';
+  static const profileRoutine = '/perfil/rotina';
+  static const profileSuggestion = '/perfil/sugestao';
   static const ramp = '/rampa';
   static const warmup = '/rampa/aquecer';
   static const challenge = '/rampa/desafio';
