@@ -557,23 +557,25 @@ Regras comuns a todos:
 
 ## Fase 5: integrar na `developer` (só com a Fase 4 inteira verde)
 
-- [ ] Conferir: verificação completa verde, revisor ok e nenhuma pendência bloqueante.
-- [ ] `git checkout developer && git pull --ff-only origin developer && git merge --no-ff feat/mobile-acesso-perfil-jardim`.
-- [ ] Na `developer`, rodar de novo o mínimo: `npm run build`, `npm run test --workspaces --if-present`, `flutter analyze` e `flutter test`. Tudo verde.
+- [x] Conferir: verificação completa verde, revisor ok e nenhuma pendência bloqueante.
+- [x] `git checkout developer && git pull --ff-only origin developer && git merge --no-ff feat/mobile-acesso-perfil-jardim`.
+  > Merge local `e05d285` (19/11).
+- [x] Na `developer`, rodar de novo o mínimo: `npm run build`, `npm run test --workspaces --if-present`, `flutter analyze` e `flutter test`. Tudo verde.
 - [ ] `git push origin developer`.
-- [ ] Confirmar que a `main` não mudou (mesmo hash do passo 0.2).
+  > ERRO: `git push origin developer` → `remote: Permission to Viniciustda/OiTenta.git denied to Fiz-av.` / `The requested URL returned error: 403`. A credencial do Keychain é da conta `Fiz-av`, sem escrita no repositório. A `developer` local já estava 3 commits à frente do remoto antes desta rodada (rodada do Ollama, 16/11). **Push pendente: depende do usuário corrigir a credencial.**
+- [x] Confirmar que a `main` não mudou (mesmo hash do passo 0.2).
 - [ ] **Se qualquer passo da Fase 4 ou 5 falhar: NÃO fazer merge nem push.** Deixar a branch como está, anotar o erro exato aqui e reportar ao usuário.
 
 ---
 
 ## Fase 6: fechamento (orquestrador)
 
-- [ ] `docs/mobile/COMO-TESTAR.md`: como testar login real, cadastro, Perfil (tema, rotina, sugestão) e Jardim no simulador.
-- [ ] `docs/6-diario-execucao.md`: o resumo da rodada (o que foi feito, as decisões, os problemas e como ficaram).
-- [ ] `afazeres.md`: fechar com `[x]` + commit o que esta rodada resolveu (por exemplo, a parte "login e cadastro sem sessão" do item da P27) e conferir que todos os itens novos da 0.5 e da Fase 1 estão lá.
-- [ ] Atualizar o `CLAUDE.md` só se a estrutura mudou (o módulo `feedback` entra na tabela "Mapa", se D9 = a).
-- [ ] Marcar `[x]` neste plano em tudo o que foi feito e anotar o hash do merge na `developer`.
-- [ ] Relatório ao usuário no formato da seção 9 da regra de processo:
+- [x] `docs/mobile/COMO-TESTAR.md`: como testar login real, cadastro, Perfil (tema, rotina, sugestão) e Jardim no simulador.
+- [x] `docs/6-diario-execucao.md`: o resumo da rodada (o que foi feito, as decisões, os problemas e como ficaram).
+- [x] `afazeres.md`: fechar com `[x]` + commit o que esta rodada resolveu (por exemplo, a parte "login e cadastro sem sessão" do item da P27) e conferir que todos os itens novos da 0.5 e da Fase 1 estão lá.
+- [x] ~~Atualizar o `CLAUDE.md` só se a estrutura mudou~~ — não mudou (D9 = b, sem módulo `feedback`) (o módulo `feedback` entra na tabela "Mapa", se D9 = a).
+- [x] Marcar `[x]` neste plano em tudo o que foi feito e anotar o hash do merge na `developer`.
+- [x] Relatório ao usuário no formato da seção 9 da regra de processo:
   - (a) o que foi entregue, por subagente e por branch;
   - (b) a saída da verificação;
   - (c) a prova do TDD;
