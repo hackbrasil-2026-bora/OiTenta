@@ -1,7 +1,5 @@
 /// Regras dos campos de Entrar e Criar conta, conferidas antes de enviar.
-class AuthRules {
-  const AuthRules._();
-
+abstract final class AuthRules {
   /// Mesmo teste do protótipo (`okMail`), com o valor aparado.
   static final _email = RegExp(r'^[^\s@]+@[^\s@]+\.[^\s@]+$');
 

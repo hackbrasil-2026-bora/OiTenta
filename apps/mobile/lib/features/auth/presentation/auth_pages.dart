@@ -1,13 +1,19 @@
 import 'package:flutter/material.dart';
 import 'package:go_router/go_router.dart';
+import 'package:phosphor_flutter/phosphor_flutter.dart';
 
 import '../../../core/di/app_dependencies.dart';
 import '../../../core/routes/app_routes.dart';
 import '../../../core/widgets/bora_scaffold.dart';
+import '../../../core/widgets/bora_toast.dart';
 import '../../../core/widgets/controller_host.dart';
 import 'login_controller.dart';
 import 'login_screen.dart';
+import 'register_controller.dart';
 import 'register_screen.dart';
+
+/// Duração do toast de entrada (`entrar` do protótipo: 2600 ms).
+const _welcomeToast = Duration(milliseconds: 2600);
 
 class LoginPage extends StatelessWidget {
   const LoginPage({super.key, required this.deps});
@@ -17,19 +23,37 @@ class LoginPage extends StatelessWidget {
   @override
   Widget build(BuildContext context) => ControllerHost<LoginController>(
     create: () => LoginController(deps.auth, deps.scheduling, deps.session),
-    builder: (context, c) => LoginScreen(
-      busy: c.busy,
-      error: c.error,
-      onContinue: () => context.go(AppRoutes.onboarding),
-      onRegister: () => context.push(AppRoutes.register),
-      onDemo: () async {
-        final next = await c.enterDemo();
-        if (!context.mounted || next == null) return;
-        context.go(
-          next == AfterLogin.today ? AppRoutes.today : AppRoutes.onboarding,
-        );
-      },
-    ),
+    builder: (context, c) {
+      void go(AfterLogin next) => context.go(
+        next == AfterLogin.today ? AppRoutes.today : AppRoutes.onboarding,
+      );
+      return LoginScreen(
+        state: c,
+        showDemo: deps.showDemo,
+        onEmail: c.setEmail,
+        onPassword: c.setPassword,
+        onToggleObscure: c.toggleObscure,
+        onSubmit: () async {
+          final next = await c.submit();
+          if (!context.mounted || next == null) return;
+          showBoraToast(
+            context,
+            icon: PhosphorIconsBold.handWaving,
+            title: 'Oi de novo, ${c.firstName}!',
+            subtitle: 'Seu plano tá do jeitinho que você deixou.',
+            duration: _welcomeToast,
+          );
+          go(next);
+        },
+        onForgot: () => context.push(AppRoutes.forgotPassword),
+        onRegister: () => context.push(AppRoutes.register),
+        onDemo: () async {
+          final next = await c.enterDemo();
+          if (!context.mounted || next == null) return;
+          go(next);
+        },
+      );
+    },
   );
 }
 
@@ -39,10 +63,36 @@ class RegisterPage extends StatelessWidget {
   final AppDependencies deps;
 
   @override
-  Widget build(BuildContext context) => RegisterScreen(
-    onBack: () =>
-        context.canPop() ? context.pop() : context.go(AppRoutes.login),
-    onContinue: () => context.go(AppRoutes.onboarding),
+  Widget build(BuildContext context) => ControllerHost<RegisterController>(
+    create: () => RegisterController(deps.auth, deps.session),
+    builder: (context, c) {
+      void toLogin() =>
+          context.canPop() ? context.pop() : context.go(AppRoutes.login);
+      return RegisterScreen(
+        state: c,
+        onName: c.setName,
+        onEmail: c.setEmail,
+        onPassword: c.setPassword,
+        onConfirm: c.setConfirm,
+        onToggleObscure: c.toggleObscure,
+        onToggleTerms: c.toggleTerms,
+        onBack: toLogin,
+        onLogin: toLogin,
+        onSubmit: () async {
+          final ok = await c.submit();
+          if (!context.mounted || !ok) return;
+          // Depois de criar a conta, sempre o onboarding (decisão 4b).
+          showBoraToast(
+            context,
+            icon: PhosphorIconsBold.handWaving,
+            title: 'Conta criada!',
+            subtitle: 'Bem-vindo ao Bora, ${c.firstName}.',
+            duration: _welcomeToast,
+          );
+          context.go(AppRoutes.onboarding);
+        },
+      );
+    },
   );
 }
 

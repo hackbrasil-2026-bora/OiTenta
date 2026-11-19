@@ -102,6 +102,25 @@ void main() {
     expect(_taps, ['submit']);
   });
 
+  testWidgets('"concluir" do teclado na senha entra só com os dados válidos', (
+    tester,
+  ) async {
+    await _pump(tester);
+    await tester.enterText(find.byKey(const Key('login-password')), 'segredo');
+    await tester.testTextInput.receiveAction(TextInputAction.done);
+    expect(_taps, isEmpty);
+
+    await tester.enterText(
+      find.byKey(const Key('login-email')),
+      'ana@bora.app',
+    );
+    await tester.pump();
+    await tester.enterText(find.byKey(const Key('login-password')), 'segredo');
+    await tester.pump();
+    await tester.testTextInput.receiveAction(TextInputAction.done);
+    expect(_taps, ['submit']);
+  });
+
   testWidgets('"Entrar" fica desabilitado enquanto entra (busy)', (
     tester,
   ) async {
