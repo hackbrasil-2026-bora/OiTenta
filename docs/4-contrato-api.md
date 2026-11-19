@@ -35,10 +35,10 @@
 
 | Método e rota | Corpo | Resposta | Erros | Caso de uso | Web | Mobile |
 |---|---|---|---|---|---|---|
-| `POST /auth/register` | `{ name, email, password, timezone? }` (`timezone` IANA, padrão `America/Sao_Paulo`, P1) | 201 `{ user{id,name,email,timezone} }` | 400, 409, 422 (senha fraca, fuso inválido) | `RegisterUser` | W04 | placeholder (sem design) |
-| `POST /auth/login` | `{ email, password }` | 200 `{ token, user }` | 401 | `LoginUser` | W03 | placeholder |
-| `POST /auth/demo` | — | 200 `{ token, user }` | 404 (seed não rodado) | `LoginDemoUser` | W03 "Entrar direto como Arthur (demo)" | placeholder com o botão de demo |
-| `GET /auth/me` | — | 200 `{ user{id,name,email,timezone} }` | 401 | `GetAuthenticatedUser` | todas as telas logadas | todas as telas logadas |
+| `POST /auth/register` | `{ name, email, password, timezone? }` (`timezone` IANA, padrão `America/Sao_Paulo`, P1) | 201 `{ user{id,name,email,timezone} }` | 400, 409, 422 (senha fraca, nome inválido `display.name` (MP2: uma palavra ou mais, 2–80 letras), fuso inválido) | `RegisterUser` | W04 | M34–M35 (register → login → onboarding) |
+| `POST /auth/login` | `{ email, password }` | 200 `{ token, user }` | 401 | `LoginUser` | W03 | M33 |
+| `POST /auth/demo` | — | 200 `{ token, user }` | 404 (seed não rodado) | `LoginDemoUser` | W03 "Entrar direto como Arthur (demo)" | M33, botão só com `SHOW_DEMO=true` (MP5) |
+| `GET /auth/me` | — | 200 `{ user{id,name,email,timezone} }` | 401 | `GetAuthenticatedUser` | todas as telas logadas | todas as telas logadas; Perfil M26 (nome e e-mail, MP6) |
 
 ---
 
@@ -317,12 +317,12 @@ Resposta 201:
 
 | Endpoint | Caso(s) de uso | Web | Mobile |
 |---|---|---|---|
-| `POST /auth/register` | `RegisterUser` | W04 | placeholder |
-| `POST /auth/login` | `LoginUser` | W03 | placeholder |
-| `POST /auth/demo` | `LoginDemoUser` | W03 | placeholder |
+| `POST /auth/register` | `RegisterUser` | W04 | M34–M35 |
+| `POST /auth/login` | `LoginUser` | W03 | M33 |
+| `POST /auth/demo` | `LoginDemoUser` | W03 | M33 (`SHOW_DEMO`) |
 | `GET /auth/me` | `GetAuthenticatedUser` | todas logadas | todas logadas |
-| `PUT /scheduling/availability` | `SetWeeklyAvailability` → `GeneratePlan` | W07–W10 | T02–T03 (+ placeholders dos passos sem design) |
-| `GET /scheduling/availability` | `GetWeeklyAvailability` | decisão W11 | decisão pós-login |
+| `PUT /scheduling/availability` | `SetWeeklyAvailability` → `GeneratePlan` | W07–W10 | T02–T03 (+ placeholders dos passos sem design); M27 Redefinir rotina (MP11) |
+| `GET /scheduling/availability` | `GetWeeklyAvailability` | decisão W11 | decisão pós-login; Perfil M26 ("Máximo por dia") e M27 |
 | `POST /goals` | `CreateGoal` → `GeneratePlan` | W30 vazia (P20) | M15 vazia, M16 (P20) |
 | `POST /goals/assistant/draft` | `DraftGoal` (IA1) | W27 → W29 → W30 preenchida | M13 → M14 → M15 preenchida |
 | `GET /goals` | `ListGoals` + `GetGoalsFeasibility` | W12 | M02 |

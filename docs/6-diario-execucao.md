@@ -232,3 +232,10 @@ Pedido: fazer o backend usar o Ollama local no rascunho do objetivo, com autoriz
 | Id | Branch | Status | TDD | Verificação | Revisor |
 |---|---|---|---|---|---|
 | docs | `docs/ollama-local` | ver o relatório da sessão | n/a (só docs; nenhum código mudou) | ver o relatório | subagente revisor |
+
+## Sessão 5 — 19/11/2026: mobile Acesso, Perfil e Jardim
+
+- Plano: `plano-mobile-acesso-perfil-jardim.md` (raiz), com as decisões MP1–MP14 (`docs/2-decisoes-mvp.md`).
+- Branch de integração `feat/mobile-acesso-perfil-jardim`, criada da `developer` (sem mudanças no remoto em 19/11). O plano e o zip, que estavam soltos na `developer` local, entraram no primeiro commit da branch.
+- Linha de base verde: build, lint, testes de todos os workspaces, e2e do backend, `flutter analyze` e 238 testes do mobile.
+

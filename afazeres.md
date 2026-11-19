@@ -424,6 +424,40 @@ Siglas: W = tela do protótipo web (`design/web/SCREENS.md`); M = tela do mobile
 - Ver também no Backend, subseção "Proposta de IA (11/11/2026)": "Aprovar a proposta de IA" (traz a `HttpGoalAssistantRepository` e os campos novos do `GoalSuggestion`: `microSteps`, `aiEstimatedMinutes`, `requirements`, `missingFields`), "O que fazer quando a IA falha" (cruza com "Aviso quando a IA falha no chat", acima), "Leitura de link e anexo (UC03)" (cruza com "Anexo e áudio do chat (M13/M14) só visuais") e "Perguntas de esclarecimento no chat".
 - Ver também no Backend, rodada do Ollama local (16/11/2026): "Modelo local do Ollama" (o "analisando" do chat dura de 6 a 21 s conforme o modelo; o app desiste aos 25 s) e "Prazo relativo errado quando o LLM responde" (o prazo da M15 pode vir errado).
 
+- [ ] [DECIDIR] Recuperação de senha de verdade (M36–M38) — (origem: plano-mobile-acesso-perfil-jardim, 19/11/2026)
+  - **Contexto:** o design novo tem "Esqueci minha senha" em 3 passos (e-mail → código de 6 dígitos → nova senha). Pela MP4, o link abre só um placeholder.
+  - **Problema:** quem esquece a senha não consegue entrar; o backend não envia e-mail nem troca senha.
+  - **Alternativas:**
+    1. **Backend de recuperação com um provedor de e-mail** (Resend, SendGrid ou SMTP): código com validade de 10 min guardado com hash, `POST /auth/password/forgot`, `POST /auth/password/verify`, `POST /auth/password/reset`, as 3 telas no mobile e no web. Prazo: 1–2 dias. Vantagem: funciona. Desvantagem: dependência e chave de um serviço externo.
+    2. **Manter o placeholder até depois do hackathon.** Vantagem: zero trabalho. Desvantagem: sem saída para quem esqueceu.
+  - **Recomendação:** 2 até 30/11; 1 logo depois, se houver usuários reais.
+- [ ] [EXECUTAR] "Entrar com Google" no login mobile — (origem: plano-mobile-acesso-perfil-jardim, 19/11/2026)
+  - **Decisão (MP3):** o botão e o "ou" ficam escondidos até existir OAuth com Google. Pronto quando houver o fluxo no backend e o botão voltar, como em M33.
+- [ ] [DECIDIR] Preferências do Perfil só visuais (Bloquear apps, Lembrete da rampa, Idioma) — (origem: plano-mobile-acesso-perfil-jardim, 19/11/2026)
+  - **Contexto:** pela MP8 as três linhas do Perfil (M26/M28) são só visuais.
+  - **Problema:** "Bloquear apps" não bloqueia (no iOS exige a API Screen Time e permissão da Apple), o lembrete não notifica (notificações estão fora do MVP) e o idioma não traduz (o app não tem i18n).
+  - **Alternativas:** 1. **manter visual** (como está); 2. **esconder até existirem**; 3. **implementar cada um** (Screen Time: dias e conta Apple; notificação local: pacote novo e 1 dia; i18n: 1–2 dias).
+  - **Recomendação:** 1 até 30/11; depois, 3 começando pelo lembrete (é o que mais ajuda quem trava ao começar).
+- [ ] [DECIDIR] "Enviar sugestão" sem backend (M29) — (origem: plano-mobile-acesso-perfil-jardim, 19/11/2026)
+  - **Contexto:** pela MP9 a tela mostra "Sugestão enviada", mas o texto fica só em memória (repositório de exemplo); "Anexar print" está desabilitado.
+  - **Problema:** o usuário acha que mandou e ninguém recebe.
+  - **Alternativas:** 1. **módulo `feedback` com `POST /feedback`** (entidade, caso de uso, prisma, controller, e2e; meio dia); o anexo exige `image_picker` e armazenamento; 2. **abrir o app de e-mail** com `url_launcher` (pacote novo; 1 h); 3. **manter**.
+  - **Recomendação:** 1 sem anexo.
+- [ ] [DECIDIR] Compromissos e Tarefas únicas têm design novo (M41–M43) — (origem: plano-mobile-acesso-perfil-jardim, 19/11/2026) — ver também Backend, "Compromissos fixos (Aula/Estágio) fora do contrato"
+  - **Contexto:** o zip de 19/11 trouxe a aba Compromissos, o formulário de compromisso e Tarefas únicas. Pela MP10, a tab bar ficou com o Jardim e essas telas ficaram fora da rodada.
+  - **Alternativas:** 1. **rodada própria** com `Commitment` persistido (migration, CRUD, contrato) e as telas, trocando a 4ª aba conforme o design; 2. **manter fora do MVP** (P8).
+  - **Recomendação:** 1, porque agora existe design e o motor do calendário já usa compromissos no domínio.
+- [ ] [DECIDIR] Sair da conta no mobile — (origem: plano-mobile-acesso-perfil-jardim, 19/11/2026)
+  - **Contexto:** o design do Perfil não tem "Sair"; pela MP12 não foi criado (fechar o app desloga, porque o token fica em memória).
+  - **Problema:** se o token passar a persistir (item "Token do mobile só em memória"), não haverá como trocar de conta.
+  - **Alternativas:** 1. **criar "Sair da conta" no fim do Perfil junto com a persistência do token**; 2. **pedir o design**.
+  - **Recomendação:** 1, decidido junto com o item do token.
+- [ ] [DECIDIR] Fuso do usuário no cadastro mobile — (origem: plano-mobile-acesso-perfil-jardim, 19/11/2026)
+  - **Contexto:** o cadastro mobile não manda `timezone` (o Flutter não dá o nome IANA sem pacote), e vale `America/Sao_Paulo` (P1).
+  - **Alternativas:** 1. **aprovar `flutter_timezone`** (pacote nativo; 1 h); 2. **manter o padrão** (o público do MVP está no Brasil).
+  - **Recomendação:** 2 no MVP.
+- Ver também no Frontend (web): "Tarefas leves no menu e Comprar guarda-chuva no Jardim sem ação" — o "Trocar por 50" do Jardim mobile também ficou sem ação (MP13).
+
 ## Backend (inclui domínio modules/*, banco e contrato)
 
 - [ ] [DECIDIR] Cor do objetivo (P4), leitura ambígua — (origem: diário, pergunta 1, B1, 10/11/2026)
