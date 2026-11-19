@@ -37,6 +37,8 @@ void main() {
 
     await tester.tap(find.text('Jardim'));
     await tester.pumpAndSettle();
-    expect(find.textContaining('entram depois do MVP'), findsOneWidget);
+    // S5 (19/11/2026): o Jardim deixou de ser placeholder; agora mostra a
+    // tela do protótipo (M04) com os valores fixos (P18).
+    expect(find.text('Estágio Broto · Nível 7'), findsOneWidget);
   });
 }
