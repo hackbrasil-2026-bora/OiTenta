@@ -199,56 +199,63 @@ Fase 6: relatório, afazeres, diário, COMO-TESTAR
 ## Fase 0: preparação (orquestrador)
 
 ### 0.1 Decisões
-- [ ] Usuário respondeu o Portão 0 (seção 2). Anotar aqui as escolhas: D1 \_ · D2 \_ · D3 \_ · D4 \_ · D5 \_ · D6 \_ · D7 \_ · D8 \_ · D9 \_ · D10 \_ · D11 \_ · D12 \_ · D13 \_ · D14 \_
-- [ ] Ajustar os passos abaixo que dependem de uma opção diferente da recomendada (riscar o que não se aplica e anotar o motivo).
+- [x] Usuário respondeu o Portão 0 (seção 2). Anotar aqui as escolhas: D1 a · D2 a · D3 a · D4 a · D5 **b** · D6 a · D7 a · D8 a · D9 **b** · D10 a · D11 a · D12 a · D13 **b** · D14 a (com o zip commitado a pedido do usuário em 19/11)
+- [x] Ajustar os passos abaixo que dependem de uma opção diferente da recomendada
+  > Ajustes: D5 = b → `SHOW_DEMO` no `AppConfig` e nos `env/*.json` (passo 0.6), `deps.showDemo`; D9 = b → S1 sem a parte B, S4 sem HTTP do feedback, Fase 2 sem a parte "Feedback no backend"; D13 = b → "Trocar por 50" sem ação no S5. (riscar o que não se aplica e anotar o motivo).
 
 ### 0.2 Branch
-- [ ] `git checkout developer && git pull --ff-only origin developer`.
-- [ ] `git checkout -b feat/mobile-acesso-perfil-jardim`.
+- [x] `git checkout developer && git pull --ff-only origin developer`.
+  > A `developer` remota não tinha mudanças (19/11). O plano e o zip, soltos na `developer` local, foram para o primeiro commit da branch (`7b58f43`).
+- [x] `git checkout -b feat/mobile-acesso-perfil-jardim`.
 - [ ] Confirmar que a `main` não foi tocada: `git log origin/main -1` antes e depois da rodada, com o mesmo hash.
 
 ### 0.3 Linha de base (para separar falha antiga de falha nova)
-- [ ] `npm --workspace apps/backend run db:start` e `npm --workspace apps/backend run prisma:generate`.
-- [ ] `npm run build`, `npx turbo run lint`, `npm run test --workspaces --if-present`, `npm --workspace apps/backend run test:e2e`.
-- [ ] `cd apps/mobile && flutter pub get && flutter analyze && flutter test`.
-- [ ] Anotar aqui o resultado (verde ou a falha exata). Se algo já falhar na `developer`, **parar e reportar** antes de mudar qualquer coisa.
+- [x] `npm --workspace apps/backend run db:start` e `npm --workspace apps/backend run prisma:generate`.
+- [x] `npm run build`, `npx turbo run lint`, `npm run test --workspaces --if-present`, `npm --workspace apps/backend run test:e2e`.
+- [x] `cd apps/mobile && flutter pub get && flutter analyze && flutter test`.
+- [x] Anotar aqui o resultado (verde ou a falha exata).
+  > Linha de base verde: build, lint (9 workspaces), testes de todos os workspaces, e2e do backend; `flutter analyze` sem problemas; 238 testes do mobile. Se algo já falhar na `developer`, **parar e reportar** antes de mudar qualquer coisa.
 
 ### 0.4 Design (se D14 = a)
-- [ ] Extrair o zip numa pasta temporária vazia e copiar só o `Bora App.dc.html` para `design/mobile/app/source/` (os demais arquivos são idênticos; conferir com `cmp`).
-- [ ] Capturar as telas novas com Playwright (`node_modules/playwright` da raiz):
+- [x] Extrair o zip numa pasta temporária vazia e copiar só o `Bora App.dc.html` para `design/mobile/app/source/` (os demais arquivos são idênticos; conferir com `cmp`).
+- [x] Capturar as telas novas com Playwright (`node_modules/playwright` da raiz):
   - viewport 390×844, deviceScaleFactor 2, só a moldura do celular, como as capturas anteriores;
   - clicar nos botões do painel "Bora · protótipo" pelo nome;
   - arquivos: `33-acesso-login.png`, `34-acesso-criar-conta.png`, `35-acesso-criar-conta-preenchido.png` (dicas verdes e termos marcados), `36-acesso-esqueci.png`, `37-acesso-codigo.png`, `38-acesso-nova-senha.png`, `39-jardim-pelo-broto.png` (topo com Broto + barra + "A" e a tab bar nova), `40-perfil-tab-bar-nova.png`, `41-compromissos.png`, `42-novo-compromisso.png`, `43-tarefas-unicas.png`;
   - o script fica numa pasta temporária, fora do repositório.
-- [ ] Atualizar o `design/mobile/app/SCREENS.md`:
+- [x] Atualizar o `design/mobile/app/SCREENS.md`:
   - linhas 33–43;
   - nas Observações: a tab bar nova, o Jardim pelo Broto e o fato de Login e Cadastro agora terem design;
   - corrigir "Não há login, cadastro nem onboarding" para refletir o design novo (o onboarding continua sem).
-- [ ] Commit `docs(design): telas novas do Bora App (acesso, compromissos, tarefas únicas)`. O zip **não** entra.
+- [x] Commit `docs(design): telas novas do Bora App
+  > `6608513`. (acesso, compromissos, tarefas únicas)`. O zip **não** entra.
 
 ### 0.5 Documentação das decisões e do contrato
-- [ ] `docs/2-decisoes-mvp.md`: nova seção "Decisões da rodada mobile Acesso/Perfil/Jardim (MP1–MP14, numeradas como D1–D14 deste plano), 19/11/2026", com cada D do Portão 0 no formato das P (contexto, decisão, motivo, consequências, status). Atualizar a P27: Login e Cadastro deixam de ser placeholder.
-- [ ] `docs/4-contrato-api.md`:
+- [x] `docs/2-decisoes-mvp.md`: nova seção "Decisões da rodada mobile Acesso/Perfil/Jardim (MP1–MP14, numeradas como D1–D14 deste plano), 19/11/2026", com cada D do Portão 0 no formato das P (contexto, decisão, motivo, consequências, status). Atualizar a P27: Login e Cadastro deixam de ser placeholder.
+- [x] `docs/4-contrato-api.md`:
   - §1, coluna Mobile: M33/M34 no lugar de "placeholder";
   - se D2 = a, a regra do nome em `POST /auth/register` (422 `display.name`);
   - se D9 = a, nova seção `POST /feedback` (corpo, resposta, erros, caso de uso, tela M29) e a linha no mapa da §6.
-- [ ] `afazeres.md`, seção Mobile e seção Backend, com referência cruzada: um item para cada diferença e cada pendência criada pelas decisões. São eles: Google (D3); recuperação de senha (D4); idioma, bloquear apps e lembrete (D8); anexo da sugestão (D9); Compromissos e Tarefas únicas com design novo, que ficam para outra rodada (D10); horários fora de 8–22h (D11); sair da conta (D12); fuso IANA no cadastro mobile (pacote).
-- [ ] `docs/6-diario-execucao.md`: entrada "19/11/2026: início da rodada mobile Acesso/Perfil/Jardim", com o link para este plano.
-- [ ] Commit `docs: decisões, contrato e afazeres da rodada mobile acesso/perfil/jardim`.
+- [x] `afazeres.md`, seção Mobile e seção Backend, com referência cruzada: um item para cada diferença e cada pendência criada pelas decisões. São eles: Google (D3); recuperação de senha (D4); idioma, bloquear apps e lembrete (D8); anexo da sugestão (D9); Compromissos e Tarefas únicas com design novo, que ficam para outra rodada (D10); horários fora de 8–22h (D11); sair da conta (D12); fuso IANA no cadastro mobile (pacote).
+- [x] `docs/6-diario-execucao.md`: entrada "19/11/2026: início da rodada mobile Acesso/Perfil/Jardim", com o link para este plano.
+- [x] Commit `docs: decisões, contrato e afazeres
+  > `13890ab`. da rodada mobile acesso/perfil/jardim`.
 
 ### 0.6 Esqueleto compartilhado do mobile (TDD: teste vermelho → verde, guardar as saídas)
 
 Objetivo: deixar rotas, dependências e topo prontos para os subagentes mexerem **só** nas pastas deles.
 
-- [ ] **Testes primeiro** (`test/core/routes_perfil_jardim_test.dart`, `test/features/gamification/home_top_bar_test.dart`):
+- [x] **Testes primeiro** (`test/core/routes_perfil_jardim_test.dart`
+  > Arquivo: `test/core/shell_perfil_jardim_test.dart` (17 testes; inclui `SHOW_DEMO` e `deps.feedback`)., `test/features/gamification/home_top_bar_test.dart`):
   - as rotas `/perfil`, `/perfil/rotina`, `/perfil/sugestao` e `/entrar/esqueci` existem e abrem uma tela com o título certo;
   - `tabFor('/perfil')`, `tabFor('/perfil/rotina')` e `tabFor('/perfil/sugestao')` devolvem `AppTab.garden` (no design, o Perfil pertence ao grupo do Jardim). Se D10 = b, ajustar;
   - no Hoje, tocar o botão "Perfil" (a inicial) leva a `/perfil`, e tocar "Abrir Jardim" (o Broto) leva a `/jardim`;
   - `HomeTopBar` mostra o Broto como botão com o rótulo "Abrir Jardim", a barra gamificada e o botão "Perfil" com a inicial do nome; sem nome, o botão fica sem letra;
   - `ThemeController` começa em `ThemeMode.light`; `toggle()` troca para dark e avisa os ouvintes; `isDark` reflete o modo;
   - `BoraApp` usa `deps.theme.mode` no `MaterialApp.router` (`themeMode`), e trocar o modo reconstrói o app com o tema escuro.
-- [ ] Rodar e guardar a saída **vermelha**.
-- [ ] **Implementar:**
+- [x] Rodar e guardar a saída **vermelha**.
+  > Vermelho: não compilava (66 erros de símbolos inexistentes: `ThemeController`, `HomeTopBar`, `ProfilePage`, `AppRoutes.profile`…).
+- [x] **Implementar:**
   - `core/routes/app_routes.dart`: `profile = '/perfil'`, `profileRoutine = '/perfil/rotina'`, `profileSuggestion = '/perfil/sugestao'`, `forgotPassword = '/entrar/esqueci'`;
   - `core/routes/app_router.dart`: rotas novas; as de perfil ficam **dentro** do `ShellRoute` (tab bar visível, como no design) e `forgotPassword` fica fora. Cada rota aponta para uma *Page* do subagente, ainda como `PlaceholderScreen` com o título da tela: `ProfilePage` (`features/profile/presentation/profile_pages.dart`), `RoutinePage` e `SuggestionPage` (`features/profile/presentation/routine_suggestion_pages.dart`), `ForgotPasswordPage` (em `auth_pages.dart`), e o `GardenPage` (`features/gamification/presentation/garden_pages.dart`) no lugar de `const GardenScreen()`;
   - `tabFor`: `/perfil` → `AppTab.garden`;
@@ -258,12 +265,15 @@ Objetivo: deixar rotas, dependências e topo prontos para os subagentes mexerem 
   - `app.dart`: `AnimatedBuilder`/`ListenableBuilder` em `deps.theme`, com `theme: AppTheme.light()`, `darkTheme: AppTheme.dark()` e `themeMode: deps.theme.mode`;
   - `features/gamification/presentation/home_top_bar.dart`: o widget `HomeTopBar({gamification, userName, onBroto, onProfile})`, extraído do `TodayScreen`;
   - `TodayScreen` passa a usá-lo, e o `TodayPage` liga `onProfile: () => context.push(AppRoutes.profile)` e `onBroto: () => context.go(AppRoutes.garden)`.
-- [ ] Rodar e guardar a saída **verde**. Rodar `flutter analyze` e `flutter test` (tudo verde, inclusive os testes antigos do Hoje).
-- [ ] Commit `feat(mobile): rotas, tema e topo compartilhado para perfil e jardim`.
+- [x] Rodar e guardar a saída **verde**.
+  > Verde: `+17: All tests passed!`; suíte inteira 255 testes; `flutter analyze` sem problemas. Rodar `flutter analyze` e `flutter test` (tudo verde, inclusive os testes antigos do Hoje).
+- [x] Commit `feat(mobile): rotas, tema e topo compartilhado
+  > `82273f3`. para perfil e jardim`.
 
 ### 0.7 Worktrees
-- [ ] Uma worktree por subagente da Fase 1, cada uma com a sua branch criada a partir da `feat/mobile-acesso-perfil-jardim` (nomes na seção 3).
-- [ ] Em cada worktree (P28): `npm ci` na raiz e `flutter pub get` em `apps/mobile`. Nas do backend, também `npm --workspace apps/backend run prisma:generate`.
+- [x] Uma worktree por subagente da Fase 1
+  > Em `/Users/arthursetragni/Hackaton/OiTenta-wt/<nome>`., cada uma com a sua branch criada a partir da `feat/mobile-acesso-perfil-jardim` (nomes na seção 3).
+- [x] Em cada worktree (P28): `npm ci` na raiz e `flutter pub get` em `apps/mobile`. Nas do backend, também `npm --workspace apps/backend run prisma:generate`.
 
 ---
 
