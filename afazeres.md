@@ -499,6 +499,24 @@ Siglas: W = tela do protótipo web (`design/web/SCREENS.md`); M = tela do mobile
 - [ ] [EXECUTAR] Captura do Cadastro preenchido (M35) no simulador — (origem: orquestrador, comparação visual, rodada mobile acesso/perfil/jardim, 19/11/2026)
   - Digitar pelo controle do simulador mandou o texto para o campo errado; o estado preenchido (dicas verdes e termos marcados) foi verificado pelo ponta a ponta `acesso_perfil_test.dart`, mas falta a imagem `m35-cadastro-preenchido-r1.jpg`. Pronto quando ela estiver em `docs/mobile/comparacoes/`.
 - [x] [INVESTIGAR] Ícones da barra de status do iOS no tema escuro — (origem: S6, rodada mobile acesso/perfil/jardim, 19/11/2026) — fechado na comparação visual: no simulador, com o app no escuro, a hora e a bateria ficam claras (`m26-perfil-escuro-r1.jpg`, `m30-hoje-escuro-r1.jpg`).
+- [ ] [EXECUTAR] Controladores avisam a tela depois de destruídos — (origem: revisor, rodada mobile acesso/perfil/jardim, 19/11/2026)
+  - Se o usuário sai da tela enquanto o `me()`, o `getAvailability` ou o `login` ainda respondem, o `notifyListeners()` do `finally` roda depois do `dispose` e, em debug, gera o erro "used after being disposed" (em release não acontece nada). Já corrigido no `RoutineController` e no `SuggestionController`. Fazer o mesmo guarda `_disposed` (padrão do `goal_chat_controller.dart`) em `ProfileController`, `GardenController`, `LoginController` e `RegisterController`, de preferência num mixin em `core/`. Pronto quando cada um tiver o teste "o Future que termina depois do dispose não avisa ninguém".
+- [ ] [DECIDIR] Mensagem genérica no 422 do cadastro — (origem: revisor, rodada mobile acesso/perfil/jardim, 19/11/2026)
+  - **Contexto:** no 422, o cadastro mostra a `message` do backend, que é "Dados inválidos.". Como o app confere as mesmas regras antes de enviar, é raro acontecer.
+  - **Alternativas:** 1. **manter**; 2. **traduzir os `details`** (`user.name.display.name`, `user.email.invalid.email`, `user.password.strong.password`) em mensagens por campo (1 h).
+  - **Recomendação:** 2, junto com o item "Textos de erro sem design".
+- [ ] [DECIDIR] Conta criada mas o login falhou: o usuário ainda pode reenviar o cadastro — (origem: revisor, rodada mobile acesso/perfil/jardim, 19/11/2026)
+  - **Contexto:** nesse caso a tela mostra "Sua conta foi criada, mas não deu pra entrar agora. Tenta pelo login." e mantém o botão "Criar conta" ativo; reenviar dá 409 "E-mail já cadastrado.".
+  - **Alternativas:** 1. **manter**; 2. **levar ao Login com o e-mail preenchido** (rota com parâmetro; 1 h); 3. **desabilitar "Criar conta" nesse estado** (30 min).
+  - **Recomendação:** 2.
+- [ ] [DECIDIR] Perfil aberto pelo Hoje destaca a aba Jardim — (origem: revisor, rodada mobile acesso/perfil/jardim, 19/11/2026)
+  - **Contexto:** pela MP10, o Perfil pertence ao grupo do Jardim (como no protótipo), então a aba Jardim fica ativa mesmo quando o Perfil foi aberto pelo Hoje; o "voltar" leva ao Hoje.
+  - **Alternativas:** 1. **manter** (igual ao protótipo); 2. **nenhuma aba ativa no Perfil**, como na tab bar nova do design (M40).
+  - **Recomendação:** 1 enquanto a aba Jardim existir.
+- [ ] [DECIDIR] "Tentar de novo" na falha de carga do Redefinir rotina não tem design — (origem: S4, correção do revisor, 19/11/2026)
+  - **Contexto:** se a rotina não carrega, a tela bloqueia a grade e mostra a mensagem com um botão terciário "Tentar de novo" logo abaixo (impede gravar uma grade vazia por cima da real).
+  - **Alternativas:** 1. **aprovar**; 2. **pedir o estado de erro ao design**.
+  - **Recomendação:** 1.
 
 ## Backend (inclui domínio modules/*, banco e contrato)
 

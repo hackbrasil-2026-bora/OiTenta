@@ -238,4 +238,10 @@ Pedido: fazer o backend usar o Ollama local no rascunho do objetivo, com autoriz
 - Plano: `plano-mobile-acesso-perfil-jardim.md` (raiz), com as decisões MP1–MP14 (`docs/2-decisoes-mvp.md`).
 - Branch de integração `feat/mobile-acesso-perfil-jardim`, criada da `developer` (sem mudanças no remoto em 19/11). O plano e o zip, que estavam soltos na `developer` local, entraram no primeiro commit da branch.
 - Linha de base verde: build, lint, testes de todos os workspaces, e2e do backend, `flutter analyze` e 238 testes do mobile.
+- Fase 1 em paralelo, 6 subagentes em worktrees: S1 (nome com uma palavra, `DisplayNameRule`), S2 (login e cadastro reais), S3 (Perfil e Idioma), S4 (Redefinir rotina e Enviar sugestão), S5 (Jardim visual), S6 (tema escuro). Todos com TDD (vermelho → verde) e cobertura de 100% nos controladores e no domínio.
+- Integração: um único conflito de teste (o Perfil contava 2 leituras da disponibilidade; com a rotina real são 3), corrigido no teste (`5555a6d`).
+- Ponta a ponta no simulador iOS: o novo `acesso_perfil_test.dart` e os dois antigos, verdes. O backend da porta 4000 era um processo antigo (sem a regra do nome) que não pude encerrar; os testes rodaram contra um backend novo nas portas 4100 e 4101 (`AI_PROVIDER=rules`).
+- Verificação completa: o e2e do backend falhou 4 vezes por estouro de tempo de 5 s (máquina carregada e saindo do repouso), sempre em suítes diferentes e não tocadas; com a máquina livre, 139/139. Registrado como [INVESTIGAR].
+- Revisor: 1 bloqueante (a rotina podia salvar sem ter carregado e apagar a disponibilidade real) corrigido pelo S4; o Broto sem ação deixou de ser anunciado como botão; os demais apontamentos foram para o `afazeres.md`.
+- O revisor alertou para a barra de status no tema escuro; no simulador, os ícones ficam claros. Item fechado.
 
