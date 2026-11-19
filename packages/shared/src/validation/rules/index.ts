@@ -9,6 +9,7 @@ export * from "./trim.rule";
 export * from "./no-whitespace.rule";
 export * from "./alpha.rule";
 export * from "./person-name.rule";
+export * from "./display-name.rule";
 export * from "./alpha-numeric.rule";
 export * from "./starts-with.rule";
 export * from "./ends-with.rule";

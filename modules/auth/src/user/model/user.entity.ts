@@ -1,11 +1,11 @@
 import {
   BcryptHashRule,
+  DisplayNameRule,
   EmailRule,
   Entity,
   EntityState,
   MaxLengthRule,
   MinLengthRule,
-  PersonNameRule,
   RequiredRule,
   TimezoneRule,
   Validator,
@@ -46,9 +46,9 @@ export class User extends Entity<UserState> {
         value: this.name,
         rules: [
           new RequiredRule(),
-          new MinLengthRule(3),
+          new MinLengthRule(2),
           new MaxLengthRule(80),
-          new PersonNameRule(),
+          new DisplayNameRule(),
         ],
       },
       {
