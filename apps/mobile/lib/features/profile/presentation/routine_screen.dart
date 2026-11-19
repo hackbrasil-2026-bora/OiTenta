@@ -18,6 +18,7 @@ class RoutineScreen extends StatelessWidget {
     required this.onToggle,
     required this.onLimit,
     required this.onSave,
+    required this.onRetry,
   });
 
   final RoutineController state;
@@ -26,9 +27,14 @@ class RoutineScreen extends StatelessWidget {
   final ValueChanged<int> onLimit;
   final VoidCallback onSave;
 
+  /// Carrega a rotina de novo depois de uma falha.
+  final VoidCallback onRetry;
+
   @override
   Widget build(BuildContext context) {
     final c = context.bora;
+    // Sem a rotina carregada, a grade e o slider ficam sem ação (MP11).
+    final editable = state.canEdit;
     return BoraPage(
       topBar: BoraTopBar(leading: BackNavButton(onPressed: onBack)),
       children: [
@@ -41,7 +47,10 @@ class RoutineScreen extends StatelessWidget {
         const SizedBox(height: 16),
         BoraCard(
           padding: const EdgeInsets.all(12),
-          child: _Grid(state: state, onToggle: onToggle),
+          child: IgnorePointer(
+            ignoring: !editable,
+            child: _Grid(state: state, onToggle: onToggle),
+          ),
         ),
         const SizedBox(height: 10),
         _Legend(freeHours: state.freeHours),
@@ -63,13 +72,16 @@ class RoutineScreen extends StatelessWidget {
           ],
         ),
         const SizedBox(height: 10),
-        BoraSlider(
-          value: state.limitHours.toDouble(),
-          min: 1,
-          max: 8,
-          step: 1,
-          semanticLabel: 'Limite diário',
-          onChanged: (v) => onLimit(v.round()),
+        IgnorePointer(
+          ignoring: !editable,
+          child: BoraSlider(
+            value: state.limitHours.toDouble(),
+            min: 1,
+            max: 8,
+            step: 1,
+            semanticLabel: 'Limite diário',
+            onChanged: (v) => onLimit(v.round()),
+          ),
         ),
         if (state.error != null) ...[
           const SizedBox(height: 16),
@@ -77,6 +89,15 @@ class RoutineScreen extends StatelessWidget {
             liveRegion: true,
             child: Text(state.error!, style: BoraText.small(c.danger)),
           ),
+          if (state.loadFailed)
+            Align(
+              alignment: Alignment.centerLeft,
+              child: TertiaryButton(
+                label: 'Tentar de novo',
+                compact: true,
+                onPressed: onRetry,
+              ),
+            ),
         ],
         const SizedBox(height: 28),
         PrimaryButton(

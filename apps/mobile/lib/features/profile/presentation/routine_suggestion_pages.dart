@@ -30,6 +30,7 @@ class RoutinePage extends StatelessWidget {
       onBack: () => _leave(context),
       onToggle: c.toggle,
       onLimit: c.setLimitHours,
+      onRetry: c.load,
       onSave: () async {
         if (!await c.save() || !context.mounted) return;
         showBoraToast(

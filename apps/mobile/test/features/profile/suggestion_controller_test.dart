@@ -87,4 +87,13 @@ void main() {
     await c.send();
     expect(seen, [true, false]);
   });
+
+  test('o envio que termina depois do dispose não avisa ninguém', () async {
+    repo.gate = Completer<void>();
+    c.setText('ideia');
+    final f = c.send();
+    c.dispose();
+    repo.gate!.complete();
+    expect(await f, isTrue);
+  });
 }

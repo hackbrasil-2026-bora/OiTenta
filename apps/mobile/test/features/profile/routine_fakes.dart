@@ -13,10 +13,14 @@ class FakeSchedulingRepository implements SchedulingRepository {
   Object? getError;
   Object? setError;
   Completer<void>? gate;
+
+  /// Segura o `getAvailability` até o teste liberar.
+  Completer<void>? getGate;
   final List<WeeklyAvailability> saved = [];
 
   @override
   Future<WeeklyAvailability?> getAvailability() async {
+    if (getGate != null) await getGate!.future;
     if (getError != null) throw getError!;
     return availability;
   }
