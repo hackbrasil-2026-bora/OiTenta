@@ -301,4 +301,40 @@ class BoraSample {
     'levelXp': 480,
     'focusXp': 25,
   };
+
+  /// Jardim (M04; `const tiles`, `const badges` e `guarda: 1` do protótipo;
+  /// P18). Nível, XP, gotas e sequência vêm de [gamification].
+  static const gardenName = 'Broto';
+  static const gardenStage = 'Broto';
+  static const gardenUmbrellas = 1;
+
+  /// [rótulo, estado]: `watered`, `umbrella` ou `pending`.
+  static const gardenDays = [
+    ['Sex', 'watered'],
+    ['Sáb', 'umbrella'],
+    ['Dom', 'watered'],
+    ['Seg', 'watered'],
+    ['Ter', 'watered'],
+    ['Qua', 'watered'],
+    ['Hoje', 'pending'],
+  ];
+
+  /// [nome, descrição, ícone, estado]: `earned`, `rare` ou `locked`.
+  static const gardenBadges = [
+    ['Primeiro passo', 'Fez o primeiro degrau', 'footprints', 'earned'],
+    ['Rampa completa', 'Rara · 8% dos usuários', 'flag-checkered', 'rare'],
+    [
+      'Voltou da pausa',
+      'Voltou depois de uma pausa',
+      'arrow-counter-clockwise',
+      'earned',
+    ],
+    ['7 dias regados', '6 de 7', 'drop', 'locked'],
+    [
+      'Entregue com folga',
+      'Entregar antes do prazo',
+      'paper-plane-tilt',
+      'locked',
+    ],
+  ];
 }
