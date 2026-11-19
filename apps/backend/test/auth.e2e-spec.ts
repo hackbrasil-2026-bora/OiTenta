@@ -69,6 +69,24 @@ describe('auth (integração)', () => {
     );
   });
 
+  it('MP2: cadastro com nome de uma palavra ("Arthur") → 201', async () => {
+    const res = await request(app.getHttpServer())
+      .post('/auth/register')
+      .send({ name: 'Arthur', email: unique(), password: 'Senha@123' });
+
+    expect(res.status).toBe(201);
+    expect((res.body as { user: { name: string } }).user.name).toBe('Arthur');
+  });
+
+  it('MP2: cadastro com nome de um caractere ("A") → 422', async () => {
+    const res = await request(app.getHttpServer())
+      .post('/auth/register')
+      .send({ name: 'A', email: unique(), password: 'Senha@123' });
+
+    expect(res.status).toBe(422);
+    expect((res.body as ErrorBody).details).toContain('user.name.min.length');
+  });
+
   it('C0: /auth/me devolve o fuso do usuário do token', async () => {
     const email = unique();
     await request(app.getHttpServer()).post('/auth/register').send({

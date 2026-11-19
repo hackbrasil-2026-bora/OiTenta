@@ -61,20 +61,54 @@ describe("User", () => {
     ]);
   });
 
-  test("deve rejeitar nome com uma palavra so", () => {
-    const user = new User(makeState({ name: "Ana" }));
+  // MP2 (docs/2-decisoes-mvp.md): o nome passa a aceitar uma palavra só ("Como quer
+  // ser chamado? Ex.: Arthur"). O antigo teste "deve rejeitar nome com uma palavra so"
+  // (que esperava "user.name.person.name" para "Ana") foi invertido por essa decisão.
+  test("MP2: deve aceitar nome com uma palavra so", () => {
+    const user = new User(makeState({ name: "Arthur" }));
+
+    expect(() => user.validate()).not.toThrow();
+  });
+
+  test("MP2: deve aceitar nome com duas letras", () => {
+    const user = new User(makeState({ name: "Bo" }));
+
+    expect(() => user.validate()).not.toThrow();
+  });
+
+  // MP2: o mínimo cai de 3 para 2 caracteres; "A" continua inválido só pelo tamanho.
+  test("MP2: deve rejeitar nome com um caractere", () => {
+    const user = new User(makeState({ name: "A" }));
 
     expect(getValidationMessages(() => user.validate())).toEqual([
-      "user.name.person.name",
+      "user.name.min.length",
     ]);
   });
 
-  test("deve rejeitar nome curto demais", () => {
-    const user = new User(makeState({ name: "A" }));
+  test("MP2: deve rejeitar nome com numero ou simbolo", () => {
+    expect(
+      getValidationMessages(() => new User(makeState({ name: "Arthur2" })).validate()),
+    ).toEqual(["user.name.display.name"]);
+    expect(
+      getValidationMessages(() => new User(makeState({ name: "@na" })).validate()),
+    ).toEqual(["user.name.display.name"]);
+  });
 
-    expect(getValidationMessages(() => user.validate())).toContain(
-      "user.name.min.length",
-    );
+  test("MP2: deve rejeitar nome vazio ou so com espacos apenas como obrigatorio", () => {
+    expect(
+      getValidationMessages(() => new User(makeState({ name: "" })).validate()),
+    ).toEqual(["user.name.required"]);
+    expect(
+      getValidationMessages(() => new User(makeState({ name: "   " })).validate()),
+    ).toEqual(["user.name.required"]);
+  });
+
+  test("MP2: deve rejeitar nome com 81 caracteres", () => {
+    const user = new User(makeState({ name: "a".repeat(81) }));
+
+    expect(getValidationMessages(() => user.validate())).toEqual([
+      "user.name.max.length",
+    ]);
   });
 
   test("deve rejeitar nome com mais de 80 caracteres", () => {
