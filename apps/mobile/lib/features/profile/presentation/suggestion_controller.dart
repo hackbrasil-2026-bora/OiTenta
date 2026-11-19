@@ -8,6 +8,7 @@ class SuggestionController extends ChangeNotifier {
   SuggestionController(this._repo);
 
   final FeedbackRepository _repo;
+  bool _disposed = false;
 
   String text = '';
   bool busy = false;
@@ -34,7 +35,14 @@ class SuggestionController extends ChangeNotifier {
       return false;
     } finally {
       busy = false;
-      notifyListeners();
+      // A tela pode ter sido fechada durante o envio.
+      if (!_disposed) notifyListeners();
     }
+  }
+
+  @override
+  void dispose() {
+    _disposed = true;
+    super.dispose();
   }
 }
