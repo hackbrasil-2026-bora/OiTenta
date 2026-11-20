@@ -80,12 +80,24 @@ export class PrismaGoalRepository implements GoalRepository {
     return found.map((goal) => this.toDomain(goal));
   }
 
+  // Apaga o objetivo do dono; as etapas saem pela cascata do banco (goal_steps.onDelete: Cascade).
+  // Os blocos futuros saem no recálculo do plano; blocos e sessões passados ficam no histórico (MC11).
+  async delete(userId: string, goalId: string): Promise<void> {
+    const { count } = await this.prisma.goal.deleteMany({
+      where: { id: goalId, userId },
+    });
+    if (count === 0) {
+      throw new NotFoundError('Objetivo não encontrado.');
+    }
+  }
+
   private toGoalPersistence(goal: Goal): GoalRecord {
     return {
       id: goal.id,
       userId: goal.userId,
       title: goal.title,
       deadline: goal.deadline,
+      plannedDate: goal.plannedDate,
       kind: goal.kind,
       colorIndex: goal.colorIndex,
       source: goal.source,
@@ -118,6 +130,7 @@ export class PrismaGoalRepository implements GoalRepository {
       userId: raw.userId,
       title: raw.title,
       deadline: raw.deadline,
+      plannedDate: raw.plannedDate,
       kind: raw.kind as GoalKind,
       colorIndex: raw.colorIndex as GoalColorIndex,
       source: raw.source as GoalSource,
