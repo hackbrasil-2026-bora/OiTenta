@@ -48,11 +48,25 @@ UC = `docs/0-casos-de-uso.md` · Fluxo = seção de `docs/0-fluxos.md`.
 | 38 | Acesso — Nova senha | "Crie uma nova senha", nova senha + confirmação, "Salvar nova senha" | Código certo (Nova senha) | — | — |
 | 39 | Jardim pelo Broto | Jardim com o topo (Broto + barra + "A") e a tab bar nova (Hoje, Objetivos, Semana, Compromissos) | Tocar o Broto do topo (Jardim (pelo Broto)) | UC25 | §7 |
 | 40 | Perfil com a tab bar nova | Idem 26, com a tab bar nova e nenhuma aba ativa | Botão "A" (Perfil) | UC32 | §7 |
-| 41 | Compromissos | Aba nova: compromissos "Toda semana" e "Só uma vez" | Aba Compromissos (Compromissos) | UC01 | §1 |
-| 42 | Novo compromisso | Formulário de compromisso (título, dias, início e fim, repetição) | "+" em Compromissos (Novo compromisso) | UC01 | §1 |
+| 41 | ~~Compromissos~~ | **Removida do design em 20/11/2026** (os compromissos passam a ser cadastrados pelo "+ Compromisso" da Semana, 44–52) | — | — | — |
+| 42 | ~~Novo compromisso (versão de 19/11)~~ | Substituída pelas 46, 46b, 47 e 52 | — | — | — |
 | 43 | Tarefas únicas | Anotar tarefa avulsa com duração e quando | Atalho no Hoje (Tarefas únicas) | UC30 | — |
+| 44 | Semana com "+ Compromisso" | Título do dia com o botão "+ Compromisso" à direita (só em Execução) | Aba Semana (Semana) | UC01, UC07 | §5 |
+| 45 | Semana com compromissos | Dia 11: "Consulta no dentista" (Compromisso · Só uma vez) na lista do dia, misturada às etapas pela hora | Tocar no dia 11 (Compromisso no calendário, sheet fechado) | UC01, UC07 | §5 |
+| 46 | Novo compromisso (semanal) | Nome, Tipo (Aula, Trabalho, Saúde, Pessoal), Repete? (Toda semana) — topo | "+ Compromisso" e "Toda semana" (Novo compromisso) | UC01 | §1 |
+| 46b | Novo compromisso (semanal), fim | Dias da semana, Até quando? (Sem fim, Fim do semestre, Escolher data), Horário, Salvar compromisso, Cancelar | Rolar o formulário | UC01 | §1 |
+| 47 | Novo compromisso (só uma vez) | Data com date picker, Horário, Salvar | "Só uma vez" no formulário | UC01 | §1 |
+| 48 | Sheet do compromisso | Nome, data e horário, "Toda terça"; Editar, Não vai ter nesse dia, Excluir | Tocar num compromisso recorrente da Semana (Compromisso no calendário) | UC01 | §5 |
+| 49 | Sheet — Editar qual? | Só nesse dia / Desse dia em diante / Todas as semanas + Continuar | "Editar" no sheet | UC01 | §5 |
+| 50 | Sheet — Excluir qual? | Os mesmos 3 escopos + Excluir | "Excluir" no sheet | UC01 | §5 |
+| 51 | Sheet — dia cancelado | Pílula "Não vai ter nesse dia", "Liberei esse horário só nesse dia…", "Vai ter sim" (e o toast "Horário liberado") | "Não vai ter nesse dia" e tocar de novo no compromisso | UC01 | §5 |
+| 52 | Editar só nesse dia | "Mudando só Ter, 11/11/2025…", nome fixo, Data, Horário, "Salvar só nesse dia" | Editar → Só nesse dia → Continuar | UC01 | §5 |
+| 53 | Tarefas únicas | Campo + "+", grupos Hoje, Próximos dias, Sem data (e Feitas) | Painel (Tarefas únicas); no app, decisão MC9 | UC30 | — |
+| 54 | Tarefas únicas — adicionando | "Quanto tempo leva?" (15 min, 30 min, 1h, 2h), "Quando?" (Hoje, Amanhã, Sem data, Escolher dia), "Adicionar tarefa" | Digitar no campo | UC30 | — |
 
 ## Observações
+
+- **Atualização de 20/11/2026** (zip "…telas principais-project", exportação do projeto inteiro): mudou o `Bora App.dc.html`; o `Bora Telas.dc.html` só passou a ler os ícones de `./vendor/phosphor` (pasta nova, junto com um `README.md`). A tab bar voltou a ser **Hoje · Objetivos · Semana · Jardim** (o ícone do Jardim no protótipo é `leaf`; o app mantém `plant`, MC14). A página dedicada de Compromissos saiu: o cadastro é pelo "+ Compromisso" da Semana, e cada ocorrência abre um sheet com Editar / Não vai ter nesse dia / Excluir e o escopo (só nesse dia, desse dia em diante, todas as semanas). O protótipo não tem caminho para as Tarefas únicas (MC9). Nas capturas 46b, 47 e 52 o campo de horário aparece em 12 h (`07:00 PM`) porque é o `input type="time"` do navegador; o texto do protótipo usa 24 h ("19:00–20:00").
 
 - **Atualização de 19/11/2026** (zip novo, só o `Bora App.dc.html` mudou): entrou o grupo **Acesso** (33–38: login, criar conta e a recuperação de senha em 3 passos), a aba **Compromissos** (41–42) e **Tarefas únicas** (43). A tab bar do protótipo passou a ser **Hoje · Objetivos · Semana · Compromissos**; o Jardim sai das abas e abre pelo **Broto do topo** (39), que aparece no Hoje e no Jardim junto da barra gamificada e do botão "A" do Perfil. Perfil, Jardim, Redefinir rotina, Idioma e Enviar sugestão não mudaram (04, 26–29). As capturas 33–43 mostram só a moldura (390×844, deviceScaleFactor 2), sem expandir a rolagem.
 - **Login e cadastro agora têm design** (33–35). O **onboarding** continua sem design neste projeto: só aparece em `design/mobile/telas/` (Bora Telas do zip "Sistema do app Bora").
