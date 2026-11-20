@@ -182,6 +182,27 @@ void main() {
     c.selectDay(1);
     expect(c.selectedDateKey, '2025-11-04');
   });
+
+  test(
+    'erro no plano: mensagem da semana (os compromissos não carregam)',
+    () async {
+      final w = WeekController(
+        _FailingScheduling(),
+        FixedClock(DateTime(2025, 11, 6, 9, 41)),
+        commitments: _Commitments(),
+      );
+      await w.load();
+      expect(w.error, 'Não deu pra carregar a semana.');
+      expect(w.loading, isFalse);
+      expect(w.dayItems, isEmpty);
+    },
+  );
+}
+
+class _FailingScheduling extends SampleSchedulingRepository {
+  @override
+  Future<WeekPlan> getWeekPlan(String start) async =>
+      throw StateError('fora do ar');
 }
 
 /// Um compromisso às 10:00 na quinta 06/11, mesmo horário do "Diagrama".

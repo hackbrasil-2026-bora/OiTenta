@@ -5,7 +5,10 @@ import '../../../core/theme/bora_colors.dart';
 import '../../../core/theme/bora_text.dart';
 import '../../../core/widgets/bora_scaffold.dart';
 import '../../../core/widgets/bora_widgets.dart';
+import '../../../core/widgets/bora_buttons.dart';
 import 'calendar_widgets.dart';
+import 'commitment_card.dart';
+import 'commitment_occurrence_view.dart';
 import 'week_controller.dart';
 
 /// Calendário (M03/M19 semana, M20 mês, M21 prazos). A tela só desenha o
@@ -20,6 +23,8 @@ class WeekScreen extends StatelessWidget {
     required this.onCollapse,
     required this.onToggleExpanded,
     required this.onMode,
+    required this.onAddCommitment,
+    required this.onOpenCommitment,
   });
 
   final WeekController state;
@@ -30,6 +35,12 @@ class WeekScreen extends StatelessWidget {
   final VoidCallback onToggleExpanded;
   final ValueChanged<CalendarMode> onMode;
 
+  /// "+ Compromisso" (só em Execução): formulário "Só uma vez" no dia.
+  final VoidCallback onAddCommitment;
+
+  /// Toque no compromisso: abre o sheet da ocorrência.
+  final ValueChanged<CommitmentOccurrenceView> onOpenCommitment;
+
   @override
   Widget build(BuildContext context) {
     final c = context.bora;
@@ -37,7 +48,7 @@ class WeekScreen extends StatelessWidget {
       return BoraPage(children: [Text('Semana', style: BoraText.h1(c.tx))]);
     }
     final deadlines = state.mode == CalendarMode.deadlines;
-    final blocks = state.dayBlocks;
+    final items = state.dayItems;
     final dayDeadlines = state.dayDeadlines;
     return BoraPage(
       children: [
@@ -109,7 +120,32 @@ class WeekScreen extends StatelessWidget {
           ],
         ),
         const SizedBox(height: 24),
-        Text(state.dayLabel.toUpperCase(), style: BoraText.label(c.tx2)),
+        ConstrainedBox(
+          constraints: const BoxConstraints(minHeight: 36),
+          child: Row(
+            children: [
+              Expanded(
+                child: Text(
+                  state.dayLabel.toUpperCase(),
+                  style: BoraText.label(c.tx2),
+                ),
+              ),
+              if (!deadlines) ...[
+                const SizedBox(width: 8),
+                TertiaryButton(
+                  label: 'Compromisso',
+                  icon: PhosphorIconsBold.plus,
+                  compact: true,
+                  onPressed: onAddCommitment,
+                ),
+              ],
+            ],
+          ),
+        ),
+        if (!deadlines && state.commitmentsError != null) ...[
+          const SizedBox(height: 4),
+          Text(state.commitmentsError!, style: BoraText.small(c.danger)),
+        ],
         const SizedBox(height: 12),
         if (deadlines) ...[
           if (dayDeadlines.isEmpty) const _Empty('Nenhuma entrega neste dia.'),
@@ -118,9 +154,15 @@ class WeekScreen extends StatelessWidget {
             const SizedBox(height: 12),
           ],
         ] else ...[
-          if (blocks.isEmpty) const _Empty('Nada planejado pra esse dia.'),
-          for (final b in blocks) ...[
-            _BlockRow(block: b),
+          if (items.isEmpty) const _Empty('Nada planejado pra esse dia.'),
+          for (final i in items) ...[
+            if (i.commitment != null)
+              _CommitmentRow(
+                commitment: i.commitment!,
+                onTap: () => onOpenCommitment(i.commitment!),
+              )
+            else
+              _BlockRow(block: i.block!),
             const SizedBox(height: 12),
           ],
         ],
@@ -148,6 +190,44 @@ class _Empty extends StatelessWidget {
         textAlign: TextAlign.center,
         style: BoraText.small(c.tx2),
       ),
+    );
+  }
+}
+
+/// Compromisso na lista do dia (Execução): hora à esquerda e o cartão.
+class _CommitmentRow extends StatelessWidget {
+  const _CommitmentRow({required this.commitment, required this.onTap});
+
+  final CommitmentOccurrenceView commitment;
+  final VoidCallback onTap;
+
+  @override
+  Widget build(BuildContext context) {
+    final c = context.bora;
+    return Row(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        SizedBox(
+          width: 40,
+          child: Padding(
+            padding: const EdgeInsets.only(top: 14),
+            child: Text(
+              commitment.time,
+              textAlign: TextAlign.center,
+              style: BoraText.nunito(
+                13,
+                16,
+                weight: FontWeight.w700,
+                color: c.tx2,
+              ),
+            ),
+          ),
+        ),
+        const SizedBox(width: 10),
+        Expanded(
+          child: CommitmentCard(commitment: commitment, onTap: onTap),
+        ),
+      ],
     );
   }
 }
