@@ -17,6 +17,11 @@ export interface PlanGoalInput {
   goalId: string;
   /** Data local `YYYY-MM-DD` da entrega, ou `null` (sem prazo, P3). */
   deadline: string | null;
+  /**
+   * Data local `YYYY-MM-DD` a partir da qual a tarefa única pode ser encaixada
+   * (MC7). Nunca recebe bloco antes desse dia. Ausente equivale a `null`.
+   */
+  plannedDate?: string | null;
   createdAt: Date;
   steps: PlanStepInput[];
 }
@@ -121,7 +126,9 @@ export class PlanCalculator {
         .map((step) => ({ ...step, remainingMinutes: roundUp(step.remainingMinutes, settings.granularity) }))
         .filter((step) => step.remainingMinutes > 0);
       const needed = steps.reduce((total, step) => total + step.remainingMinutes, 0);
-      const allocate = (lastDay: string | null) => allocateGoal(state, goal.goalId, steps, lastDay, settings);
+      const firstDay = goal.plannedDate ?? null;
+      const allocate = (lastDay: string | null) =>
+        allocateGoal(state, goal.goalId, steps, { firstDay, lastDay }, settings);
 
       let allocation: Allocation;
       let feasibility: Omit<GoalFeasibility, "goalId" | "scheduledMinutes" | "unscheduledMinutes">;
@@ -173,24 +180,38 @@ function roundUp(minutes: number, granularity: number): number {
   return Math.ceil(minutes / granularity) * granularity;
 }
 
-/** Prazo mais cedo primeiro; sem prazo por último (P3); depois criação e id. */
+/** Chave de prioridade (MC7): o prazo e, sem ele, a data planejada da tarefa única. */
+function priorityDate(goal: PlanGoalInput): string | null {
+  return goal.deadline ?? goal.plannedDate ?? null;
+}
+
+/** Data mais cedo primeiro; sem data por último (P3); depois criação e id. */
 function sortGoals(goals: PlanGoalInput[]): PlanGoalInput[] {
   return [...goals].sort((a, b) => {
-    if (a.deadline !== b.deadline) {
-      if (a.deadline === null) return 1;
-      if (b.deadline === null) return -1;
-      return compareText(a.deadline, b.deadline);
+    const dateA = priorityDate(a);
+    const dateB = priorityDate(b);
+    if (dateA !== dateB) {
+      if (dateA === null) return 1;
+      if (dateB === null) return -1;
+      return compareText(dateA, dateB);
     }
     return a.createdAt.getTime() - b.createdAt.getTime() || compareText(a.goalId, b.goalId);
   });
 }
 
-/** Tenta alocar as etapas de um objetivo numa cópia do estado, até `lastDay` (inclusive). */
+interface DayWindow {
+  /** Primeiro dia permitido (inclusive), ou `null` para sem limite. */
+  firstDay: string | null;
+  /** Último dia permitido (inclusive), ou `null` para sem limite. */
+  lastDay: string | null;
+}
+
+/** Tenta alocar as etapas de um objetivo numa cópia do estado, entre `firstDay` e `lastDay` (inclusive). */
 function allocateGoal(
   original: State,
   goalId: string,
   steps: PlanStepInput[],
-  lastDay: string | null,
+  { firstDay, lastDay }: DayWindow,
   settings: Settings,
 ): Allocation {
   const state: State = {
@@ -209,7 +230,7 @@ function allocateGoal(
       if (lastDay !== null && segment.day > lastDay) {
         break;
       }
-      if (segment.start < cursor) {
+      if (segment.start < cursor || (firstDay !== null && segment.day < firstDay)) {
         continue;
       }
       const start = segment.start;

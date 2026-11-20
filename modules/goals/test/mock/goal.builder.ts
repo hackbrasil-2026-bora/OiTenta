@@ -12,6 +12,7 @@ export interface GoalSpec {
   userId: string;
   title?: string;
   deadline?: string | null;
+  plannedDate?: string | null;
   kind?: GoalKind;
   colorIndex?: GoalColorIndex;
   status?: GoalStatus;
@@ -24,6 +25,7 @@ export function buildGoal(spec: GoalSpec): Goal {
     userId: spec.userId,
     title: spec.title ?? "Trabalho de Algoritmos",
     deadline: spec.deadline === undefined ? "2026-11-24" : spec.deadline,
+    plannedDate: spec.plannedDate ?? null,
     kind: spec.kind ?? "goal",
     colorIndex: spec.colorIndex ?? 1,
     source: "manual",
