@@ -245,3 +245,9 @@ Pedido: fazer o backend usar o Ollama local no rascunho do objetivo, com autoriz
 - Revisor: 1 bloqueante (a rotina podia salvar sem ter carregado e apagar a disponibilidade real) corrigido pelo S4; o Broto sem ação deixou de ser anunciado como botão; os demais apontamentos foram para o `afazeres.md`.
 - O revisor alertou para a barra de status no tema escuro; no simulador, os ícones ficam claros. Item fechado.
 
+## Sessão 6 — 20/11/2026: compromissos no calendário e tarefas únicas
+
+- Plano: `plano-mobile-compromissos-tarefas-unicas.md`, decisões MC1–MC14 (`docs/2-decisoes-mvp.md`); o usuário escolheu as recomendadas, menos C6 (compromissos também no Hoje) e C14 (ícone `plant`).
+- Branch `feat/compromissos-tarefas-unicas`, criada da `developer` (sem mudanças no remoto). Linha de base verde (582 testes no mobile; e2e 139/139).
+- Modelagem §8 e contrato §5b e §3 (tarefas únicas) fixados antes do paralelo. O `done` numérico do `GET /goals` foi mantido; a tarefa feita é `status: done`.
+

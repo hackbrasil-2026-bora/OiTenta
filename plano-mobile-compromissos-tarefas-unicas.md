@@ -247,7 +247,7 @@ Vale com as recomendações; se uma decisão mudar, o executor ajusta esta seç�
 | Método e rota | Mudança | Erros |
 |---|---|---|
 | `POST /goals` | aceita `plannedDate?: YYYY-MM-DD` (só com `kind: single`; com `goal` → 422) | os de hoje + 422 |
-| `GET /goals` | cada item ganha `kind`, `plannedDate`, `estimatedMinutes` (a soma) e `done`; aceita `?kind=goal\|single` | 400 (`kind` inválido) |
+| `GET /goals` | cada item ganha `kind`, `plannedDate` e `estimatedMinutes` (a soma); a tarefa feita é `status: done` (o `done` numérico já existente continua sendo a contagem de etapas); aceita `?kind=goal\|single` | 400 (`kind` inválido) |
 | `PATCH /goals/:goalId/done` | `{ done: boolean }` → 200 `{ goal, plan }`; só `single` | 400, 401, 404, 422 (objetivo comum) |
 | `DELETE /goals/:goalId` | → 200 `{ plan }` | 401, 404 |
 
@@ -287,8 +287,9 @@ Fase 6: relatório, afazeres, diário, COMO-TESTAR
 ## Fase 0: preparação (orquestrador)
 
 ### 0.1 Decisões
-- [ ] O usuário respondeu o Portão 0. Escolhas: C1 \_ · C2 \_ · C3 \_ · C4 \_ · C5 \_ · C6 \_ · C7 \_ · C8 \_ · C9 \_ · C10 \_ · C11 \_ · C12 \_ · C13 \_ · C14 \_
-- [ ] Ajustar a seção 3 (contrato) e os passos que dependem de opções diferentes da recomendada (riscar e anotar o motivo).
+- [x] O usuário respondeu o Portão 0. Escolhas: C1 a · C2 a · C3 a · C4 a · C5 a · C6 **b** · C7 a · C8 a · C9 a · C10 a · C11 a · C12 a · C13 a · C14 **b**
+- [x] Ajustar a seção 3 (contrato) e os passos que dependem de opções diferentes da recomendada (riscar e anotar o motivo).
+  > **C6 = b:** o M1 também mostra os compromissos do dia na linha do tempo do Hoje (mesmo cartão e mesmo sheet), carregando as ocorrências do dia junto com o plano. **C14 = b:** o ícone do Jardim não muda (o item da tab bar sai do 0.6). **Contrato:** o `GET /goals` já tinha `done` numérico (contagem de etapas); a tarefa feita é indicada por `status: done`, sem campo `done` booleano novo.
 
 ### 0.2 Branch
 - [ ] `git checkout developer && git pull --ff-only origin developer` (anotar se a remota trouxe algo).
@@ -345,7 +346,7 @@ Objetivo: deixar rotas, DI, os modelos de domínio do app e os repositórios (in
   - **rotas:** `/semana/compromisso` (novo; `extra` com a data inicial) e `/semana/compromisso/:id` (editar; `extra` com escopo e data) abrem `CommitmentFormPage`; `/tarefas` abre `SingleTasksPage`; as três ficam dentro do shell; `tabFor` devolve `week` para `/semana/compromisso*` e `today` para `/tarefas`;
   - **DI:** `deps.commitments` é o exemplo no modo `sample` e o HTTP no modo `http`; `deps.singleTasks` idem;
   - **config:** `AppConfig.semesterEnd` lê `SEMESTER_END` (C3 = a), com padrão `2026-12-12`;
-  - **tab bar:** o Jardim usa `PhosphorIconsRegular.leaf` / `Fill.leaf` (C14 = a).
+  - ~~**tab bar:** o Jardim usa `leaf`~~ — não se aplica (C14 = b).
 - [ ] Rodar e guardar o **vermelho**.
 - [ ] **Implementar:**
   - `features/scheduling/domain/commitment.dart` (modelos);
@@ -354,7 +355,7 @@ Objetivo: deixar rotas, DI, os modelos de domínio do app e os repositórios (in
   - `http_commitments_repository.dart` (**métodos que lançam `UnimplementedError`**; o M1 completa);
   - `features/goals/domain/single_task.dart`, `features/goals/data/single_tasks_repository.dart` + exemplo (com as 6 tarefas do protótipo) + HTTP vazio;
   - páginas esqueleto `CommitmentFormPage` (em `features/scheduling/presentation/commitment_form_pages.dart`) e `SingleTasksPage` (em `features/goals/presentation/single_tasks_pages.dart`), como `PlaceholderScreen`;
-  - rotas, DI, `AppConfig.semesterEnd`, `SEMESTER_END` nos `env/*.json` e o ícone `leaf` no `app_shell.dart`.
+  - rotas, DI, `AppConfig.semesterEnd` e `SEMESTER_END` nos `env/*.json`.
 - [ ] Rodar e guardar o **verde**; `flutter analyze` e `flutter test` inteiros verdes.
 - [ ] Commit `feat(mobile): esqueleto de compromissos e tarefas únicas (rotas, DI, modelos, repositórios)`.
 
@@ -420,9 +421,9 @@ Regras comuns:
   - objetivo com prazo **não muda** de comportamento (rodar os testes antigos sem alterar).
 - [ ] `npm run test --workspace @oitenta/goals` e `--workspace @oitenta/scheduling` com 100%; grep de framework. **Parar** e reportar.
 
-### M1. Mobile: compromissos na Semana e sheet da ocorrência (`feat/cp-r-mobile-semana`)
+### M1. Mobile: compromissos na Semana, no Hoje (C6 = b) e sheet da ocorrência (`feat/cp-r-mobile-semana`)
 
-**Pastas:** `features/scheduling/presentation/week_*`, `calendar_widgets.dart`, `commitment_occurrence_sheet.dart` (novo), `features/scheduling/data/http_commitments_repository.dart` e os testes correspondentes. **Ler:** template `<!-- SEMANA / CALENDÁRIO -->` (procurar `cpAddDia`, `isCp`), o sheet `sheetCpOcc` e a lógica `ocAcoes`, `ocEscopos` e `ocContinuar` do `Bora App.dc.html`; `screens/44, 45, 48–51`.
+**Pastas:** `features/scheduling/presentation/week_*`, `today_controller.dart`, `today_screen.dart` (C6 = b), `scheduling_pages.dart`, `calendar_widgets.dart`, `commitment_occurrence_sheet.dart` (novo), `commitment_card.dart` (novo), `features/scheduling/data/http_commitments_repository.dart` e os testes correspondentes. **Ler:** template `<!-- SEMANA / CALENDÁRIO -->` (procurar `cpAddDia`, `isCp`), o sheet `sheetCpOcc` e a lógica `ocAcoes`, `ocEscopos` e `ocContinuar` do `Bora App.dc.html`; `screens/44, 45, 48–51`.
 
 - [ ] **`HttpCommitmentsRepository`** (testes primeiro, com o `fake_api.dart`): cada método da seção 3 com rota, verbo, corpo, query e o mapeamento de 401/404/409/422 para as falhas do app.
 - [ ] **`WeekController`** (testes primeiro):
@@ -437,6 +438,7 @@ Regras comuns:
   - passo de escopo com "Só nesse dia" selecionado por padrão;
   - "Continuar": no editar navega para o formulário com escopo e data; no excluir chama o método certo (`so` → cancelar o dia; `following` → `DELETE ?scope=following`; `all` → `DELETE ?scope=all`);
   - os toasts do design; `busy`; erro.
+- [ ] **Hoje (C6 = b)** (testes primeiro): o `TodayController` carrega as ocorrências do dia junto com o plano; a linha do tempo mistura etapas e compromissos pela hora, com o mesmo cartão da Semana; o toque abre o mesmo sheet; ações recarregam o Hoje. Os testes antigos do Hoje continuam passando. Elemento sem design no Hoje: registrar como diferença.
 - [ ] **Telas** (widget tests primeiro): botão "+ Compromisso" no título do dia só no modo Execução (abre `/semana/compromisso` com a data do dia e "Só uma vez"); card do compromisso igual ao design; o sheet com os 3 estados e o passo de escopo. Só tokens.
 - [ ] `flutter analyze`, `flutter test` e cobertura de 100% nos controladores e no repositório HTTP.
 

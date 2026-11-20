@@ -443,7 +443,7 @@ Siglas: W = tela do protótipo web (`design/web/SCREENS.md`); M = tela do mobile
   - **Problema:** o usuário acha que mandou e ninguém recebe.
   - **Alternativas:** 1. **módulo `feedback` com `POST /feedback`** (entidade, caso de uso, prisma, controller, e2e; meio dia); o anexo exige `image_picker` e armazenamento; 2. **abrir o app de e-mail** com `url_launcher` (pacote novo; 1 h); 3. **manter**.
   - **Recomendação:** 1 sem anexo.
-- [ ] [DECIDIR] Compromissos e Tarefas únicas têm design novo (M41–M43) — (origem: plano-mobile-acesso-perfil-jardim, 19/11/2026) — ver também Backend, "Compromissos fixos (Aula/Estágio) fora do contrato"
+- [x] [DECIDIR] Compromissos e Tarefas únicas têm design novo (M41–M43)[DECIDIR] Compromissos e Tarefas únicas têm design novo (M41–M43) — (origem: plano-mobile-acesso-perfil-jardim, 19/11/2026) — ver também Backend, "Compromissos fixos (Aula/Estágio) fora do contrato" — fechado pelas decisões MC1–MC14 (20/11/2026); implementado na rodada `feat/compromissos-tarefas-unicas`.
   - **Contexto:** o zip de 19/11 trouxe a aba Compromissos, o formulário de compromisso e Tarefas únicas. Pela MP10, a tab bar ficou com o Jardim e essas telas ficaram fora da rodada.
   - **Alternativas:** 1. **rodada própria** com `Commitment` persistido (migration, CRUD, contrato) e as telas, trocando a 4ª aba conforme o design; 2. **manter fora do MVP** (P8).
   - **Recomendação:** 1, porque agora existe design e o motor do calendário já usa compromissos no domínio.
@@ -517,6 +517,16 @@ Siglas: W = tela do protótipo web (`design/web/SCREENS.md`); M = tela do mobile
   - **Contexto:** se a rotina não carrega, a tela bloqueia a grade e mostra a mensagem com um botão terciário "Tentar de novo" logo abaixo (impede gravar uma grade vazia por cima da real).
   - **Alternativas:** 1. **aprovar**; 2. **pedir o estado de erro ao design**.
   - **Recomendação:** 1.
+- [ ] [EXECUTAR] Atualizar `SEMESTER_END` a cada semestre — (origem: plano-mobile-compromissos-tarefas-unicas, 20/11/2026)
+  - Pela MC3, o chip "Fim do semestre" usa a data fixa `SEMESTER_END` dos `env/*.json` (`2026-12-12`). Pronto quando a data for trocada no início de cada semestre (ou quando o perfil tiver um campo próprio).
+- [ ] [DECIDIR] Caminho para as Tarefas únicas e compromissos no Hoje sem design — (origem: plano-mobile-compromissos-tarefas-unicas, 20/11/2026)
+  - **Contexto:** o design não tem caminho para as Tarefas únicas nem mostra compromissos no Hoje. Pela MC9 e MC6, o app cria o botão "Tarefas únicas" ao lado de "SEU DIA" e mostra os compromissos na linha do tempo do Hoje.
+  - **Alternativas:** 1. **manter** (como decidido); 2. **pedir os dois ao design** e ajustar depois.
+  - **Recomendação:** 2, sem bloquear a rodada.
+- [ ] [DECIDIR] Web sem tela de compromissos e de tarefas únicas — (origem: plano-mobile-compromissos-tarefas-unicas, 20/11/2026) — ver também Frontend
+  - **Contexto:** os compromissos já ocupam o plano também no web (o backend é o mesmo), mas o web não tem como cadastrá-los, vê-los no calendário nem gerenciar tarefas únicas.
+  - **Alternativas:** 1. **rodada própria para o web** (telas no calendário W15–W16 e uma lista de tarefas); 2. **manter o web sem** até o design do web.
+  - **Recomendação:** 1 depois do MVP mobile.
 
 ## Backend (inclui domínio modules/*, banco e contrato)
 
@@ -763,7 +773,7 @@ Siglas: W = tela do protótipo web (`design/web/SCREENS.md`); M = tela do mobile
   - **Alternativas:** 1. **manter fixo até o módulo `gamification`** (P18); 2. **criar o módulo agora** (dias de trabalho, fora do MVP).
   - **Recomendação:** 1.
 
-- [ ] [DECIDIR] Compromissos fixos (Aula/Estágio) fora do contrato — (origem: revisor da W1, 11/11/2026)
+- [x] [DECIDIR] Compromissos fixos (Aula/Estágio) fora do contrato[DECIDIR] Compromissos fixos (Aula/Estágio) fora do contrato — (origem: revisor da W1, 11/11/2026) — fechado pelas decisões MC1–MC14 (20/11/2026); implementado na rodada `feat/compromissos-tarefas-unicas`.
   - **Contexto:** o domínio já tem `Commitment` (P8, implementação vazia `EmptyCommitmentRepository`), mas o contrato não expõe compromissos. A grade da W26 e o calendário ficam sem a hachura "Aula/Estágio" e sem a legenda "Aula e estágio" do protótipo.
   - **Alternativas:** 1. **manter (P8)**; 2. **expor e persistir compromissos** (CRUD, prisma, contrato e telas; 1–2 dias).
   - **Recomendação:** 1 no MVP, como decidido na P8.
