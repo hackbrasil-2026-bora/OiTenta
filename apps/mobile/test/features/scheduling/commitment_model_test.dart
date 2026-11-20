@@ -194,6 +194,22 @@ void main() {
       });
     });
 
+    test('CommitmentChange com makeSingle manda recurrence: null', () {
+      const ch = CommitmentChange(
+        scope: CommitmentScope.all,
+        startDate: '2025-11-11',
+        makeSingle: true,
+      );
+      final j = ch.toJson();
+      expect(j.containsKey('recurrence'), isTrue);
+      expect(j['recurrence'], isNull);
+      expect(j['startDate'], '2025-11-11');
+      // sem makeSingle e sem recorrência: a chave não vai (mantém a série)
+      expect(const CommitmentChange(scope: CommitmentScope.all).toJson(), {
+        'scope': 'all',
+      });
+    });
+
     test('OccurrenceChange: cancelar e mover', () {
       expect(const OccurrenceChange.cancel().toJson(), {'status': 'cancelled'});
       expect(

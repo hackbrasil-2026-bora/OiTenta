@@ -471,6 +471,7 @@ class CommitmentFormController extends ChangeNotifier {
             startMinute: startMinute,
             endMinute: endMinute,
             recurrence: isWeekly ? _recurrence : null,
+            makeSingle: !isWeekly,
           ),
         );
         return CommitmentFormToast(

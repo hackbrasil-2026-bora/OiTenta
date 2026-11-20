@@ -477,6 +477,11 @@ void main() {
       final t = await c.save();
       expect(repo.change!.startDate, '2026-11-25');
       expect(repo.change!.recurrence, isNull);
+      // "Só uma vez" no editar todas pede explicitamente recurrence: null
+      // (vira compromisso único no backend; contrato §5b, 20/11).
+      expect(repo.change!.makeSingle, isTrue);
+      expect(repo.change!.toJson()['recurrence'], isNull);
+      expect(repo.change!.toJson().containsKey('recurrence'), isTrue);
       expect(t!.subtitle, 'Recalculei seu plano em volta dele.');
     });
 

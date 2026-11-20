@@ -209,6 +209,7 @@ class CommitmentChange {
     this.startMinute,
     this.endMinute,
     this.recurrence,
+    this.makeSingle = false,
   });
 
   final CommitmentScope scope;
@@ -220,6 +221,10 @@ class CommitmentChange {
   final int? endMinute;
   final CommitmentRecurrence? recurrence;
 
+  /// `true` manda `recurrence: null` explícito: a série vira compromisso
+  /// único (contrato §5b, 20/11). Sem isso, a recorrência fica como está.
+  final bool makeSingle;
+
   Map<String, dynamic> toJson() => {
     'scope': scope.name,
     'fromDate': ?fromDate,
@@ -228,7 +233,7 @@ class CommitmentChange {
     'startDate': ?startDate,
     'startMinute': ?startMinute,
     'endMinute': ?endMinute,
-    'recurrence': ?recurrence?.toJson(),
+    if (makeSingle) 'recurrence': null else 'recurrence': ?recurrence?.toJson(),
   };
 }
 
