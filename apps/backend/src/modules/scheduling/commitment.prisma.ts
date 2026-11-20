@@ -142,17 +142,23 @@ export class PrismaCommitmentRepository implements CommitmentRepository {
       recurrence: raw.recurring
         ? {
             weekdays: [...raw.recurrenceWeekdays],
-            ...(raw.recurrenceEndDate ? { endDate: raw.recurrenceEndDate } : {}),
+            ...(raw.recurrenceEndDate
+              ? { endDate: raw.recurrenceEndDate }
+              : {}),
           }
         : null,
-      exceptions: raw.exceptions.map((exception) => this.toExceptionDomain(exception)),
+      exceptions: raw.exceptions.map((exception) =>
+        this.toExceptionDomain(exception),
+      ),
       createdAt: raw.createdAt,
       updatedAt: raw.updatedAt,
       deletedAt: raw.deletedAt,
     });
   }
 
-  private toExceptionDomain(raw: CommitmentExceptionRecord): CommitmentException {
+  private toExceptionDomain(
+    raw: CommitmentExceptionRecord,
+  ): CommitmentException {
     const exception: CommitmentException = {
       date: raw.date,
       type: raw.type as CommitmentExceptionType,

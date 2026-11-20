@@ -184,7 +184,12 @@ describe('compromissos (integração)', () => {
       .delete(`/scheduling/commitments/${id}${query}`)
       .set('Authorization', auth(token));
 
-  const putOccurrence = (token: string, id: string, date: string, body: unknown) =>
+  const putOccurrence = (
+    token: string,
+    id: string,
+    date: string,
+    body: unknown,
+  ) =>
     server()
       .put(`/scheduling/commitments/${id}/occurrences/${date}`)
       .set('Authorization', auth(token))
@@ -308,7 +313,10 @@ describe('compromissos (integração)', () => {
       ['startDate fora do formato', { startDate: '18/11/2030' }],
       ['sem recurrence', { recurrence: undefined }],
       ['weekdays que não é lista', { recurrence: { weekdays: 'segunda' } }],
-      ['endDate fora do formato', { recurrence: { weekdays: [0], endDate: '13/12' } }],
+      [
+        'endDate fora do formato',
+        { recurrence: { weekdays: [0], endDate: '13/12' } },
+      ],
     ])('%s → 400', async (_, override) => {
       const { token } = await onboarded();
 
@@ -482,8 +490,11 @@ describe('compromissos (integração)', () => {
       await patch(token, commitment.id, { scope: 'all', category: 'pessoal' });
 
       expect(
-        ((await getOne(token, commitment.id)).body as { commitment: CommitmentBody })
-          .commitment.category,
+        (
+          (await getOne(token, commitment.id)).body as {
+            commitment: CommitmentBody;
+          }
+        ).commitment.category,
       ).toBe('pessoal');
     });
 
@@ -752,9 +763,14 @@ describe('compromissos (integração)', () => {
       const other = await onboarded();
       const commitment = await created(token, WEEKLY_BODY);
 
-      const res = await putOccurrence(other.token, commitment.id, '2030-11-20', {
-        status: 'cancelled',
-      });
+      const res = await putOccurrence(
+        other.token,
+        commitment.id,
+        '2030-11-20',
+        {
+          status: 'cancelled',
+        },
+      );
 
       expect(res.status).toBe(404);
     });
@@ -768,9 +784,22 @@ describe('compromissos (integração)', () => {
     });
 
     it.each([
-      ['userId no corpo', '2030-11-20', { status: 'cancelled', userId: randomUUID() }],
+      [
+        'userId no corpo',
+        '2030-11-20',
+        { status: 'cancelled', userId: randomUUID() },
+      ],
       ['status fora da lista', '2030-11-20', { status: 'skipped' }],
-      ['startMinute como texto', '2030-11-20', { status: 'moved', newDate: '2030-11-21', startMinute: '10:00', endMinute: 700 }],
+      [
+        'startMinute como texto',
+        '2030-11-20',
+        {
+          status: 'moved',
+          newDate: '2030-11-21',
+          startMinute: '10:00',
+          endMinute: 700,
+        },
+      ],
       ['data da rota fora do formato', '20-11-2030', { status: 'cancelled' }],
     ])('%s → 400', async (_, date, body) => {
       const { token } = await onboarded();
@@ -815,7 +844,11 @@ describe('compromissos (integração)', () => {
         status: 'cancelled',
       });
 
-      const res = await clearOccurrence(other.token, commitment.id, '2030-11-20');
+      const res = await clearOccurrence(
+        other.token,
+        commitment.id,
+        '2030-11-20',
+      );
       const stored = await getOne(token, commitment.id);
 
       expect({
@@ -886,7 +919,10 @@ describe('compromissos (integração)', () => {
       };
     }
 
-    async function dayBlocks(token: string, date: string): Promise<BlockBody[]> {
+    async function dayBlocks(
+      token: string,
+      date: string,
+    ): Promise<BlockBody[]> {
       const res = await server()
         .get(`/scheduling/plan/day?date=${date}`)
         .set('Authorization', auth(token));
@@ -926,7 +962,10 @@ describe('compromissos (integração)', () => {
 
     it('2. "Não vai ter nesse dia" → ocorrência cancelled e o horário volta a ter bloco', async () => {
       const { login, date, start, end } = await userWithPlannedBlock();
-      const commitment = await created(login.token, coveringBody(date, start, end));
+      const commitment = await created(
+        login.token,
+        coveringBody(date, start, end),
+      );
 
       const res = await putOccurrence(login.token, commitment.id, date, {
         status: 'cancelled',
@@ -936,10 +975,11 @@ describe('compromissos (integração)', () => {
 
       expect({
         status: res.status,
-        statuses: (listed.body as { occurrences: OccurrenceBody[] }).occurrences.map(
-          (item) => item.status,
-        ),
-        overlapping: blocks.filter((block) => overlaps(block, start, end)).length,
+        statuses: (
+          listed.body as { occurrences: OccurrenceBody[] }
+        ).occurrences.map((item) => item.status),
+        overlapping: blocks.filter((block) => overlaps(block, start, end))
+          .length,
       }).toEqual({ status: 200, statuses: ['cancelled'], overlapping: 1 });
     });
 
@@ -1051,7 +1091,10 @@ describe('compromissos (integração)', () => {
       expect({
         recurrence: found?.recurrence,
         exceptions: found?.exceptions,
-      }).toEqual({ recurrence: owned.recurrence, exceptions: owned.exceptions });
+      }).toEqual({
+        recurrence: owned.recurrence,
+        exceptions: owned.exceptions,
+      });
     });
 
     it('findById de outro usuário → null', async () => {
@@ -1081,7 +1124,9 @@ describe('compromissos (integração)', () => {
 
       await repository.update(changed);
 
-      expect((await repository.findById(ownerId, owned.id))?.exceptions).toEqual([
+      expect(
+        (await repository.findById(ownerId, owned.id))?.exceptions,
+      ).toEqual([
         { date: '2030-11-20', type: 'cancelled' },
         { date: '2030-11-25', type: 'cancelled' },
       ]);
