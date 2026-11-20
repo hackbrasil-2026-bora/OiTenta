@@ -142,6 +142,18 @@ void main() {
     },
   );
 
+  test('GoalSummary.fromJson lê kind; sem kind vale goal', () {
+    final base = {
+      ..._goal,
+      'done': 0,
+      'total': 1,
+      'status': 'active',
+      'slackDays': null,
+    };
+    expect(GoalSummary.fromJson(base).kind, 'goal');
+    expect(GoalSummary.fromJson({...base, 'kind': 'single'}).kind, 'single');
+  });
+
   test('Goal.fromJson sem progressPct dentro e fora → erro de parse', () {
     final json = Map<String, dynamic>.of(_goal)..remove('progressPct');
     expect(() => Goal.fromJson(json), throwsA(isA<TypeError>()));
