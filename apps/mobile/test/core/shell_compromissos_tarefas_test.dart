@@ -4,6 +4,7 @@ import 'package:oitenta/core/di/app_dependencies.dart';
 import 'package:oitenta/core/routes/app_router.dart';
 import 'package:oitenta/core/routes/app_routes.dart';
 import 'package:oitenta/core/widgets/app_shell.dart';
+import 'package:oitenta/core/widgets/bora_buttons.dart';
 import 'package:oitenta/features/goals/data/http_single_tasks_repository.dart';
 import 'package:oitenta/features/goals/data/sample_single_tasks_repository.dart';
 import 'package:oitenta/features/goals/presentation/single_tasks_pages.dart';
@@ -58,6 +59,19 @@ void main() {
       final d = AppDependencies.http(showDemo: false);
       expect(d.commitments, isA<HttpCommitmentsRepository>());
       expect(d.singleTasks, isA<HttpSingleTasksRepository>());
+    });
+  });
+
+  group('Hoje → Tarefas únicas (MC9)', () {
+    testWidgets('botão ao lado de SEU DIA abre /tarefas', (tester) async {
+      await pumpApp(tester, location: AppRoutes.today);
+      final button = find.widgetWithText(TertiaryButton, 'Tarefas únicas');
+      expect(button, findsOneWidget);
+      // o resumo "N etapas · …" continua visível, na linha de baixo
+      expect(find.textContaining('etapas'), findsWidgets);
+      await tester.tap(button);
+      await tester.pumpAndSettle();
+      expect(find.byType(SingleTasksPage), findsOneWidget);
     });
   });
 

@@ -164,6 +164,10 @@ class TodayPage extends StatelessWidget {
       onToggleLight: c.toggleLightTask,
       onProfile: () => context.push(AppRoutes.profile),
       onBroto: () => context.go(AppRoutes.garden),
+      onSingleTasks: () async {
+        await context.push(AppRoutes.singleTasks);
+        await c.load();
+      },
       onOpenCommitment: (o) =>
           openCommitmentOccurrence(context, deps, o, c.load),
     ),

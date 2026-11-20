@@ -158,7 +158,9 @@ void main() {
     await pumpApp(tester, location: '/tarefas');
     await tester.tap(find.bySemanticsLabel('Voltar'));
     await tester.pumpAndSettle();
-    expect(find.text('Tarefas únicas'), findsNothing);
+    // O Hoje tem o botão "Tarefas únicas" (MC9); o que importa é que a tela
+    // das tarefas saiu.
+    expect(find.byType(SingleTasksScreen), findsNothing);
     expect(find.text('SEU DIA'), findsOneWidget);
   });
 }

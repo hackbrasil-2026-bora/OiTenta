@@ -3,6 +3,7 @@ import 'package:phosphor_flutter/phosphor_flutter.dart';
 
 import '../../../core/theme/bora_colors.dart';
 import '../../../core/theme/bora_text.dart';
+import '../../../core/widgets/bora_buttons.dart';
 import '../../../core/widgets/bora_scaffold.dart';
 import '../../../core/widgets/bora_widgets.dart';
 import '../../gamification/presentation/home_top_bar.dart';
@@ -20,6 +21,7 @@ class TodayScreen extends StatelessWidget {
     required this.onProfile,
     required this.onOpenCommitment,
     this.onBroto,
+    this.onSingleTasks,
   });
 
   final TodayController state;
@@ -31,6 +33,9 @@ class TodayScreen extends StatelessWidget {
 
   /// Broto do topo: abre o Jardim (M39).
   final VoidCallback? onBroto;
+
+  /// "Tarefas únicas" ao lado de SEU DIA (MC9, elemento sem design).
+  final VoidCallback? onSingleTasks;
 
   /// Toque no compromisso (MC6 = b): abre o sheet da ocorrência.
   final ValueChanged<CommitmentOccurrenceView> onOpenCommitment;
@@ -56,7 +61,19 @@ class TodayScreen extends StatelessWidget {
         const SizedBox(height: 16),
         _Hero(onTap: state.nextBlock == null ? null : onStart),
         const SizedBox(height: 32),
-        SectionHeader(label: 'Seu dia', trailing: state.summary),
+        // MC9: o botão ocupa o lado direito do título; o resumo desce.
+        Row(
+          crossAxisAlignment: CrossAxisAlignment.center,
+          children: [
+            const Expanded(child: SectionHeader(label: 'Seu dia')),
+            TertiaryButton(
+              label: 'Tarefas únicas',
+              onPressed: onSingleTasks,
+              compact: true,
+            ),
+          ],
+        ),
+        Text(state.summary, style: BoraText.caption(c.tx2)),
         const SizedBox(height: 12),
         if (state.loading) const SizedBox(height: 40),
         if (state.error != null)
