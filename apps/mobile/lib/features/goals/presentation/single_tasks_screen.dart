@@ -60,8 +60,6 @@ class SingleTasksScreen extends StatelessWidget {
                 value: state.text,
                 onChanged: onText,
                 hint: 'Ex.: Arrumar o guarda-roupa',
-                textInputAction: TextInputAction.done,
-                onSubmitted: (_) => add?.call(),
               ),
             ),
             const SizedBox(width: 8),

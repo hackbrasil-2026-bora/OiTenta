@@ -1,12 +1,21 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_test/flutter_test.dart';
 
+import 'package:oitenta/core/clock/clock.dart';
+import 'package:oitenta/core/errors/app_errors.dart';
+import 'package:oitenta/features/goals/data/single_tasks_repository.dart';
+import 'package:oitenta/features/goals/domain/single_task.dart';
+import 'package:oitenta/features/goals/presentation/single_tasks_controller.dart';
+import 'package:oitenta/features/goals/presentation/single_tasks_screen.dart';
+
 import '../../helpers/test_app.dart';
 
 Future<void> _settleToast(WidgetTester tester) =>
     tester.pump(const Duration(seconds: 3));
 
 void main() {
+  _errorTest();
+
   testWidgets('tela 53: título, campo e grupos com as tarefas', (tester) async {
     await pumpApp(tester, location: '/tarefas');
     expect(find.text('Tarefas únicas'), findsOneWidget);
@@ -151,5 +160,46 @@ void main() {
     await tester.pumpAndSettle();
     expect(find.text('Tarefas únicas'), findsNothing);
     expect(find.text('SEU DIA'), findsOneWidget);
+  });
+}
+
+class _FailingRepo implements SingleTasksRepository {
+  @override
+  Future<List<SingleTask>> list() async => throw NetworkFailure('sem rede');
+
+  @override
+  dynamic noSuchMethod(Invocation invocation) => super.noSuchMethod(invocation);
+}
+
+void _errorTest() {
+  testWidgets('falha ao carregar mostra o erro', (tester) async {
+    await usePhoneSize(tester);
+    final c = SingleTasksController(
+      _FailingRepo(),
+      FixedClock(DateTime(2025, 11, 6)),
+    );
+    addTearDown(c.dispose);
+    await tester.pumpWidget(
+      themed(
+        ListenableBuilder(
+          listenable: c,
+          builder: (_, _) => SingleTasksScreen(
+            state: c,
+            onBack: () {},
+            onText: c.setText,
+            onDuration: c.setMinutes,
+            onWhen: c.setWhen,
+            onPickDay: () {},
+            onAdd: () {},
+            onToggle: (_) {},
+            onDelete: (_) {},
+          ),
+        ),
+      ),
+    );
+    await c.load();
+    await tester.pumpAndSettle();
+    expect(find.text('Não deu pra carregar suas tarefas.'), findsOneWidget);
+    expect(find.text('HOJE'), findsNothing);
   });
 }
