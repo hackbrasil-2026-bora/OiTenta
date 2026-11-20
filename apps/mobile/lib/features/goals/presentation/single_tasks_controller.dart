@@ -246,6 +246,7 @@ class SingleTasksController extends ChangeNotifier {
 
   /// Marca ou desmarca. Só marcar devolve o toast "Feito!".
   Future<SingleTaskToast?> toggle(String id) async {
+    if (busy) return null;
     final task = _tasks.where((t) => t.id == id).firstOrNull;
     if (task == null) return null;
     final done = !task.done;
@@ -257,8 +258,10 @@ class SingleTasksController extends ChangeNotifier {
     return const SingleTaskToast('Feito!', 'Uma coisa a menos na cabeça.');
   }
 
-  Future<void> remove(String id) =>
-      _run(() => _repo.delete(id), 'Não deu pra atualizar a tarefa.');
+  Future<void> remove(String id) async {
+    if (busy) return;
+    await _run(() => _repo.delete(id), 'Não deu pra atualizar a tarefa.');
+  }
 
   /// Roda a ação com `busy` e recarrega a lista quando dá certo.
   Future<bool> _run(Future<void> Function() action, String failure) async {

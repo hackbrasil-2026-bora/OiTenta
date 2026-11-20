@@ -302,6 +302,30 @@ void main() {
   group('marcar e excluir', () {
     setUp(() => c.load());
 
+    test('toque duplo em marcar: o segundo não chama o repositório', () async {
+      repo.gate = Completer<void>();
+      final first = c.toggle('luz');
+      expect(c.busy, isTrue);
+      expect(await c.toggle('luz'), isNull);
+      repo.gate!.complete();
+      await first;
+      expect(repo.calls.where((x) => x.startsWith('setDone')), [
+        'setDone:luz:true',
+      ]);
+    });
+
+    test('toque duplo em excluir: o segundo não chama o repositório', () async {
+      repo.gate = Completer<void>();
+      final first = c.remove('presente');
+      await c.remove('presente');
+      repo.gate!.complete();
+      await first;
+      expect(repo.calls.where((x) => x.startsWith('delete')), [
+        'delete:presente',
+      ]);
+      expect(c.error, isNull);
+    });
+
     test('marcar: setDone(true), toast "Feito!" e vai para Feitas', () async {
       final toast = await c.toggle('luz');
       expect(repo.calls, contains('setDone:luz:true'));
