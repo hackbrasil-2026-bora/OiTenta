@@ -7,8 +7,11 @@ import '../../gamification/data/gamification_repository.dart';
 import '../../gamification/domain/gamification.dart';
 import '../../goals/data/goals_repository.dart';
 import '../../goals/domain/goal.dart';
+import '../data/commitments_repository.dart';
 import '../data/scheduling_repository.dart';
+import '../domain/commitment.dart';
 import '../domain/plan.dart';
+import 'commitment_occurrence_view.dart';
 
 /// Etapa da timeline do Hoje, pronta para a tela.
 class TodayBlockView {
@@ -54,13 +57,23 @@ class TodayLightView {
 }
 
 class TodayItem {
-  const TodayItem({required this.time, this.block, this.light});
+  const TodayItem({
+    required this.time,
+    this.block,
+    this.light,
+    this.commitment,
+  });
 
   final String time;
   final TodayBlockView? block;
   final TodayLightView? light;
 
+  /// Compromisso do dia (MC6 = b; elemento sem design no Hoje).
+  final CommitmentOccurrenceView? commitment;
+
   bool get isBlock => block != null;
+
+  bool get isCommitment => commitment != null;
 }
 
 /// Hoje (M01).
@@ -70,8 +83,9 @@ class TodayController extends ChangeNotifier {
     this._goals,
     this._gamification,
     this._session,
-    this._clock,
-  );
+    this._clock, {
+    CommitmentsRepository? commitments,
+  }) : _commitments = commitments;
 
   final SchedulingRepository _scheduling;
   final GoalsRepository _goals;
@@ -79,8 +93,15 @@ class TodayController extends ChangeNotifier {
   final SessionStore _session;
   final Clock _clock;
 
+  /// Sem ele, o Hoje não mostra compromissos.
+  final CommitmentsRepository? _commitments;
+
   bool loading = true;
   String? error;
+
+  /// Erro só dos compromissos: as etapas continuam na tela.
+  String? commitmentsError;
+  List<CommitmentOccurrence> _occurrences = const [];
   GamificationSnapshot? gamification;
   DayPlan? _day;
   List<GoalSummary> _goalList = const [];
@@ -111,9 +132,22 @@ class TodayController extends ChangeNotifier {
       }
     } catch (_) {
       error = 'Não deu pra carregar o seu dia.';
-    } finally {
-      loading = false;
-      notifyListeners();
+    }
+    await _loadCommitments();
+    loading = false;
+    notifyListeners();
+  }
+
+  Future<void> _loadCommitments() async {
+    final repo = _commitments;
+    if (repo == null) return;
+    final date = BoraFormat.dateKey(_clock.now());
+    try {
+      _occurrences = await repo.listOccurrences(date, date);
+      commitmentsError = null;
+    } catch (_) {
+      _occurrences = const [];
+      commitmentsError = 'Não deu pra carregar os compromissos.';
     }
   }
 
@@ -184,13 +218,24 @@ class TodayController extends ChangeNotifier {
             checked: _checked.contains(l.id),
           ),
         ),
+      for (final o in _occurrences)
+        () {
+          final v = CommitmentOccurrenceView(o);
+          return TodayItem(time: v.time, commitment: v);
+        }(),
     ];
     int minutes(String t) {
       final p = t.split(':').map(int.parse).toList();
       return p[0] * 60 + p[1];
     }
 
-    list.sort((a, b) => minutes(a.time).compareTo(minutes(b.time)));
+    // Ordenação estável: no empate, fica a ordem de cima (etapa, leve,
+    // compromisso).
+    final order = {for (final (i, item) in list.indexed) item: i};
+    list.sort((a, b) {
+      final byTime = minutes(a.time).compareTo(minutes(b.time));
+      return byTime != 0 ? byTime : order[a]!.compareTo(order[b]!);
+    });
     return list;
   }
 
