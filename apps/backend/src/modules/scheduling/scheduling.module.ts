@@ -1,27 +1,30 @@
 import { Module } from '@nestjs/common';
 import { CommitmentBusySource } from '@oitenta/scheduling';
 import { DbModule } from '../../db/db.module';
-import { EmptyCommitmentRepository } from './commitment.empty';
+import { PrismaCommitmentRepository } from './commitment.prisma';
 import { PrismaScheduledBlockRepository } from './scheduled-block.prisma';
 import { SchedulingController } from './scheduling.controller';
 import { PrismaWeeklyAvailabilityRepository } from './weekly-availability.prisma';
 
-// P8: a ocupação vem dos compromissos, que nesta fase são sempre uma lista vazia.
+// A ocupação do plano vem dos compromissos do usuário (MC1; atualização da P8).
 @Module({
   imports: [DbModule],
   controllers: [SchedulingController],
   providers: [
     PrismaWeeklyAvailabilityRepository,
     PrismaScheduledBlockRepository,
+    PrismaCommitmentRepository,
     {
       provide: CommitmentBusySource,
-      useFactory: () =>
-        new CommitmentBusySource(new EmptyCommitmentRepository()),
+      inject: [PrismaCommitmentRepository],
+      useFactory: (repository: PrismaCommitmentRepository) =>
+        new CommitmentBusySource(repository),
     },
   ],
   exports: [
     PrismaWeeklyAvailabilityRepository,
     PrismaScheduledBlockRepository,
+    PrismaCommitmentRepository,
     CommitmentBusySource,
   ],
 })
