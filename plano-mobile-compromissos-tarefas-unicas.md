@@ -577,23 +577,25 @@ Regras comuns:
 
 ## Fase 5: integrar na `developer`
 
-- [ ] Conferir: verificação completa verde e revisor sem bloqueante.
-- [ ] `git checkout developer && git pull --ff-only origin developer && git merge --no-ff feat/compromissos-tarefas-unicas`.
-- [ ] Na `developer`: `npm run build`, `npm run test --workspaces --if-present`, `flutter analyze` e `flutter test`.
-- [ ] `git push origin developer`. O git já usa a conta ativa do `gh` (`arthursetragni`, configurada com `gh auth setup-git` em 19/11); se der 403, **parar e perguntar** ao usuário.
-- [ ] Confirmar que a `main` não mudou (hash do passo 0.2).
-- [ ] **Se qualquer passo da Fase 4 ou 5 falhar: NÃO fazer merge nem push.** Anotar o erro e reportar.
+- [x] Conferir: verificação completa verde e revisor sem bloqueante.
+- [x] `git checkout developer && git pull --ff-only origin developer && git merge --no-ff feat/compromissos-tarefas-unicas`.
+- [x] Na `developer`: `npm run build`, `npm run test --workspaces --if-present`, `flutter analyze` e `flutter test`.
+- [x] `git push origin developer`.
+  > `999fa54..a40e000`, com a conta `arthursetragni` (credencial do `gh`). A `main` continua em `7b8a85e`. O git já usa a conta ativa do `gh` (`arthursetragni`, configurada com `gh auth setup-git` em 19/11); se der 403, **parar e perguntar** ao usuário.
+- [x] Confirmar que a `main` não mudou (hash do passo 0.2).
+- [x] **Se qualquer passo da Fase 4 ou 5 falhar: NÃO fazer merge nem push.** Anotar o erro e reportar.
+  > Nada falhou.
 
 ---
 
 ## Fase 6: fechamento
 
-- [ ] `docs/mobile/COMO-TESTAR.md` e `docs/backend/COMO-TESTAR.md`: como testar compromissos e tarefas únicas (manual e ponta a ponta) e as rotas novas no Swagger.
-- [ ] `docs/6-diario-execucao.md`: o resumo da rodada.
-- [ ] `afazeres.md`: fechar o que foi resolvido; conferir que todas as pendências dos subagentes e do revisor estão lá.
-- [ ] Apagar as worktrees `OiTenta-wt/*` (depois de conferir que estão limpas e integradas).
-- [ ] Marcar `[x]` neste plano e anotar o hash do merge.
-- [ ] Relatório ao usuário (seção 9 da regra):
+- [x] `docs/mobile/COMO-TESTAR.md` e `docs/backend/COMO-TESTAR.md`: como testar compromissos e tarefas únicas (manual e ponta a ponta) e as rotas novas no Swagger.
+- [x] `docs/6-diario-execucao.md`: o resumo da rodada.
+- [x] `afazeres.md`: fechar o que foi resolvido; conferir que todas as pendências dos subagentes e do revisor estão lá.
+- [x] Apagar as worktrees `OiTenta-wt/*` (depois de conferir que estão limpas e integradas).
+- [x] Marcar `[x]` neste plano e anotar o hash do merge.
+- [x] Relatório ao usuário (seção 9 da regra):
   - (a) o que foi entregue, por subagente e branch;
   - (b) a verificação;
   - (c) a prova do TDD;
