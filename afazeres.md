@@ -545,8 +545,26 @@ Siglas: W = tela do protótipo web (`design/web/SCREENS.md`); M = tela do mobile
   - **Contexto:** a constante `showDoneGoalsInDeadlines = true` deixa 1 linha sem cobertura (208/209). Ligado ao [DECIDIR] antigo de mostrar objetivos concluídos em Prazos.
   - **Alternativas:** 1. tirar a constante e o ramo morto; 2. manter.
   - **Recomendação:** decidir junto com o item original.
+- [ ] [DECIDIR] Compromisso que termina à meia-noite — (origem: revisor, rodada de compromissos e tarefas únicas, 20/11/2026)
+  - **Contexto:** o domínio aceita `endMinute = 1440` (MC2), mas o seletor de hora do app (`CupertinoDatePicker`) vai só até 23:55.
+  - **Alternativas:** 1. **tratar 00:00 escolhido no fim como 24:00** (1440) (30 min, com teste); 2. **manter** (o último fim possível é 23:55).
+  - **Recomendação:** 1.
+- [ ] [DECIDIR] "Fim do semestre" vencido — (origem: revisor, rodada de compromissos e tarefas únicas, 20/11/2026) — ver também `SEMESTER_END`
+  - **Contexto:** se a data `SEMESTER_END` já passou, o chip "Fim do semestre" manda `endDate < startDate` e o backend responde 422.
+  - **Alternativas:** 1. **esconder ou desabilitar o chip quando a data já passou** (30 min); 2. **manter** (depende de atualizar o `env` a cada semestre).
+  - **Recomendação:** 1.
 
 ## Backend (inclui domínio modules/*, banco e contrato)
+- [ ] [EXECUTAR] `SplitCommitmentFrom` atômico — (origem: revisor, rodada de compromissos e tarefas únicas, 20/11/2026)
+  - O caso de uso encerra (ou apaga) a série antiga e cria a nova em duas chamadas separadas; se a segunda falhar, as ocorrências futuras se perdem. Fazer: um método do repositório (ex.: `split(previous|null, next)`) que grava os dois numa `$transaction` do Prisma, com teste de falha. Pronto quando uma falha no `create` deixa a série antiga intacta.
+- [ ] [EXECUTAR] `SetSingleTaskDone` com mais de uma etapa — (origem: revisor, rodada de compromissos e tarefas únicas, 20/11/2026)
+  - Só a primeira etapa é marcada; uma tarefa `single` com 2 etapas (a API aceita) fica `active`. Fazer: marcar todas as etapas não `superseded`, ou o `Goal.validate()` recusar `single` com mais de 1 etapa (a §2.1 já diz "exatamente 1"; conferir se a regra existe no `validate`). Pronto quando o teste com 2 etapas der `done` ou 422.
+- [ ] [DECIDIR] `deadline` em tarefa `single` — (origem: revisor, rodada de compromissos e tarefas únicas, 20/11/2026)
+  - **Contexto:** pela MC7 a tarefa única não tem prazo, mas o backend ainda aceita `deadline` com `kind: single`. O app já não manda (corrigido no "Preencher à mão").
+  - **Alternativas:** 1. **o domínio recusar `deadline` em `single`** (422); 2. **manter aceitando**.
+  - **Recomendação:** 1.
+- [ ] [EXECUTAR] Registrar na §5b que `startDate` só vale no `PATCH scope=all` — (origem: revisor, rodada de compromissos e tarefas únicas, 20/11/2026)
+  - No `scope=following`, o `startDate` do corpo é ignorado (a série nova começa no `fromDate`). Escrever isso na tabela do contrato.
 - [ ] [DECIDIR] `plannedDate` nas respostas de `POST /goals`, `PATCH …/done` e `GET /goals/:id` — (origem: D2, rodada de compromissos e tarefas únicas, 20/11/2026)
   - **Contexto:** pela §8.2 a saída do `CreateGoal` ficou igual; o `plannedDate` só aparece no `GET /goals`. O app recarrega a lista depois de cada ação.
   - **Alternativas:** 1. **manter**; 2. **acrescentar ao cabeçalho do objetivo** (campo aditivo nas 3 respostas).
