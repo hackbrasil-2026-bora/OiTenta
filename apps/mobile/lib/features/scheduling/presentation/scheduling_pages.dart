@@ -22,6 +22,8 @@ import 'week_screen.dart';
 
 /// Abre o sheet da ocorrência (Semana e Hoje). Depois de uma ação mostra o
 /// toast e chama [reload]; no Editar abre o formulário e recarrega ao voltar.
+/// Se o sheet for fechado (arrastar ou tocar fora) com uma ação em andamento,
+/// espera a ação terminar e recarrega do mesmo jeito.
 Future<void> openCommitmentOccurrence(
   BuildContext context,
   AppDependencies deps,
@@ -29,6 +31,7 @@ Future<void> openCommitmentOccurrence(
   Future<void> Function() reload,
 ) async {
   final c = context.bora;
+  Future<OccurrenceOutcome?>? pending;
   final outcome = await showModalBottomSheet<OccurrenceOutcome>(
     context: context,
     useRootNavigator: true,
@@ -41,6 +44,7 @@ Future<void> openCommitmentOccurrence(
       init: (oc) => oc.load(),
       builder: (_, oc) {
         Future<void> close(Future<OccurrenceOutcome?> run) async {
+          pending = run;
           final result = await run;
           if (result != null && sheetContext.mounted) {
             Navigator.of(sheetContext).pop(result);
@@ -58,7 +62,15 @@ Future<void> openCommitmentOccurrence(
       },
     ),
   );
-  if (outcome == null || !context.mounted) return;
+  if (outcome == null) {
+    // Fechado sem resultado: se havia uma chamada, o backend pode tê-la
+    // aplicado; recarrega depois que ela terminar.
+    if (pending == null) return;
+    await pending;
+    if (context.mounted) await reload();
+    return;
+  }
+  if (!context.mounted) return;
   final edit = outcome.edit;
   if (edit != null) {
     await context.push(

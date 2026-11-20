@@ -1,3 +1,5 @@
+import 'dart:async';
+
 import 'package:flutter_test/flutter_test.dart';
 import 'package:oitenta/core/clock/clock.dart';
 import 'package:oitenta/features/scheduling/data/sample_commitments_repository.dart';
@@ -197,6 +199,39 @@ void main() {
       expect(w.dayItems, isEmpty);
     },
   );
+
+  test('descartado no meio do load/reload: não avisa ninguém', () async {
+    final slow = _SlowScheduling();
+    final w = WeekController(
+      slow,
+      FixedClock(DateTime(2025, 11, 6, 9, 41)),
+      commitments: _Commitments(),
+    );
+    final loading = w.load();
+    w.dispose();
+    slow.hold.complete();
+    await loading;
+
+    final slow2 = _SlowScheduling();
+    final w2 = WeekController(slow2, FixedClock(DateTime(2025, 11, 6, 9, 41)));
+    slow2.hold.complete();
+    await w2.load();
+    slow2.hold = Completer<void>();
+    final reloading = w2.reload();
+    w2.dispose();
+    slow2.hold.complete();
+    await reloading;
+  });
+}
+
+class _SlowScheduling extends SampleSchedulingRepository {
+  Completer<void> hold = Completer<void>();
+
+  @override
+  Future<WeekPlan> getWeekPlan(String start) async {
+    await hold.future;
+    return super.getWeekPlan(start);
+  }
 }
 
 class _FailingScheduling extends SampleSchedulingRepository {

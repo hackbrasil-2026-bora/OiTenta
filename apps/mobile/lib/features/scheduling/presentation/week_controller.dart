@@ -158,18 +158,31 @@ class WeekController extends ChangeNotifier {
   List<GoalSummary>? _goals;
   late DateTime _selected;
 
+  bool _disposed = false;
+
+  @override
+  void dispose() {
+    _disposed = true;
+    super.dispose();
+  }
+
+  /// Não avisa depois do `dispose` (a tela pode sair durante um `await`).
+  void _notify() {
+    if (!_disposed) notifyListeners();
+  }
+
   Future<void> load() async {
     final now = _clock.now();
     _selected = DateTime(now.year, now.month, now.day);
     loading = true;
-    notifyListeners();
+    _notify();
     try {
       await _ensureWeeks([_monday]);
     } catch (_) {
       error = 'Não deu pra carregar a semana.';
     } finally {
       loading = false;
-      notifyListeners();
+      _notify();
     }
   }
 
@@ -444,7 +457,7 @@ class WeekController extends ChangeNotifier {
   void selectDay(int i) {
     final m = _monday;
     _selected = DateTime(m.year, m.month, m.day + i);
-    notifyListeners();
+    _notify();
   }
 
   /// Dia da grade do mês; dia de fora do mês é ignorado.
@@ -452,14 +465,14 @@ class WeekController extends ChangeNotifier {
     final outOfMonth = d.year != _selected.year || d.month != _selected.month;
     if (expanded && outOfMonth) return;
     _selected = DateTime(d.year, d.month, d.day);
-    notifyListeners();
+    _notify();
   }
 
   /// Arrastar para baixo: abre o mês e carrega as semanas que faltam.
   Future<void> expand() async {
     if (expanded) return;
     expanded = true;
-    notifyListeners();
+    _notify();
     await _guard(() => _ensureWeeks(_monthMondays), 'o mês');
   }
 
@@ -467,7 +480,7 @@ class WeekController extends ChangeNotifier {
   Future<void> collapse() async {
     if (!expanded) return;
     expanded = false;
-    notifyListeners();
+    _notify();
     await _guard(() => _ensureWeeks([_monday]), 'a semana');
   }
 
@@ -476,7 +489,7 @@ class WeekController extends ChangeNotifier {
   /// Troca Execução/Prazos; Prazos busca `GET /goals` na primeira vez.
   Future<void> setMode(CalendarMode m) async {
     mode = m;
-    notifyListeners();
+    _notify();
     final repo = _goalsRepo;
     if (m == CalendarMode.deadlines && _goals == null && repo != null) {
       await _guard(() async => _goals = await repo.listGoals(), 'os prazos');
@@ -490,7 +503,7 @@ class WeekController extends ChangeNotifier {
     } catch (_) {
       error = 'Não deu pra carregar $what.';
     } finally {
-      notifyListeners();
+      _notify();
     }
   }
 }
