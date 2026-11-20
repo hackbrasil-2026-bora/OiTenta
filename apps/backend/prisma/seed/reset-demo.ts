@@ -28,6 +28,8 @@ async function main() {
       prisma.scheduledBlock.deleteMany({ where: { userId } }),
       prisma.goal.deleteMany({ where: { userId } }),
       prisma.weeklyAvailability.deleteMany({ where: { userId } }),
+      // As exceções caem em cascata (MC1).
+      prisma.commitment.deleteMany({ where: { userId } }),
     ]);
     console.log(`[reset-demo] dados do usuário demo apagados (${email}).`);
   } finally {
