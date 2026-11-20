@@ -123,13 +123,34 @@ export class GoalListItemResponse implements GoalListItemView {
   @ApiProperty({ type: String, nullable: true, example: '2026-12-15' })
   deadline!: string | null;
 
+  @ApiProperty({ enum: ['goal', 'single'] })
+  kind!: GoalKind;
+
+  @ApiProperty({
+    type: String,
+    nullable: true,
+    example: '2026-11-21',
+    description:
+      'Data local YYYY-MM-DD planejada da tarefa única (MC7); null no objetivo comum ou "Sem data".',
+  })
+  plannedDate!: string | null;
+
+  @ApiProperty({
+    example: 30,
+    description: 'Soma das estimativas das etapas, em minutos (MC8).',
+  })
+  estimatedMinutes!: number;
+
   @ApiProperty({ enum: [1, 2, 3, 4] })
   colorIndex!: GoalColorIndex;
 
   @ApiProperty({ example: 20 })
   progressPct!: number;
 
-  @ApiProperty({ example: 1 })
+  @ApiProperty({
+    example: 1,
+    description: 'Quantidade de etapas concluídas.',
+  })
   done!: number;
 
   @ApiProperty({ example: 5 })
