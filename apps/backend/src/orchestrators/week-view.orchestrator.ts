@@ -1,4 +1,5 @@
 import { Injectable } from '@nestjs/common';
+import { ListGoals } from '@oitenta/goals';
 import { GetWeekPlan } from '@oitenta/scheduling';
 import { PrismaUserRepository } from '../modules/auth/user.prisma';
 import { PrismaGoalRepository } from '../modules/goals/goal.prisma';
@@ -32,7 +33,16 @@ export class WeekViewOrchestrator {
       this.blockRepository,
       this.availabilityRepository,
     ).execute({ userId: input.userId, weekStart: input.start, timezone });
-    const goals = await loadGoalsOf(this.goalRepository, input.userId, days);
-    return { days: days.map((day) => toDayPlanView(day, goals)) };
+    // MC11: bloco passado de objetivo apagado fica no histórico, mas não aparece na semana.
+    const { goals: existing } = await new ListGoals(
+      this.goalRepository,
+    ).execute({ userId: input.userId });
+    const goalIds = new Set(existing.map((goal) => goal.id));
+    const visible = days.map((day) => ({
+      ...day,
+      blocks: day.blocks.filter((block) => goalIds.has(block.goalId)),
+    }));
+    const goals = await loadGoalsOf(this.goalRepository, input.userId, visible);
+    return { days: visible.map((day) => toDayPlanView(day, goals)) };
   }
 }

@@ -1,5 +1,6 @@
-// Módulo scheduling: entidades de modules/scheduling/src (availability, plan).
-// Commitment não tem tabela nesta fase (decisão P8).
+// Módulo scheduling: entidades de modules/scheduling/src (availability, plan, commitment).
+// Commitment ganhou tabela em 20/11/2026 (MC1; atualização da P8): a série e, numa
+// tabela filha, as exceções por dia ("Não vai ter", "Horário alterado").
 // Blocos referenciam objetivo e etapa só por id, sem FK entre módulos (D 4d).
 
 model WeeklyAvailability {
@@ -32,4 +33,40 @@ model ScheduledBlock {
 
   @@index([userId, start])
   @@map("scheduled_blocks")
+}
+
+model Commitment {
+  id                 String                @id @db.Uuid
+  userId             String                @map("user_id") @db.Uuid
+  title              String
+  category           String
+  kind               String
+  startDate          String                @map("start_date")
+  startMinute        Int                   @map("start_minute")
+  endMinute          Int                   @map("end_minute")
+  recurrenceWeekdays Int[]                 @map("recurrence_weekdays")
+  recurrenceEndDate  String?               @map("recurrence_end_date")
+  recurring          Boolean
+  createdAt          DateTime              @map("created_at")
+  updatedAt          DateTime              @map("updated_at")
+  deletedAt          DateTime?             @map("deleted_at")
+  user               User                  @relation(fields: [userId], references: [id])
+  exceptions         CommitmentException[]
+
+  @@index([userId])
+  @@map("commitments")
+}
+
+model CommitmentException {
+  id           String     @id @default(uuid()) @db.Uuid
+  commitmentId String     @map("commitment_id") @db.Uuid
+  date         String
+  type         String
+  newDate      String?    @map("new_date")
+  startMinute  Int?       @map("start_minute")
+  endMinute    Int?       @map("end_minute")
+  commitment   Commitment @relation(fields: [commitmentId], references: [id], onDelete: Cascade)
+
+  @@unique([commitmentId, date])
+  @@map("commitment_exceptions")
 }

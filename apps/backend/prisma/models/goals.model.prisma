@@ -1,19 +1,20 @@
 // Módulo goals: entidades de modules/goals/src/goal/model
 
 model Goal {
-  id         String    @id @db.Uuid
-  userId     String    @map("user_id") @db.Uuid
-  title      String
-  deadline   String?
-  kind       String
-  colorIndex Int       @map("color_index")
-  source     String
-  status     String
-  createdAt  DateTime  @map("created_at")
-  updatedAt  DateTime  @map("updated_at")
-  deletedAt  DateTime? @map("deleted_at")
-  user       User      @relation(fields: [userId], references: [id])
-  steps      Step[]
+  id          String    @id @db.Uuid
+  userId      String    @map("user_id") @db.Uuid
+  title       String
+  deadline    String?
+  plannedDate String?   @map("planned_date")
+  kind        String
+  colorIndex  Int       @map("color_index")
+  source      String
+  status      String
+  createdAt   DateTime  @map("created_at")
+  updatedAt   DateTime  @map("updated_at")
+  deletedAt   DateTime? @map("deleted_at")
+  user        User      @relation(fields: [userId], references: [id])
+  steps       Step[]
 
   @@index([userId])
   @@map("goals")

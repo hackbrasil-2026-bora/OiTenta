@@ -224,6 +224,128 @@ Authorization: Bearer {{login.response.body.$.token}}
 ### Detalhe sem token → 401
 GET {{baseUrl}}/goals/{{goalId}}
 
+# --- Tarefas únicas (docs/4-contrato-api.md §3, MC7, MC8, MC10, MC11) ---
+
+### Tarefa única com data planejada → 201 { goal, plan }; o primeiro bloco cai a partir da data
+# @name createSingle
+POST {{baseUrl}}/goals
+Authorization: Bearer {{login.response.body.$.token}}
+Content-Type: application/json
+
+{
+  "title": "Pagar o boleto",
+  "deadline": null,
+  "kind": "single",
+  "plannedDate": "2026-11-21",
+  "steps": [{ "title": "Pagar o boleto", "estimatedMinutes": 30 }]
+}
+
+### Tarefa única "Sem data" (plannedDate null) → 201
+POST {{baseUrl}}/goals
+Authorization: Bearer {{login.response.body.$.token}}
+Content-Type: application/json
+
+{
+  "title": "Ligar para o dentista",
+  "deadline": null,
+  "kind": "single",
+  "plannedDate": null,
+  "steps": [{ "title": "Ligar para o dentista", "estimatedMinutes": 15 }]
+}
+
+### Objetivo comum com plannedDate → 422 (goal.plannedDate.single)
+POST {{baseUrl}}/goals
+Authorization: Bearer {{login.response.body.$.token}}
+Content-Type: application/json
+
+{
+  "title": "Trabalho de Algoritmos",
+  "deadline": "2026-11-24",
+  "kind": "goal",
+  "plannedDate": "2026-11-21",
+  "steps": [{ "title": "Ler o enunciado", "estimatedMinutes": 30 }]
+}
+
+### plannedDate malformado → 400
+POST {{baseUrl}}/goals
+Authorization: Bearer {{login.response.body.$.token}}
+Content-Type: application/json
+
+{
+  "title": "Pagar o boleto",
+  "kind": "single",
+  "plannedDate": "21/11/2026",
+  "steps": [{ "title": "Pagar o boleto", "estimatedMinutes": 30 }]
+}
+
+### Só as tarefas únicas → 200 { goals[…kind, plannedDate, estimatedMinutes] }
+GET {{baseUrl}}/goals?kind=single
+Authorization: Bearer {{login.response.body.$.token}}
+
+### Só os objetivos comuns → 200
+GET {{baseUrl}}/goals?kind=goal
+Authorization: Bearer {{login.response.body.$.token}}
+
+### kind inválido → 400
+GET {{baseUrl}}/goals?kind=xyz
+Authorization: Bearer {{login.response.body.$.token}}
+
+### Marcar a tarefa como feita → 200 { goal (status done), plan }; os blocos futuros dela somem
+PATCH {{baseUrl}}/goals/{{createSingle.response.body.$.goal.id}}/done
+Authorization: Bearer {{login.response.body.$.token}}
+Content-Type: application/json
+
+{ "done": true }
+
+### Desfazer → 200 { goal (status active), plan }; os blocos voltam
+PATCH {{baseUrl}}/goals/{{createSingle.response.body.$.goal.id}}/done
+Authorization: Bearer {{login.response.body.$.token}}
+Content-Type: application/json
+
+{ "done": false }
+
+### Feito num objetivo comum → 422 (goal.kind.single)
+PATCH {{baseUrl}}/goals/{{goalId}}/done
+Authorization: Bearer {{login.response.body.$.token}}
+Content-Type: application/json
+
+{ "done": true }
+
+### Feito pedido por outro usuário → 404
+PATCH {{baseUrl}}/goals/{{createSingle.response.body.$.goal.id}}/done
+Authorization: Bearer {{loginOther.response.body.$.token}}
+Content-Type: application/json
+
+{ "done": true }
+
+### Feito com campo a mais → 400
+PATCH {{baseUrl}}/goals/{{createSingle.response.body.$.goal.id}}/done
+Authorization: Bearer {{login.response.body.$.token}}
+Content-Type: application/json
+
+{ "done": true, "userId": "{{loginOther.response.body.$.user.id}}" }
+
+### Feito sem token → 401
+PATCH {{baseUrl}}/goals/{{createSingle.response.body.$.goal.id}}/done
+Content-Type: application/json
+
+{ "done": true }
+
+### Apagar pedido por outro usuário → 404
+DELETE {{baseUrl}}/goals/{{createSingle.response.body.$.goal.id}}
+Authorization: Bearer {{loginOther.response.body.$.token}}
+
+### Apagar sem token → 401
+DELETE {{baseUrl}}/goals/{{createSingle.response.body.$.goal.id}}
+
+### Apagar a tarefa → 200 { plan }; os blocos futuros dela somem
+DELETE {{baseUrl}}/goals/{{createSingle.response.body.$.goal.id}}
+Authorization: Bearer {{login.response.body.$.token}}
+
+### Apagar de novo → 404
+DELETE {{baseUrl}}/goals/{{createSingle.response.body.$.goal.id}}
+Authorization: Bearer {{login.response.body.$.token}}
+
 ### Plano do dia → 200 { date, blocks[…goalTitle, colorIndex, stepTitle], usedMinutes, limitMinutes }
 GET {{baseUrl}}/scheduling/plan/day?date=2026-11-16
 Authorization: Bearer {{login.response.body.$.token}}

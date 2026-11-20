@@ -93,6 +93,15 @@ npm --workspace apps/backend run db:reset-demo
    - **Enviar sugestão:** é só visual (MP9): mostra "Sugestão enviada", mas nada vai ao backend.
 5. **Jardim:** toque no Broto do canto superior esquerdo do Hoje (ou na aba Jardim). Os números são fixos do protótipo (P18); "Trocar por 50" não faz nada (MP13).
 
+### Compromissos e tarefas únicas (rodada de 20/11/2026)
+
+1. **Novo compromisso:** na aba **Semana** (modo Execução), toque em **+ Compromisso** à direita do título do dia. O formulário abre em "Só uma vez" naquele dia; troque para **Toda semana** para escolher os dias. "Até quando?": Sem fim, Fim do semestre (`SEMESTER_END` do `env`) ou Escolher data. Horário de 5 em 5 min, em 24 h. Se o horário bater com uma etapa do plano, aparece "Bate com …"; ao salvar, o plano é recalculado e a etapa muda de lugar.
+2. **Na lista do dia** (Semana e também Hoje, MC6): o compromisso aparece pela hora, com fundo cinza-esverdeado. Tocar abre o sheet:
+   - **Não vai ter nesse dia** → pílula "Não vai ter" e o horário fica livre para etapas; tocar de novo → **Vai ter sim**;
+   - **Editar** → "Só nesse dia" (muda só aquele dia: pílula "Horário alterado", depois **Voltar pro horário normal**), "Desse dia em diante" (divide a série) ou "Todas as semanas";
+   - **Excluir** → os mesmos três escopos (no compromisso único, exclui direto).
+3. **Tarefas únicas:** no Hoje, toque em **Tarefas únicas** (ao lado de "SEU DIA"). Digite, escolha a duração e "Quando?" (Hoje, Amanhã, Sem data, Escolher dia) e **Adicionar tarefa**. A tarefa entra no plano a partir do dia escolhido. Marque a caixa para concluir (vai para Feitas); a lixeira exclui. As tarefas não aparecem em Objetivos.
+
 ### Novo objetivo com a IA (M13 → M15)
 
 Desde 12/11/2026, **Novo objetivo** (em Objetivos) abre o **chat** (decisão IA4):
@@ -165,6 +174,14 @@ Esperado: `No issues found!` e `All tests passed!` (160 testes em 10/11).
    ```
 
 Esperado: `All tests passed!`, em cerca de 45 s mais o build do Xcode na primeira vez.
+
+**Compromissos e tarefas únicas** (`integration_test/compromissos_tarefas_test.dart`): conta nova a cada execução; o onboarding marca só as noites e o teste confere pela API que o compromisso tira a etapa do horário, cancelar/restaurar o dia, dia movido, excluir desse dia em diante e todas, o compromisso único, as tarefas únicas (criar, concluir, desfazer, excluir) e que Objetivos não as mostra. **Rode antes de cerca de 17:30** (precisa de noite livre hoje). Com o backend no ar:
+
+```bash
+cd apps/mobile && flutter test integration_test/compromissos_tarefas_test.dart -d <UDID> --dart-define-from-file=env/local-simulator.json
+```
+
+Esperado: `All tests passed!` em cerca de 55 s.
 
 **Acesso e Perfil** (`integration_test/acesso_perfil_test.dart`): cria uma conta nova a cada execução (não precisa do `db:reset-demo`) e percorre cadastro → onboarding → Perfil → Redefinir rotina (confere o `GET /scheduling/availability`) → modo escuro → sugestão → Jardim → reabrir o app → senha errada → login. Com o backend no ar:
 

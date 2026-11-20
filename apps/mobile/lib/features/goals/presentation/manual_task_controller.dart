@@ -74,7 +74,10 @@ class ManualTaskController extends ChangeNotifier {
       return await _repo.createGoal(
         NewGoal(
           title: title.trim(),
-          deadline: deadline == null ? null : BoraFormat.dateKey(deadline!),
+          // MC7/MC8: a tarefa única não tem prazo; a data escolhida é o dia
+          // planejado (o motor encaixa a partir dele).
+          deadline: null,
+          plannedDate: deadline == null ? null : BoraFormat.dateKey(deadline!),
           kind: 'single',
           steps: [NewStep(title: title.trim(), estimatedMinutes: minutes!)],
         ),

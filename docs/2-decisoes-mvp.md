@@ -626,3 +626,57 @@ Dependências técnicas indispensáveis para as aprovadas funcionarem (ex.: `@vi
 
 ### Atualização da P27
 - Login e cadastro mobile deixam de ser placeholder (MP1–MP5). Os passos sem design do onboarding continuam placeholder.
+
+---
+
+## Decisões da rodada de compromissos e tarefas únicas (MC1–MC14) — 20/11/2026
+
+**Origem:** o zip de 20/11/2026 tirou a página de Compromissos e pôs o cadastro no "+ Compromisso" da Semana, com exceções por dia e escopo de edição; trouxe também a tela Tarefas únicas. Opções em `plano-mobile-compromissos-tarefas-unicas.md` (seção 2, C1–C14); o usuário marcou as escolhas em 20/11/2026. MCn = Cn do plano.
+
+### MC1 — Exceções por dia dentro do agregado `Commitment`
+- **Decisão:** `exceptions: [{ date, type: 'cancelled' | 'moved', newDate?, startMinute?, endMinute? }]` dentro do agregado, como as `Step` no `Goal`; tabela filha `commitment_exceptions` com cascata. O `RecurrenceExpander` aplica as exceções. **Status:** definitiva.
+
+### MC2 — Horário do compromisso em múltiplos de 5 min
+- **Contexto:** o domínio exigia 15 min; aulas reais terminam às 09:40.
+- **Decisão:** início e fim em múltiplos de 5 min; seletor de 5 em 5. O motor continua alinhando os horários livres em 15 min (`AvailabilityCalculator`). **Status:** definitiva.
+
+### MC3 — "Fim do semestre" = `SEMESTER_END` do app
+- **Decisão:** data fixa no `env/<ambiente>.json` (lida no `AppConfig`), inicialmente `2026-12-12`; atualizar a cada semestre. **Status:** provisória.
+
+### MC4 — Endpoint próprio para as ocorrências
+- **Decisão:** `GET /scheduling/commitments/occurrences?from&to` devolve as ocorrências expandidas com as exceções; os endpoints de plano não mudam. **Status:** definitiva.
+
+### MC5 — Aviso de conflito calculado no app
+- **Decisão:** o formulário compara o horário com os blocos já carregados (semana visível e a seguinte) e mostra a primeira etapa que se sobrepõe; ao salvar, o backend recalcula o plano. **Status:** definitiva.
+
+### MC6 — Compromissos também no Hoje
+- **Decisão:** a linha do tempo do Hoje mostra os compromissos do dia, no mesmo cartão da Semana, e o toque abre o mesmo sheet. **Elemento sem design no Hoje** (o design do Hoje não mostra compromissos). **Status:** definitiva.
+
+### MC7 — Tarefa única = `Goal` `single` com `plannedDate`
+- **Contexto:** pela P9 não se agenda trabalho no dia do prazo, então uma tarefa "Hoje" com prazo hoje nunca seria encaixada.
+- **Decisão:** `Goal` com `kind: 'single'` ganha `plannedDate` (data local opcional). O `PlanCalculator` não encaixa a tarefa antes desse dia e ordena pela data; sem data, fica no fim da fila (como sem prazo, P3). O `deadline` das tarefas únicas fica nulo; a P9 continua valendo para os objetivos. **Status:** definitiva.
+
+### MC8 — Tarefas únicas só na tela própria
+- **Decisão:** Objetivos lista só `kind: 'goal'`; as tarefas do "Preencher à mão" (M16) também vão para Tarefas únicas. Os blocos continuam no Hoje e na Semana. **Status:** definitiva.
+
+### MC9 — Entrada para Tarefas únicas no Hoje
+- **Decisão:** botão terciário "Tarefas únicas" à direita do título "SEU DIA" do Hoje; o resumo "N etapas · N tarefas leves" passa para a linha de baixo. **Elemento sem design.** **Status:** provisória até o design.
+
+### MC10 — `PATCH /goals/:goalId/done`
+- **Decisão:** `{ done: boolean }`, só `kind: 'single'` (422 em objetivo comum): etapa em 100% (ou 0%), status `done` (ou `active`) e plano recalculado. **Status:** definitiva.
+
+### MC11 — `DELETE /goals/:goalId`
+- **Decisão:** apaga o objetivo e as etapas (qualquer `kind`; o app usa só nas tarefas únicas) e recalcula o plano. Blocos e sessões passados ficam no histórico. **Status:** definitiva.
+
+### MC12 — "Desse dia em diante" divide a série
+- **Decisão:** a série antiga termina no dia anterior (com as exceções anteriores) e uma nova começa no dia escolhido (com as exceções seguintes); se a antiga ficar sem nenhum dia, é apagada. Excluir desse dia em diante = encerrar a antiga. **Status:** definitiva.
+
+### MC13 — `design/mobile/app/` atualizado com o zip de 20/11
+- **Decisão:** `source/` substituído (com `vendor/` e `README.md`), telas 44–54 capturadas, M41/M42 marcadas como removidas no `SCREENS.md`, zip commitado. **Status:** definitiva.
+
+### MC14 — Ícone da aba Jardim continua `plant`
+- **Decisão:** o app mantém `plant` (o protótipo usa `leaf`). **Status:** definitiva.
+
+### Atualização da P8
+- Compromissos passam a ter tela (Semana, Hoje), endpoints (`/scheduling/commitments`, §7 do contrato) e tabela (`commitments`, `commitment_exceptions`). O `EmptyCommitmentRepository` sai.
+

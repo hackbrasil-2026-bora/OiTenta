@@ -115,17 +115,38 @@ describe("GeneratePlan", () => {
     const commitment = new Commitment({
       userId: USER_A,
       title: "Curso",
+      category: "aula",
       kind: "commitment",
       startDate: "2026-11-10",
       startMinute: 19 * 60,
-      durationMinutes: 60,
+      endMinute: 20 * 60,
       recurrence: null,
+      exceptions: [],
     });
     const { useCase } = makeSut([], [commitment]);
 
     const output = await useCase.execute({ userId: USER_A, timezone: SAO_PAULO, now: NOW, goals: [GOAL] });
 
     expect(output.blocks[0]?.start.toISOString()).toBe("2026-11-10T23:00:00.000Z");
+  });
+
+  test("ocorrencia cancelada libera o horario para a etapa", async () => {
+    const commitment = new Commitment({
+      userId: USER_A,
+      title: "Curso",
+      category: "aula",
+      kind: "commitment",
+      startDate: "2026-11-10",
+      startMinute: 19 * 60,
+      endMinute: 20 * 60,
+      recurrence: null,
+      exceptions: [{ date: "2026-11-10", type: "cancelled" }],
+    });
+    const { useCase } = makeSut([], [commitment]);
+
+    const output = await useCase.execute({ userId: USER_A, timezone: SAO_PAULO, now: NOW, goals: [GOAL] });
+
+    expect(output.blocks[0]?.start.toISOString()).toBe("2026-11-10T22:00:00.000Z");
   });
 
   test("cenario 3: usuario sem disponibilidade -> NotFoundError e nada e gravado (P12)", async () => {

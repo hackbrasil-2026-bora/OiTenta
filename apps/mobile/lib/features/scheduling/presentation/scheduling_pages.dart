@@ -4,16 +4,93 @@ import 'package:go_router/go_router.dart';
 import '../../../core/di/app_dependencies.dart';
 import '../../../core/routes/app_routes.dart';
 import '../../../core/theme/bora_colors.dart';
+import '../../../core/widgets/bora_toast.dart';
 import '../../../core/widgets/controller_host.dart';
 import '../../activation/presentation/checkin_controller.dart';
 import '../../activation/presentation/checkin_sheet.dart';
 import '../../activation/presentation/ramp_session.dart';
+import 'commitment_form_pages.dart';
+import 'commitment_occurrence_controller.dart';
+import 'commitment_occurrence_sheet.dart';
+import 'commitment_occurrence_view.dart';
 import 'onboarding_controller.dart';
 import 'onboarding_screen.dart';
 import 'today_controller.dart';
 import 'today_screen.dart';
 import 'week_controller.dart';
 import 'week_screen.dart';
+
+/// Abre o sheet da ocorrência (Semana e Hoje). Depois de uma ação mostra o
+/// toast e chama [reload]; no Editar abre o formulário e recarrega ao voltar.
+/// Se o sheet for fechado (arrastar ou tocar fora) com uma ação em andamento,
+/// espera a ação terminar e recarrega do mesmo jeito.
+Future<void> openCommitmentOccurrence(
+  BuildContext context,
+  AppDependencies deps,
+  CommitmentOccurrenceView view,
+  Future<void> Function() reload,
+) async {
+  final c = context.bora;
+  Future<OccurrenceOutcome?>? pending;
+  final outcome = await showModalBottomSheet<OccurrenceOutcome>(
+    context: context,
+    useRootNavigator: true,
+    isScrollControlled: true,
+    backgroundColor: c.surface.withValues(alpha: 0),
+    barrierColor: c.scrim,
+    builder: (sheetContext) => ControllerHost<CommitmentOccurrenceController>(
+      create: () =>
+          CommitmentOccurrenceController(deps.commitments, view.occurrence),
+      init: (oc) => oc.load(),
+      builder: (_, oc) {
+        Future<void> close(Future<OccurrenceOutcome?> run) async {
+          pending = run;
+          final result = await run;
+          if (result != null && sheetContext.mounted) {
+            Navigator.of(sheetContext).pop(result);
+          }
+        }
+
+        return CommitmentOccurrenceSheet(
+          state: oc,
+          onAction: (k) => close(oc.pick(k)),
+          onKeep: () => close(oc.keep()),
+          onScope: oc.selectScope,
+          onConfirm: () => close(oc.confirm()),
+          onBack: oc.back,
+        );
+      },
+    ),
+  );
+  if (outcome == null) {
+    // Fechado sem resultado: se havia uma chamada, o backend pode tê-la
+    // aplicado; recarrega depois que ela terminar.
+    if (pending == null) return;
+    await pending;
+    if (context.mounted) await reload();
+    return;
+  }
+  if (!context.mounted) return;
+  final edit = outcome.edit;
+  if (edit != null) {
+    await context.push(
+      AppRoutes.commitmentEdit(edit.commitmentId),
+      extra: CommitmentFormArgs(
+        scope: edit.scope,
+        occurrenceDate: edit.occurrenceDate,
+      ),
+    );
+  } else {
+    final t = outcome.toast!;
+    showBoraToast(
+      context,
+      icon: occurrenceToastIcon(t.kind),
+      title: t.title,
+      subtitle: t.subtitle,
+    );
+  }
+  await reload();
+}
 
 class OnboardingPage extends StatelessWidget {
   const OnboardingPage({super.key, required this.deps});
@@ -90,6 +167,7 @@ class TodayPage extends StatelessWidget {
       deps.gamification,
       deps.session,
       deps.clock,
+      commitments: deps.commitments,
     ),
     init: (c) => c.load(),
     builder: (context, c) => TodayScreen(
@@ -98,6 +176,12 @@ class TodayPage extends StatelessWidget {
       onToggleLight: c.toggleLightTask,
       onProfile: () => context.push(AppRoutes.profile),
       onBroto: () => context.go(AppRoutes.garden),
+      onSingleTasks: () async {
+        await context.push(AppRoutes.singleTasks);
+        await c.load();
+      },
+      onOpenCommitment: (o) =>
+          openCommitmentOccurrence(context, deps, o, c.load),
     ),
   );
 }
@@ -109,8 +193,12 @@ class WeekPage extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) => ControllerHost<WeekController>(
-    create: () =>
-        WeekController(deps.scheduling, deps.clock, goals: deps.goals),
+    create: () => WeekController(
+      deps.scheduling,
+      deps.clock,
+      goals: deps.goals,
+      commitments: deps.commitments,
+    ),
     init: (c) => c.load(),
     builder: (context, c) => WeekScreen(
       state: c,
@@ -120,6 +208,15 @@ class WeekPage extends StatelessWidget {
       onCollapse: c.collapse,
       onToggleExpanded: c.toggleExpanded,
       onMode: c.setMode,
+      onAddCommitment: () async {
+        await context.push(
+          AppRoutes.commitmentNew,
+          extra: CommitmentFormArgs(date: c.selectedDateKey),
+        );
+        await c.reload();
+      },
+      onOpenCommitment: (o) =>
+          openCommitmentOccurrence(context, deps, o, c.reload),
     ),
   );
 }

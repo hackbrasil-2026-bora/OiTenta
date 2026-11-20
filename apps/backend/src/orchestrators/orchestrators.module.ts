@@ -4,9 +4,15 @@ import { AuthModule } from '../modules/auth/auth.module';
 import { GoalsModule } from '../modules/goals/goals.module';
 import { SchedulingModule } from '../modules/scheduling/scheduling.module';
 import { AvailabilityController } from './availability.controller';
+import { CommitmentCreateOrchestrator } from './commitment-create.orchestrator';
+import { CommitmentDeleteOrchestrator } from './commitment-delete.orchestrator';
+import { CommitmentMutationsController } from './commitment-mutations.controller';
+import { CommitmentOccurrenceOrchestrator } from './commitment-occurrence.orchestrator';
+import { CommitmentUpdateOrchestrator } from './commitment-update.orchestrator';
 import { CreateGoalOrchestrator } from './create-goal.orchestrator';
 import { DayViewOrchestrator } from './day-view.orchestrator';
 import { GoalAssistantController } from './goal-assistant.controller';
+import { GoalDeleteOrchestrator } from './goal-delete.orchestrator';
 import { GoalDraftOrchestrator } from './goal-draft.orchestrator';
 import { GoalsViewController } from './goals-view.controller';
 import { GoalsViewOrchestrator } from './goals-view.orchestrator';
@@ -16,6 +22,7 @@ import { RampOrchestrator } from './ramp.orchestrator';
 import { RecordProgressOrchestrator } from './record-progress.orchestrator';
 import { SessionsController } from './sessions.controller';
 import { SetAvailabilityOrchestrator } from './set-availability.orchestrator';
+import { SingleTaskDoneOrchestrator } from './single-task-done.orchestrator';
 import { WeekViewOrchestrator } from './week-view.orchestrator';
 
 // Orquestradores (docs/3-modelagem-dominio.md §5): um arquivo por fluxo, só encadeiam casos de uso.
@@ -24,6 +31,7 @@ import { WeekViewOrchestrator } from './week-view.orchestrator';
   imports: [AuthModule, GoalsModule, SchedulingModule, ActivationModule],
   controllers: [
     AvailabilityController,
+    CommitmentMutationsController,
     GoalAssistantController,
     GoalsViewController,
     PlanViewsController,
@@ -32,6 +40,10 @@ import { WeekViewOrchestrator } from './week-view.orchestrator';
   ],
   providers: [
     SetAvailabilityOrchestrator,
+    CommitmentCreateOrchestrator,
+    CommitmentUpdateOrchestrator,
+    CommitmentDeleteOrchestrator,
+    CommitmentOccurrenceOrchestrator,
     CreateGoalOrchestrator,
     GoalDraftOrchestrator,
     GoalsViewOrchestrator,
@@ -39,6 +51,8 @@ import { WeekViewOrchestrator } from './week-view.orchestrator';
     WeekViewOrchestrator,
     RampOrchestrator,
     RecordProgressOrchestrator,
+    SingleTaskDoneOrchestrator,
+    GoalDeleteOrchestrator,
   ],
 })
 export class OrchestratorsModule {}

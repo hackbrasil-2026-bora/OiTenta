@@ -443,7 +443,7 @@ Siglas: W = tela do protótipo web (`design/web/SCREENS.md`); M = tela do mobile
   - **Problema:** o usuário acha que mandou e ninguém recebe.
   - **Alternativas:** 1. **módulo `feedback` com `POST /feedback`** (entidade, caso de uso, prisma, controller, e2e; meio dia); o anexo exige `image_picker` e armazenamento; 2. **abrir o app de e-mail** com `url_launcher` (pacote novo; 1 h); 3. **manter**.
   - **Recomendação:** 1 sem anexo.
-- [ ] [DECIDIR] Compromissos e Tarefas únicas têm design novo (M41–M43) — (origem: plano-mobile-acesso-perfil-jardim, 19/11/2026) — ver também Backend, "Compromissos fixos (Aula/Estágio) fora do contrato"
+- [x] [DECIDIR] Compromissos e Tarefas únicas têm design novo (M41–M43)[DECIDIR] Compromissos e Tarefas únicas têm design novo (M41–M43) — (origem: plano-mobile-acesso-perfil-jardim, 19/11/2026) — ver também Backend, "Compromissos fixos (Aula/Estágio) fora do contrato" — fechado pelas decisões MC1–MC14 (20/11/2026); implementado na rodada `feat/compromissos-tarefas-unicas`.
   - **Contexto:** o zip de 19/11 trouxe a aba Compromissos, o formulário de compromisso e Tarefas únicas. Pela MP10, a tab bar ficou com o Jardim e essas telas ficaram fora da rodada.
   - **Alternativas:** 1. **rodada própria** com `Commitment` persistido (migration, CRUD, contrato) e as telas, trocando a 4ª aba conforme o design; 2. **manter fora do MVP** (P8).
   - **Recomendação:** 1, porque agora existe design e o motor do calendário já usa compromissos no domínio.
@@ -517,8 +517,64 @@ Siglas: W = tela do protótipo web (`design/web/SCREENS.md`); M = tela do mobile
   - **Contexto:** se a rotina não carrega, a tela bloqueia a grade e mostra a mensagem com um botão terciário "Tentar de novo" logo abaixo (impede gravar uma grade vazia por cima da real).
   - **Alternativas:** 1. **aprovar**; 2. **pedir o estado de erro ao design**.
   - **Recomendação:** 1.
+- [ ] [EXECUTAR] Atualizar `SEMESTER_END` a cada semestre — (origem: plano-mobile-compromissos-tarefas-unicas, 20/11/2026)
+  - Pela MC3, o chip "Fim do semestre" usa a data fixa `SEMESTER_END` dos `env/*.json` (`2026-12-12`). Pronto quando a data for trocada no início de cada semestre (ou quando o perfil tiver um campo próprio).
+- [ ] [DECIDIR] Caminho para as Tarefas únicas e compromissos no Hoje sem design — (origem: plano-mobile-compromissos-tarefas-unicas, 20/11/2026)
+  - **Contexto:** o design não tem caminho para as Tarefas únicas nem mostra compromissos no Hoje. Pela MC9 e MC6, o app cria o botão "Tarefas únicas" ao lado de "SEU DIA" e mostra os compromissos na linha do tempo do Hoje.
+  - **Alternativas:** 1. **manter** (como decidido); 2. **pedir os dois ao design** e ajustar depois.
+  - **Recomendação:** 2, sem bloquear a rodada.
+- [ ] [DECIDIR] Web sem tela de compromissos e de tarefas únicas — (origem: plano-mobile-compromissos-tarefas-unicas, 20/11/2026) — ver também Frontend
+  - **Contexto:** os compromissos já ocupam o plano também no web (o backend é o mesmo), mas o web não tem como cadastrá-los, vê-los no calendário nem gerenciar tarefas únicas.
+  - **Alternativas:** 1. **rodada própria para o web** (telas no calendário W15–W16 e uma lista de tarefas); 2. **manter o web sem** até o design do web.
+  - **Recomendação:** 1 depois do MVP mobile.
+- [ ] [DECIDIR] "Sem prazo" aparece nos date pickers de compromisso e de tarefa única — (origem: M2, M3, rodada de compromissos e tarefas únicas, 20/11/2026)
+  - **Contexto:** o `showBoraDatePicker` (`features/goals/presentation/date_picker_sheet.dart`) sempre mostra "Sem prazo"; no protótipo ele só existe no Prazo do objetivo. No formulário de compromisso e no "Escolher dia" das tarefas, tocar nele não muda nada.
+  - **Alternativas:** 1. **parâmetro `showClear`** no sheet, falso nesses usos (30 min, com teste); 2. **manter**.
+  - **Recomendação:** 1.
+- [ ] [DECIDIR] Textos e estados sem design nos compromissos e tarefas — (origem: M1, M2, M3, rodada de compromissos e tarefas únicas, 20/11/2026)
+  - **Contexto:** mensagens de erro ("Não deu pra carregar os compromissos.", "Não deu pra salvar agora. Tenta de novo.", "Não deu pra carregar/salvar/excluir o compromisso. Tenta de novo?", "Não deu pra carregar suas tarefas." etc.), indicador de carregamento no editar, sheet do seletor de hora ("Início"/"Fim" + "Confirmar"), botões desabilitados durante uma ação e o ponto vazado do compromisso na linha do tempo do Hoje (MC6).
+  - **Alternativas:** 1. **aprovar como estão** (seguem o tom do app); 2. **pedir ao design**.
+  - **Recomendação:** 1.
+- [ ] [DECIDIR] Toast "Encerrado" quando a série acaba no primeiro dia — (origem: M1, rodada de compromissos e tarefas únicas, 20/11/2026)
+  - **Contexto:** "Excluir desse dia em diante" na primeira ocorrência apaga a série (MC12), mas o toast do protótipo diz "Encerrado / O último foi em (dia anterior)", e esse dia nunca teve compromisso.
+  - **Alternativas:** 1. **manter como o protótipo**; 2. **mostrar "Compromisso excluído"** nesse caso (exige um `GET` antes para saber a `startDate`).
+  - **Recomendação:** 1 no MVP.
+- [ ] [EXECUTAR] Unificar a borda tracejada (`commitment_card.dart` e `garden_screen.dart`) — (origem: M1, rodada de compromissos e tarefas únicas, 20/11/2026)
+  - Mover um painter com espessura configurável para `core/widgets` e usar nos dois. Pronto quando os dois usarem o mesmo painter e os testes passarem.
+- [ ] [DECIDIR] Linha inalcançável no `WeekController._deadlineGoals` — (origem: M1, rodada de compromissos e tarefas únicas, 20/11/2026)
+  - **Contexto:** a constante `showDoneGoalsInDeadlines = true` deixa 1 linha sem cobertura (208/209). Ligado ao [DECIDIR] antigo de mostrar objetivos concluídos em Prazos.
+  - **Alternativas:** 1. tirar a constante e o ramo morto; 2. manter.
+  - **Recomendação:** decidir junto com o item original.
+- [ ] [DECIDIR] Compromisso que termina à meia-noite — (origem: revisor, rodada de compromissos e tarefas únicas, 20/11/2026)
+  - **Contexto:** o domínio aceita `endMinute = 1440` (MC2), mas o seletor de hora do app (`CupertinoDatePicker`) vai só até 23:55.
+  - **Alternativas:** 1. **tratar 00:00 escolhido no fim como 24:00** (1440) (30 min, com teste); 2. **manter** (o último fim possível é 23:55).
+  - **Recomendação:** 1.
+- [ ] [DECIDIR] "Fim do semestre" vencido — (origem: revisor, rodada de compromissos e tarefas únicas, 20/11/2026) — ver também `SEMESTER_END`
+  - **Contexto:** se a data `SEMESTER_END` já passou, o chip "Fim do semestre" manda `endDate < startDate` e o backend responde 422.
+  - **Alternativas:** 1. **esconder ou desabilitar o chip quando a data já passou** (30 min); 2. **manter** (depende de atualizar o `env` a cada semestre).
+  - **Recomendação:** 1.
 
 ## Backend (inclui domínio modules/*, banco e contrato)
+- [ ] [EXECUTAR] `SplitCommitmentFrom` atômico — (origem: revisor, rodada de compromissos e tarefas únicas, 20/11/2026)
+  - O caso de uso encerra (ou apaga) a série antiga e cria a nova em duas chamadas separadas; se a segunda falhar, as ocorrências futuras se perdem. Fazer: um método do repositório (ex.: `split(previous|null, next)`) que grava os dois numa `$transaction` do Prisma, com teste de falha. Pronto quando uma falha no `create` deixa a série antiga intacta.
+- [ ] [EXECUTAR] `SetSingleTaskDone` com mais de uma etapa — (origem: revisor, rodada de compromissos e tarefas únicas, 20/11/2026)
+  - Só a primeira etapa é marcada; uma tarefa `single` com 2 etapas (a API aceita) fica `active`. Fazer: marcar todas as etapas não `superseded`, ou o `Goal.validate()` recusar `single` com mais de 1 etapa (a §2.1 já diz "exatamente 1"; conferir se a regra existe no `validate`). Pronto quando o teste com 2 etapas der `done` ou 422.
+- [ ] [DECIDIR] `deadline` em tarefa `single` — (origem: revisor, rodada de compromissos e tarefas únicas, 20/11/2026)
+  - **Contexto:** pela MC7 a tarefa única não tem prazo, mas o backend ainda aceita `deadline` com `kind: single`. O app já não manda (corrigido no "Preencher à mão").
+  - **Alternativas:** 1. **o domínio recusar `deadline` em `single`** (422); 2. **manter aceitando**.
+  - **Recomendação:** 1.
+- [ ] [EXECUTAR] Registrar na §5b que `startDate` só vale no `PATCH scope=all` — (origem: revisor, rodada de compromissos e tarefas únicas, 20/11/2026)
+  - No `scope=following`, o `startDate` do corpo é ignorado (a série nova começa no `fromDate`). Escrever isso na tabela do contrato.
+- [ ] [DECIDIR] `plannedDate` nas respostas de `POST /goals`, `PATCH …/done` e `GET /goals/:id` — (origem: D2, rodada de compromissos e tarefas únicas, 20/11/2026)
+  - **Contexto:** pela §8.2 a saída do `CreateGoal` ficou igual; o `plannedDate` só aparece no `GET /goals`. O app recarrega a lista depois de cada ação.
+  - **Alternativas:** 1. **manter**; 2. **acrescentar ao cabeçalho do objetivo** (campo aditivo nas 3 respostas).
+  - **Recomendação:** 1.
+- [ ] [DECIDIR] Bordas do `endingBefore` registradas pelo D1 — (origem: D1, rodada de compromissos e tarefas únicas, 20/11/2026)
+  - **Contexto:** o domínio devolve `null` (apaga a série) também quando sobra só um intervalo sem nenhum dia da semana da série, e não alonga uma série cujo `endDate` já era anterior a `date − 1`. A §8.1 não dizia isso.
+  - **Alternativas:** 1. **registrar as duas regras na §8.1** (como implementado); 2. mudar o comportamento.
+  - **Recomendação:** 1.
+- [ ] [INVESTIGAR] Worktrees novas sem o `dist` do `@oitenta/shared` — (origem: D1, D2, rodada de compromissos e tarefas únicas, 20/11/2026)
+  - **Sintoma:** os testes do módulo falham com `Cannot find module '@oitenta/shared'` até rodar `npx turbo run build --filter=@oitenta/shared`. **Possível saída:** incluir o build dos pacotes no preparo das worktrees (P28).
 
 - [ ] [DECIDIR] O mínimo de 2 caracteres do nome conta os espaços das pontas — (origem: S1, rodada mobile acesso/perfil/jardim, 19/11/2026)
   - **Contexto:** pela MP2, o nome vai de 2 a 80 caracteres. O `RegisterUser` não apara o nome, e a `MinLengthRule(2)` mede o texto bruto: `" A"` passa no backend com uma letra só. O mobile apara antes de validar e de enviar.
@@ -763,7 +819,7 @@ Siglas: W = tela do protótipo web (`design/web/SCREENS.md`); M = tela do mobile
   - **Alternativas:** 1. **manter fixo até o módulo `gamification`** (P18); 2. **criar o módulo agora** (dias de trabalho, fora do MVP).
   - **Recomendação:** 1.
 
-- [ ] [DECIDIR] Compromissos fixos (Aula/Estágio) fora do contrato — (origem: revisor da W1, 11/11/2026)
+- [x] [DECIDIR] Compromissos fixos (Aula/Estágio) fora do contrato[DECIDIR] Compromissos fixos (Aula/Estágio) fora do contrato — (origem: revisor da W1, 11/11/2026) — fechado pelas decisões MC1–MC14 (20/11/2026); implementado na rodada `feat/compromissos-tarefas-unicas`.
   - **Contexto:** o domínio já tem `Commitment` (P8, implementação vazia `EmptyCommitmentRepository`), mas o contrato não expõe compromissos. A grade da W26 e o calendário ficam sem a hachura "Aula/Estágio" e sem a legenda "Aula e estágio" do protótipo.
   - **Alternativas:** 1. **manter (P8)**; 2. **expor e persistir compromissos** (CRUD, prisma, contrato e telas; 1–2 dias).
   - **Recomendação:** 1 no MVP, como decidido na P8.

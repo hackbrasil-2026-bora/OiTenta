@@ -1,12 +1,15 @@
 import {
   Body,
   Controller,
+  Delete,
   Get,
   HttpCode,
   HttpStatus,
   Param,
   ParseUUIDPipe,
+  Patch,
   Post,
+  Query,
   UseGuards,
 } from '@nestjs/common';
 import {
@@ -22,13 +25,19 @@ import {
 import { JwtAuthGuard } from '../shared/auth/jwt-auth.guard';
 import { CurrentUser } from '../shared/decorators/current-user.decorator';
 import { CreateGoalOrchestrator } from './create-goal.orchestrator';
+import { GoalDeleteOrchestrator } from './goal-delete.orchestrator';
 import {
   CreateGoalBody,
   CreateGoalResponse,
+  GoalDeleteResponse,
   GoalDetailResponse,
+  GoalListQuery,
   GoalListResponse,
+  SingleTaskDoneBody,
+  SingleTaskDoneResponse,
 } from './goals-view.dto';
 import { GoalsViewOrchestrator } from './goals-view.orchestrator';
+import { SingleTaskDoneOrchestrator } from './single-task-done.orchestrator';
 
 @ApiTags('goals')
 @ApiBearerAuth()
@@ -41,6 +50,8 @@ export class GoalsViewController {
   constructor(
     private readonly createGoal: CreateGoalOrchestrator,
     private readonly goalsView: GoalsViewOrchestrator,
+    private readonly singleTaskDone: SingleTaskDoneOrchestrator,
+    private readonly goalDelete: GoalDeleteOrchestrator,
   ) {}
 
   @Post()
@@ -51,7 +62,8 @@ export class GoalsViewController {
   })
   @ApiNotFoundResponse({ description: 'Sem disponibilidade cadastrada (P12).' })
   @ApiUnprocessableEntityResponse({
-    description: 'Título vazio, zero etapas ou estimativa inválida.',
+    description:
+      'Título vazio, zero etapas, estimativa inválida ou plannedDate com kind "goal".',
   })
   async create(
     @CurrentUser('id') userId: string,
@@ -61,6 +73,7 @@ export class GoalsViewController {
       userId,
       title: body.title,
       deadline: body.deadline ?? null,
+      plannedDate: body.plannedDate ?? null,
       kind: body.kind,
       source: body.source,
       steps: body.steps.map((step) => ({
@@ -74,8 +87,12 @@ export class GoalsViewController {
 
   @Get()
   @ApiOkResponse({ type: GoalListResponse })
-  async list(@CurrentUser('id') userId: string): Promise<GoalListResponse> {
-    return this.goalsView.list(userId);
+  @ApiBadRequestResponse({ description: 'kind diferente de goal ou single.' })
+  async list(
+    @CurrentUser('id') userId: string,
+    @Query() query: GoalListQuery,
+  ): Promise<GoalListResponse> {
+    return this.goalsView.list(userId, query.kind);
   }
 
   @Get(':goalId')
@@ -89,5 +106,37 @@ export class GoalsViewController {
     @Param('goalId', ParseUUIDPipe) goalId: string,
   ): Promise<GoalDetailResponse> {
     return this.goalsView.detail(userId, goalId);
+  }
+
+  @Patch(':goalId/done')
+  @ApiOkResponse({ type: SingleTaskDoneResponse })
+  @ApiBadRequestResponse({
+    description: 'goalId não é um UUID, done não é booleano ou campo a mais.',
+  })
+  @ApiNotFoundResponse({
+    description: 'Tarefa inexistente ou de outro usuário.',
+  })
+  @ApiUnprocessableEntityResponse({
+    description: 'O objetivo não é uma tarefa única (goal.kind.single).',
+  })
+  async setDone(
+    @CurrentUser('id') userId: string,
+    @Param('goalId', ParseUUIDPipe) goalId: string,
+    @Body() body: SingleTaskDoneBody,
+  ): Promise<SingleTaskDoneResponse> {
+    return this.singleTaskDone.execute({ userId, goalId, done: body.done });
+  }
+
+  @Delete(':goalId')
+  @ApiOkResponse({ type: GoalDeleteResponse })
+  @ApiBadRequestResponse({ description: 'goalId não é um UUID.' })
+  @ApiNotFoundResponse({
+    description: 'Objetivo inexistente ou de outro usuário.',
+  })
+  async remove(
+    @CurrentUser('id') userId: string,
+    @Param('goalId', ParseUUIDPipe) goalId: string,
+  ): Promise<GoalDeleteResponse> {
+    return this.goalDelete.execute({ userId, goalId });
   }
 }

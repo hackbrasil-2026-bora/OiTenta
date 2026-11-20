@@ -6,8 +6,10 @@ import '../../features/auth/presentation/auth_pages.dart';
 import '../../features/gamification/presentation/garden_pages.dart';
 import '../../features/goals/domain/goal_suggestion.dart';
 import '../../features/goals/presentation/goals_pages.dart';
+import '../../features/goals/presentation/single_tasks_pages.dart';
 import '../../features/profile/presentation/profile_pages.dart';
 import '../../features/profile/presentation/routine_suggestion_pages.dart';
+import '../../features/scheduling/presentation/commitment_form_pages.dart';
 import '../../features/scheduling/presentation/scheduling_pages.dart';
 import '../di/app_dependencies.dart';
 import '../widgets/app_shell.dart';
@@ -107,6 +109,29 @@ GoRouter createRouter(
           GoRoute(
             path: AppRoutes.garden,
             pageBuilder: (_, s) => page(s, GardenPage(deps: deps)),
+          ),
+          GoRoute(
+            path: AppRoutes.commitmentNew,
+            builder: (_, s) => CommitmentFormPage(
+              deps: deps,
+              args: s.extra is CommitmentFormArgs
+                  ? s.extra as CommitmentFormArgs
+                  : const CommitmentFormArgs(),
+            ),
+          ),
+          GoRoute(
+            path: '${AppRoutes.commitmentNew}/:id',
+            builder: (_, s) => CommitmentFormPage(
+              deps: deps,
+              commitmentId: s.pathParameters['id'],
+              args: s.extra is CommitmentFormArgs
+                  ? s.extra as CommitmentFormArgs
+                  : const CommitmentFormArgs(),
+            ),
+          ),
+          GoRoute(
+            path: AppRoutes.singleTasks,
+            builder: (_, _) => SingleTasksPage(deps: deps),
           ),
           GoRoute(
             path: AppRoutes.profile,

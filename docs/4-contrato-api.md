@@ -217,6 +217,21 @@ Não há teste de posse: a rota não lê nem grava recurso de usuário.
 3. Id inexistente → 404.
 4. Sem token → 401.
 
+
+### Tarefas únicas (MC7, MC8, MC10, MC11 — 20/11/2026)
+
+- **`POST /goals`** aceita `plannedDate?: "YYYY-MM-DD"`, só com `kind: "single"` (com `kind: "goal"` → 422 `goal.plannedDate.single`). A tarefa única do app manda `kind: "single"`, `deadline: null`, `plannedDate` (ou `null` para "Sem data") e 1 etapa com o título e `estimatedMinutes` 15, 30, 60 ou 120.
+- **`GET /goals`** aceita `?kind=goal|single` (outro valor → 400) e cada item ganha `kind`, `plannedDate` (`string | null`) e `estimatedMinutes` (soma das etapas). A tarefa feita é a que tem `status: "done"` (o `done` numérico continua sendo a contagem de etapas).
+- **`PATCH /goals/:goalId/done`** — corpo `{ done: boolean }` → 200 `{ goal, plan }`. Só `kind: "single"` (objetivo comum → 422 `goal.kind.single`). `done: true` põe a etapa em 100% e o status em `done`; `false` volta a 0% e `active`. Recalcula o plano (os blocos futuros da tarefa somem ou voltam). Erros: 400, 401, 404 (inexistente ou de outro usuário), 422. Caso de uso: `SetSingleTaskDone` → `GeneratePlan`.
+- **`DELETE /goals/:goalId`** → 200 `{ plan }`. Apaga o objetivo e as etapas e recalcula o plano; blocos e sessões passados ficam no histórico (o plano do dia ignora bloco de objetivo apagado). Erros: 401, 404. Caso de uso: `DeleteGoal` → `GeneratePlan`.
+
+**Integração:**
+1. `POST /goals` single com `plannedDate` amanhã → 201 e nenhum bloco hoje; o primeiro bloco é amanhã.
+2. `POST /goals` goal com `plannedDate` → 422.
+3. `GET /goals?kind=single` → só as tarefas; `?kind=xyz` → 400.
+4. `PATCH …/done {done:true}` → 200, `status: done` e os blocos futuros somem; `{done:false}` → voltam.
+5. `PATCH …/done` num objetivo comum → 422; de outro usuário → 404; sem token → 401; corpo com campo a mais → 400.
+6. `DELETE /goals/:id` → 200 e os blocos futuros somem; de outro usuário → 404; sem token → 401.
 ---
 
 ## 4. Plano (Hoje e calendário)
@@ -313,6 +328,35 @@ Resposta 201:
 
 ---
 
+## 5b. Compromissos (MC1–MC6, MC12 — 20/11/2026)
+
+Controller `scheduling` para as leituras; as mutações passam por orquestradores (`commitment-*.orchestrator.ts`) que chamam o caso de uso e depois `GeneratePlan` (como o `PUT /scheduling/availability`) e devolvem `plan` no formato da §2.
+
+`commitment` na resposta: `{ id, title, category, startDate, startMinute, endMinute, recurrence: { weekdays, endDate? } | null, exceptions: [{ date, type, newDate?, startMinute?, endMinute? }] }`.
+
+| Método e rota | Corpo / query | Resposta | Erros | Caso de uso |
+|---|---|---|---|---|
+| `POST /scheduling/commitments` | `{ title, category: aula\|trabalho\|saude\|pessoal, startDate, startMinute, endMinute, recurrence: { weekdays, endDate? } \| null }` | 201 `{ commitment, plan }` | 400, 401, 404 (sem disponibilidade, P12), 422 | `CreateCommitment` → `GeneratePlan` |
+| `GET /scheduling/commitments/:id` | — | 200 `{ commitment }` | 401, 404 | `GetCommitment` |
+| `GET /scheduling/commitments/occurrences` | `?from=YYYY-MM-DD&to=YYYY-MM-DD` (até 62 dias) | 200 `{ occurrences: [{ commitmentId, title, category, date, originalDate, startMinute, endMinute, status: normal\|cancelled\|moved, recurrence }] }` | 400 (data mal formada), 401, 422 (`occurrences.range`) | `ListCommitmentOccurrences` |
+| `PATCH /scheduling/commitments/:id` | `{ scope: all\|following, fromDate? (obrigatório em following), title?, category?, startDate?, startMinute?, endMinute?, recurrence? }` | 200 `{ commitment, plan }` (em `following`, a série nova) | 400, 401, 404, 422 | `UpdateCommitment` / `SplitCommitmentFrom` → `GeneratePlan` |
+| `DELETE /scheduling/commitments/:id` | `?scope=all\|following&fromDate=YYYY-MM-DD` (`fromDate` obrigatório em `following`) | 200 `{ plan }` | 400, 401, 404 | `DeleteCommitment` / `EndCommitmentBefore` → `GeneratePlan` |
+| `PUT /scheduling/commitments/:id/occurrences/:date` | `{ status: cancelled }` ou `{ status: moved, newDate, startMinute, endMinute }` | 200 `{ commitment, plan }` | 400, 401, 404, 422 (data que não é ocorrência) | `SetOccurrenceException` → `GeneratePlan` |
+| `DELETE /scheduling/commitments/:id/occurrences/:date` | — | 200 `{ commitment, plan }` | 401, 404 (série inexistente ou sem exceção na data) | `ClearOccurrenceException` → `GeneratePlan` |
+
+- Horários em minutos desde 00:00, múltiplos de 5 (MC2); `endMinute > startMinute`, sem cruzar a meia-noite; `title` 2–80; a ocupação no plano usa o fuso do usuário.
+- **`recurrence` no `PATCH` (20/11/2026):** ausente = mantém; `null` = vira compromisso único na `startDate` (em `following`, no `fromDate`); objeto = nova recorrência. As exceções que deixam de ser ocorrências são descartadas (também no `following`).
+- **Intervalo das ocorrências:** no máximo 62 dias contando as duas pontas (`from=01/11`, `to=01/01` passa; `to=02/01` → 422 `occurrences.range`).
+- **Códigos de 422 além dos da modelagem §8.1:** `commitment.endMinute.after.start`, `commitment.exceptions.{newDate,startMinute,endMinute}.not.allowed` (em `cancelled`), `commitment.exceptions.endMinute.after.start`, `commitment.fromDate.local.date`, `occurrences.from|to.required|local.date`. 404 do `DELETE …/occurrences/:date` sem exceção: "Exceção não encontrada nesta data."
+- Ações do app: "Não vai ter nesse dia" e "Excluir só nesse dia" = `PUT …/occurrences/:date {cancelled}`; "Editar só nesse dia" = `{moved}`; "Vai ter sim" e "Voltar pro horário normal" = `DELETE …/occurrences/:date`; "Desse dia em diante" = `PATCH`/`DELETE` com `scope=following`.
+- **Telas:** mobile M44–M52 (Semana, sheet, formulário) e o Hoje (MC6). Web: sem tela nesta fase (os compromissos já ocupam o plano do web).
+
+**Integração** (`apps/backend/test/commitments.e2e-spec.ts`), para cada rota: caminho feliz; sem token → 401; recurso de outro usuário → 404; corpo com campo a mais (`userId`) → 400; regra violada → 422. E ainda:
+1. Um compromisso que cobre o horário de um bloco planejado → depois do `POST`, o `GET /scheduling/plan/day` não tem bloco sobreposto ao compromisso.
+2. `PUT …/occurrences/:date {cancelled}` → o `GET …/occurrences` mostra `cancelled` e o horário volta a poder receber bloco.
+3. `PATCH scope=following` → as ocorrências antes de `fromDate` ficam com o horário antigo e as seguintes com o novo.
+4. `DELETE scope=following` → nenhuma ocorrência a partir de `fromDate`.
+
 ## 6. Mapa endpoint → caso de uso → tela
 
 | Endpoint | Caso(s) de uso | Web | Mobile |
@@ -331,6 +375,8 @@ Resposta 201:
 | `GET /scheduling/plan/week` | `GetWeekPlan` + `ListGoals` | W15–W16 | M03, M19 |
 | `GET /activation/ramp` | `GetGoal` → `BuildRamp` | W12–W14, W32–W36 | M05–M10 |
 | `POST /activation/sessions` | `RecordFocusSession` → `UpdateStepProgress` → `RecordBlockOutcome` → `GeneratePlan` | W38–W41 | M11–M12 |
+| `POST/GET/PATCH/DELETE /scheduling/commitments…` | `CreateCommitment`, `GetCommitment`, `ListCommitmentOccurrences`, `UpdateCommitment`, `SplitCommitmentFrom`, `DeleteCommitment`, `EndCommitmentBefore`, `SetOccurrenceException`, `ClearOccurrenceException` (→ `GeneratePlan` nas mutações) | — | M44–M52, Hoje (MC6) |
+| `PATCH /goals/:goalId/done`, `DELETE /goals/:goalId` | `SetSingleTaskDone`, `DeleteGoal` (→ `GeneratePlan`) | — | M53–M54 (Tarefas únicas) |
 
 ## 7. Decisões deste documento
 

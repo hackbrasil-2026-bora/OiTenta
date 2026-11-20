@@ -106,6 +106,34 @@ void main() {
     expect(jsonDecode(requests.single.body), {'a': 1});
   });
 
+  test('PATCH manda o corpo em JSON; DELETE manda a query (§5b)', () async {
+    final api = clientReturning(jsonResponse({'ok': true}, 200));
+    await api.patch('/goals/g1/done', body: {'done': true});
+    expect(requests.single.method, 'PATCH');
+    expect(requests.single.headers['Authorization'], 'Bearer tok-123');
+    expect(jsonDecode(requests.single.body), {'done': true});
+
+    final api2 = clientReturning(jsonResponse({'plan': {}}, 200));
+    final r = await api2.delete(
+      '/scheduling/commitments/c1',
+      query: {'scope': 'following', 'fromDate': '2025-11-18'},
+    );
+    expect(requests.single.method, 'DELETE');
+    expect(
+      requests.single.url.toString(),
+      'http://api.test:4000/scheduling/commitments/c1?scope=following&fromDate=2025-11-18',
+    );
+    expect(requests.single.body, isEmpty);
+    expect(r, {'plan': {}});
+  });
+
+  test('DELETE com 404 → NotFoundFailure', () async {
+    final api = clientReturning(
+      jsonResponse(errorBody(404, 'Não achei.'), 404),
+    );
+    expect(() => api.delete('/goals/x'), throwsA(isA<NotFoundFailure>()));
+  });
+
   test('decodifica UTF-8 da resposta', () async {
     final api = clientReturning(jsonResponse({'t': 'Ação'}, 200));
     expect(await api.get('/x'), {'t': 'Ação'});

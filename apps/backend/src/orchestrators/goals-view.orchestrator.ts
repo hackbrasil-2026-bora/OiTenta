@@ -2,6 +2,7 @@ import { Inject, Injectable } from '@nestjs/common';
 import {
   GetGoal,
   GetGoalOut,
+  GoalKind,
   GoalListItem,
   ListGoals,
   StepView,
@@ -44,11 +45,18 @@ export class GoalsViewOrchestrator {
     @Inject(CommitmentBusySource) private readonly busySource: BusySource,
   ) {}
 
-  async list(userId: string): Promise<{ goals: GoalListItemView[] }> {
-    const { goals } = await new ListGoals(this.goalRepository).execute({
-      userId,
-    });
-    const slackByGoal = await this.slackByGoal(userId, goals);
+  // Com filtro de kind (MC8), a folga continua vindo do plano de todos os objetivos ativos:
+  // o plano é um só, e a folga de cada um depende dos outros.
+  async list(
+    userId: string,
+    kind?: GoalKind,
+  ): Promise<{ goals: GoalListItemView[] }> {
+    const listGoals = new ListGoals(this.goalRepository);
+    const { goals } = await listGoals.execute({ userId, kind });
+    const { goals: all } = kind
+      ? await listGoals.execute({ userId })
+      : { goals };
+    const slackByGoal = await this.slackByGoal(userId, all);
     return {
       goals: goals.map((goal) => ({
         ...goal,

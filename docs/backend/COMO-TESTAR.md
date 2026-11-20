@@ -253,6 +253,20 @@ Esperado: status 201, `step.progressPct: 100` e o `plan` recalculado. No `GET /g
 
 Também dá para rodar tudo isso no VS Code com a extensão **REST Client**: abra `apps/backend/src/modules/auth/auth.integration.http` e clique em **Send Request** acima de cada requisição, de cima para baixo.
 
+### Compromissos e tarefas únicas (20/11/2026)
+
+No Swagger (`/docs`, seção **scheduling** e **goals**) ou no `apps/backend/src/modules/scheduling/scheduling.integration.http` / `apps/backend/src/orchestrators/orchestrators.integration.http`, com o token do demo:
+
+- `POST /scheduling/commitments` com `{ "title": "Aula de violão", "category": "pessoal", "startDate": "<hoje>", "startMinute": 1140, "endMinute": 1200, "recurrence": { "weekdays": [1] } }` → 201 com `commitment` e `plan`;
+- `GET /scheduling/commitments/occurrences?from=<hoje>&to=<hoje+13>` → as ocorrências com `status`;
+- `PUT /scheduling/commitments/<id>/occurrences/<data>` com `{ "status": "cancelled" }` → o dia fica livre; `DELETE` na mesma rota desfaz;
+- `PATCH /scheduling/commitments/<id>` com `{ "scope": "following", "fromDate": "<data>", "startMinute": 1200, "endMinute": 1260 }` → divide a série;
+- `DELETE /scheduling/commitments/<id>?scope=all` → apaga;
+- `POST /goals` com `{ "title": "Pagar a conta", "kind": "single", "plannedDate": "<amanhã>", "steps": [{ "title": "Pagar a conta", "estimatedMinutes": 15, "microSteps": [] }] }` → o bloco cai a partir de amanhã;
+- `GET /goals?kind=single`, `PATCH /goals/<id>/done` com `{ "done": true }`, `DELETE /goals/<id>`.
+
+Toda mutação devolve o `plan` recalculado. O contrato completo está em `docs/4-contrato-api.md` §5b e §3 ("Tarefas únicas"). O `db:reset-demo` também apaga os compromissos do demo.
+
 ## 8b. Assistente do novo objetivo (IA)
 
 O `POST /goals/assistant/draft` transforma um texto livre num rascunho de objetivo com etapas (decisões IA1–IA7, contrato em `docs/4-contrato-api.md` §3). **Não grava nada**; quem grava é o `POST /goals`. O motor é escolhido no `apps/backend/.env`:

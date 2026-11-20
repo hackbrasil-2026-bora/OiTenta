@@ -299,7 +299,7 @@ Fluxo: texto sem espaços nas pontas → valida (1–2000) → `today` = data lo
 - Janelas do mesmo dia não se sobrepõem; janelas encostadas são unidas.
 - O web marca por hora (W07, 08h–22h) e o mobile por período (T02: manhã 6–12, tarde 12–18, noite 18–23). Os dois viram janelas. (T Observações)
 
-### 3.2 Agregado `commitment` (só domínio nesta fase)
+### 3.2 Agregado `commitment` (só domínio nesta fase; **atualizado em 20/11/2026 na §8**)
 
 **Entidade `Commitment`**: compromisso único ou recorrente que ocupa tempo (aula, estágio). (D 4b, 4e)
 
@@ -625,3 +625,124 @@ Todas as perguntas P1–P18 deste documento foram respondidas em 10/11/2026 com 
 | P16 | Texto da "Tarefa leve de 5 min" do aquecimento (cita um PDF de exemplo) | Manter o texto literal do protótipo |
 | P17 | Orquestradores de leitura juntam títulos aos blocos | Aceitar como composição, não cálculo |
 | P18 | Barra gamificada e celebração (gotas/XP) fora do MVP, mas presentes nos designs | Mostrar os valores fixos do protótipo, sem lógica |
+
+---
+
+## 8. Rodada de compromissos e tarefas únicas (MC1–MC14, 20/11/2026)
+
+Vale sobre as §3.2 e §2 onde houver conflito. Os subagentes de domínio implementam **exatamente** estes cenários, com testes antes do código e 100% de cobertura.
+
+### 8.1 Agregado `commitment` (substitui a tabela da §3.2)
+
+**Entidade `Commitment`** (`modules/scheduling/src/commitment/model/commitment.entity.ts`):
+
+| Atributo | Tipo | Regra |
+|---|---|---|
+| `userId` | UUID | obrigatório |
+| `title` | `string` | obrigatório, 2–80 caracteres sem os espaços das pontas |
+| `category` | `'aula' \| 'trabalho' \| 'saude' \| 'pessoal'` | obrigatório (o "Tipo" do formulário) |
+| `kind` | `'commitment'` | igual |
+| `startDate` | data local | obrigatório; no recorrente, o primeiro dia da série |
+| `startMinute` | inteiro | 0–1435, múltiplo de 5 (MC2) |
+| `endMinute` | inteiro | `startMinute < endMinute ≤ 1440`, múltiplo de 5 (sem cruzar a meia-noite); **substitui o `durationMinutes`** |
+| `recurrence` | `{ weekdays: (0–6)[], endDate?: data }` ou `null` | `weekdays` não vazio e sem repetição; `endDate ≥ startDate` |
+| `exceptions` | `CommitmentException[]` | MC1; uma por data |
+
+**`CommitmentException`** (valor dentro do agregado): `{ date, type: 'cancelled' | 'moved', newDate?, startMinute?, endMinute? }`.
+- `date` é uma ocorrência da própria série (no recorrente, um dia da semana em `weekdays`, entre `startDate` e `endDate`; no único, igual a `startDate`). Senão, código `commitment.exceptions.date.not.occurrence`.
+- `moved` exige `newDate`, `startMinute` e `endMinute` com as mesmas regras do horário; `cancelled` não aceita esses campos.
+- Duas exceções com a mesma `date` → `commitment.exceptions.date.unique`.
+
+**Operações puras** (devolvem um clone; não validam sozinhas):
+- `withException(exception)`: troca a exceção daquela data, se já houver;
+- `withoutException(date)`;
+- `endingBefore(date)`: no recorrente, `endDate = date − 1` e mantém só as exceções `< date`. Devolve `null` se não sobrar nenhuma ocorrência (`date ≤ startDate`). No único, devolve `null`;
+- `splitFrom(date, changes)` (MC12): devolve `{ previous: endingBefore(date), next }`. O `next` é um compromisso **novo** (id novo), com `startDate = date`, os campos de `changes` aplicados, as exceções `≥ date` e o mesmo `userId`.
+
+**`RecurrenceExpander`** (atualizado):
+- `occurrences(commitment, fromDate, toDate)`: devolve `[{ date, originalDate, startMinute, endMinute, status: 'normal' | 'cancelled' | 'moved' }]` em datas locais, com as exceções aplicadas. A `cancelled` aparece com o horário original. A `moved` aparece em `newDate` (mesmo que o dia original esteja fora da janela) e não aparece no dia original;
+- `expand(commitment, fromDate, toDate, timezone)` (ocupação, UTC): usa `occurrences` e **ignora as `cancelled`**.
+
+**`CommitmentRepository`:** `create(commitment)`, `update(commitment)`, `delete(userId, id)`, `findById(userId, id)` (`null` se não existe ou é de outro usuário), `findAllByUser(userId)`.
+
+**Casos de uso** (`modules/scheduling/src/commitment/usecase/`):
+
+| Caso de uso | Entrada | Saída |
+|---|---|---|
+| `CreateCommitment` | `userId`, `title`, `category`, `startDate`, `startMinute`, `endMinute`, `recurrence` | `{ commitment }` |
+| `GetCommitment` | `userId`, `commitmentId` | `{ commitment }` ou `NotFoundError('Compromisso não encontrado.')` |
+| `ListCommitmentOccurrences` | `userId`, `from`, `to` (datas locais) | `{ occurrences[{ commitmentId, title, category, date, originalDate, startMinute, endMinute, status, recurrence }] }` ordenadas por `date` e `startMinute` |
+| `UpdateCommitment` | `userId`, `commitmentId`, campos opcionais | `{ commitment }` (escopo "todas") |
+| `SplitCommitmentFrom` | `userId`, `commitmentId`, `fromDate`, campos opcionais | `{ commitment: next }` (MC12) |
+| `DeleteCommitment` | `userId`, `commitmentId` | `void` |
+| `EndCommitmentBefore` | `userId`, `commitmentId`, `fromDate` | `void` (apaga se não sobrar ocorrência) |
+| `SetOccurrenceException` | `userId`, `commitmentId`, `date`, `type`, `newDate?`, `startMinute?`, `endMinute?` | `{ commitment }` |
+| `ClearOccurrenceException` | `userId`, `commitmentId`, `date` | `{ commitment }` (`NotFoundError` se não havia exceção nessa data) |
+
+**Cenários — `Commitment`**
+1. Dado um recorrente válido (título "Aula de violão", `pessoal`, ter, 19:00–20:00), quando `validate()`, então ok.
+2. Dado título "A" ou com 81 caracteres, então `ValidationException` (`commitment.title`).
+3. Dado `category = 'lazer'`, então erro (`commitment.category`).
+4. Dado `startMinute = 482` (não múltiplo de 5), então erro; dado 08:00–09:40 (480–580), então ok (MC2).
+5. Dado `endMinute ≤ startMinute`, ou `endMinute = 1445`, então erro.
+6. Dado `weekdays = []`, `[1, 1]` ou `[7]`, então erro.
+7. Dado `endDate < startDate`, então erro.
+8. Dado uma exceção `cancelled` numa quarta de um compromisso só de terça, então `commitment.exceptions.date.not.occurrence`.
+9. Dado uma exceção `moved` sem `newDate`, ou com `endMinute ≤ startMinute`, então erro.
+10. Dado duas exceções na mesma data, então `commitment.exceptions.date.unique`.
+11. `withException` numa data que já tem exceção troca a anterior; `withoutException` remove só aquela.
+12. `endingBefore(date)` num recorrente iniciado em 03/11 com `date = 17/11`: `endDate = 16/11` e só as exceções anteriores a 17/11; com `date = 03/11`, devolve `null`.
+13. `splitFrom(17/11, { startMinute: 1140 })`: `previous` termina em 16/11; `next` tem id diferente, `startDate = 17/11`, o horário novo e as exceções a partir de 17/11.
+
+**Cenários — `RecurrenceExpander`** (somam-se aos 4 da §3.7, adaptados de `durationMinutes` para `endMinute`)
+5. Dado a ter 11/11 `cancelled`, quando `occurrences` de 10/11 a 16/11, então a ocorrência de 11/11 tem `status 'cancelled'`; quando `expand`, então 11/11 não aparece.
+6. Dado a ter 11/11 `moved` para qua 12/11 20:00–21:00, então 11/11 não aparece, e 12/11 aparece com `originalDate = 11/11`, 20:00–21:00 e `status 'moved'`; o `expand` usa o horário novo.
+7. Dado a mesma `moved`, quando a janela é só 12/11, então a ocorrência movida aparece mesmo com 11/11 fora da janela.
+
+**Cenários — `CommitmentBusySource`**
+1. Dado uma ocorrência `cancelled`, então ela não entra na ocupação.
+
+**Cenários — casos de uso** (cada um com o **teste negativo de posse**: B não lê, não altera e não apaga o de A → `NotFoundError`)
+1. `CreateCommitment`: dado dados válidos, então grava com o `userId` da entrada; dado dados inválidos, então `ValidationException` e não grava.
+2. `GetCommitment`: o dono recebe; inexistente → `NotFoundError`.
+3. `ListCommitmentOccurrences`: dado A com 2 compromissos e B com 1, então A recebe só as dele; dado `from > to` ou um intervalo de mais de 62 dias, então `ValidationException` (`occurrences.range`).
+4. `UpdateCommitment`: muda o título e o horário de todas as ocorrências; exceções que deixaram de ser ocorrências da série (ex.: mudou de terça para quarta) são **descartadas**.
+5. `SplitCommitmentFrom`: grava a anterior encerrada e cria a nova; se a anterior ficar sem ocorrência, apaga-a.
+6. `DeleteCommitment`: apaga.
+7. `EndCommitmentBefore`: encerra; com `fromDate ≤ startDate`, apaga.
+8. `SetOccurrenceException`: `cancelled` numa ocorrência válida grava; numa data que não é ocorrência → `ValidationException`.
+9. `ClearOccurrenceException`: remove; sem exceção na data → `NotFoundError`.
+
+### 8.2 Tarefas únicas no `goals` (MC7, MC8, MC10, MC11)
+
+**`Goal.plannedDate`:** data local ou `null`. Só pode ser preenchida com `kind = 'single'` (código `goal.plannedDate.single`).
+
+**`GoalRepository.delete(userId, goalId)`** (e na implementação em memória).
+
+**Casos de uso:**
+
+| Caso de uso | Entrada | Saída |
+|---|---|---|
+| `CreateGoal` | + `plannedDate?` | igual |
+| `ListGoals` | `userId`, `kind?` | itens + `kind`, `plannedDate`, `estimatedMinutes` (soma das etapas não `superseded`) |
+| `SetSingleTaskDone` | `userId`, `goalId`, `done` | `{ goal }` |
+| `DeleteGoal` | `userId`, `goalId` | `void` |
+
+**Cenários**
+1. `Goal`: `kind='single'` com `plannedDate = 2026-11-21`, então ok; `kind='goal'` com `plannedDate`, então `goal.plannedDate.single`; `plannedDate = '21/11'`, então erro de data.
+2. `CreateGoal`: grava o `plannedDate`.
+3. `ListGoals`: `kind='single'` devolve só as tarefas; sem `kind`, todos; cada item tem `kind`, `plannedDate` e `estimatedMinutes`.
+4. `SetSingleTaskDone`: `done: true` → etapa em 100%, `status 'done'`; `done: false` → 0% e `'active'`; objetivo `kind='goal'` → `ValidationException` (`goal.kind.single`); de outro usuário → `NotFoundError`.
+5. `DeleteGoal`: o dono apaga; outro usuário → `NotFoundError` e nada é apagado.
+
+### 8.3 `PlanCalculator` com `plannedDate` (MC7)
+
+`PlanGoalInput` ganha `plannedDate: string | null`.
+1. Dado uma tarefa com `plannedDate` amanhã e horário livre hoje, então nenhum bloco hoje; o bloco cai amanhã.
+2. Dado `plannedDate` hoje e horário livre hoje, então o bloco é hoje.
+3. Dado `plannedDate` hoje sem horário livre (ou limite diário esgotado), então o bloco vai para o próximo dia com horário.
+4. Dado duas tarefas com `plannedDate` 22/11 e 21/11, então a de 21/11 é encaixada primeiro.
+5. Dado uma tarefa sem `plannedDate` nem `deadline`, então ela fica depois dos objetivos com prazo (P3).
+6. Ordem geral: a chave de ordenação é `deadline` e, sem ele, `plannedDate`; sem os dois, por último; depois `createdAt`.
+7. Objetivos com `deadline` não mudam: os testes antigos passam sem alteração.
+

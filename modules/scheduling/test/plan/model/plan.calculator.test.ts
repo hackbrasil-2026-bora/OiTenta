@@ -392,4 +392,132 @@ describe("PlanCalculator", () => {
       });
     });
   });
+
+  describe("8.3: tarefa unica com plannedDate (MC7)", () => {
+    function task(
+      goalId: string,
+      plannedDate: string | null,
+      minutes: number,
+      createdAt = CREATED,
+      firstStep = 40,
+    ): PlanGoalInput {
+      return { ...goal(goalId, null, [minutes], createdAt, firstStep), plannedDate };
+    }
+
+    test("cenario 1: plannedDate amanha com horario livre hoje -> nenhum bloco hoje, o bloco cai amanha", () => {
+      const result = calculator.calculate(
+        makeInput({ goals: [task(GOAL_1, "2026-11-11", 60)] }),
+      );
+
+      expect(result.blocks.map(dayOf)).toEqual(["2026-11-11"]);
+      expect(result.goals).toEqual([
+        {
+          goalId: GOAL_1,
+          scheduledMinutes: 60,
+          unscheduledMinutes: 0,
+          feasible: true,
+          usedSlack: false,
+          slackDays: null,
+        },
+      ]);
+    });
+
+    test("cenario 2: plannedDate hoje com horario livre hoje -> o bloco e hoje", () => {
+      const result = calculator.calculate(
+        makeInput({ goals: [task(GOAL_1, "2026-11-10", 60)] }),
+      );
+
+      expect(result.blocks.map(dayOf)).toEqual(["2026-11-10"]);
+      expect(result.blocks[0]?.start).toEqual(local("2026-11-10", 19));
+    });
+
+    test("cenario 3: plannedDate hoje sem horario livre hoje -> proximo dia com horario", () => {
+      const result = calculator.calculate(
+        makeInput({
+          freeIntervals: everyEvening("2026-11-12", "2026-11-20"),
+          goals: [task(GOAL_1, "2026-11-10", 60)],
+        }),
+      );
+
+      expect(result.blocks.map(dayOf)).toEqual(["2026-11-12"]);
+    });
+
+    test("cenario 3: plannedDate hoje com o limite diario esgotado -> proximo dia com horario", () => {
+      const result = calculator.calculate(
+        makeInput({
+          fixedBlocks: [{ start: local("2026-11-10", 19), end: local("2026-11-10", 21) }],
+          goals: [task(GOAL_1, "2026-11-10", 60)],
+        }),
+      );
+
+      expect(result.blocks.map(dayOf)).toEqual(["2026-11-11"]);
+    });
+
+    test("cenario 4: plannedDate 22/11 e 21/11 -> a de 21/11 e encaixada primeiro", () => {
+      const result = calculator.calculate(
+        makeInput({
+          freeIntervals: [{ start: local("2026-11-22", 19), end: local("2026-11-22", 19, 30) }],
+          goals: [
+            task(GOAL_1, "2026-11-22", 30, new Date("2026-10-01T12:00:00.000Z")),
+            task(GOAL_2, "2026-11-21", 30, CREATED, 50),
+          ],
+        }),
+      );
+
+      expect(result.blocks.map((block) => block.goalId)).toEqual([GOAL_2]);
+      expect(result.goals.map((item) => [item.goalId, item.unscheduledMinutes])).toEqual([
+        [GOAL_2, 0],
+        [GOAL_1, 30],
+      ]);
+    });
+
+    test("cenario 5: sem plannedDate nem deadline fica depois dos objetivos com prazo (P3)", () => {
+      const result = calculator.calculate(
+        makeInput({
+          freeIntervals: [{ start: local("2026-11-10", 19), end: local("2026-11-10", 19, 30) }],
+          goals: [
+            task(GOAL_1, null, 30, new Date("2026-10-01T12:00:00.000Z")),
+            goal(GOAL_2, "2026-11-30", [30], CREATED, 10),
+          ],
+        }),
+      );
+
+      expect(result.blocks.map((block) => block.goalId)).toEqual([GOAL_2]);
+      expect(result.goals.map((item) => item.goalId)).toEqual([GOAL_2, GOAL_1]);
+    });
+
+    test("cenario 6: a chave e o deadline e, sem ele, o plannedDate; sem os dois por ultimo; depois createdAt", () => {
+      const early = new Date("2026-10-01T12:00:00.000Z");
+      const result = calculator.calculate(
+        makeInput({
+          goals: [
+            task(GOAL_4, null, 30, early, 40),
+            goal(GOAL_3, "2026-11-25", [30], early, 30),
+            goal(GOAL_2, "2026-11-21", [30], CREATED, 20),
+            task(GOAL_1, "2026-11-21", 30, early, 10),
+            { ...goal("33333333-3333-4333-8333-333333333335", "2026-11-20", [30], CREATED, 50), plannedDate: undefined },
+          ],
+        }),
+      );
+
+      expect(result.goals.map((item) => item.goalId)).toEqual([
+        "33333333-3333-4333-8333-333333333335",
+        GOAL_1,
+        GOAL_2,
+        GOAL_3,
+        GOAL_4,
+      ]);
+    });
+
+    test("plannedDate junto com deadline: nao aloca antes do plannedDate e respeita o prazo", () => {
+      const result = calculator.calculate(
+        makeInput({
+          goals: [{ ...goal(GOAL_1, "2026-11-20", [60]), plannedDate: "2026-11-13" }],
+        }),
+      );
+
+      expect(result.blocks.map(dayOf)).toEqual(["2026-11-13"]);
+      expect(result.goals[0]?.usedSlack).toBe(true);
+    });
+  });
 });
