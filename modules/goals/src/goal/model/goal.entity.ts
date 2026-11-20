@@ -31,6 +31,8 @@ export interface GoalState extends EntityState {
   userId: string;
   title: string;
   deadline: string | null;
+  /** Data local `YYYY-MM-DD` planejada da tarefa única (MC7); só com `kind = 'single'`. */
+  plannedDate: string | null;
   kind: GoalKind;
   colorIndex: GoalColorIndex;
   source: GoalSource;
@@ -55,6 +57,14 @@ class StepsBelongToGoalRule implements ValidationRule<Step[]> {
   }
 }
 
+class SingleKindOnlyRule implements ValidationRule {
+  constructor(private readonly kind: GoalKind) {}
+
+  validate(value: unknown): string | null {
+    return value === null || this.kind === "single" ? null : "single";
+  }
+}
+
 class GoalStatusConsistencyRule implements ValidationRule<Goal> {
   validate(goal: Goal): string | null {
     return goal.status === Goal.statusFor(goal.steps) ? null : "inconsistent";
@@ -76,6 +86,10 @@ export class Goal extends Entity<GoalState> {
 
   get deadline(): string | null {
     return this.props.deadline;
+  }
+
+  get plannedDate(): string | null {
+    return this.props.plannedDate;
   }
 
   get kind(): GoalKind {
@@ -131,6 +145,16 @@ export class Goal extends Entity<GoalState> {
         value: this.deadline,
         rules: [
           ...(this.deadline === null ? [] : [new RequiredRule()]),
+          new RegexRule(LOCAL_DATE_PATTERN),
+          new DateStringRule(),
+        ],
+      },
+      {
+        code: "goal.plannedDate",
+        value: this.plannedDate,
+        rules: [
+          ...(this.plannedDate === null ? [] : [new RequiredRule()]),
+          new SingleKindOnlyRule(this.kind),
           new RegexRule(LOCAL_DATE_PATTERN),
           new DateStringRule(),
         ],

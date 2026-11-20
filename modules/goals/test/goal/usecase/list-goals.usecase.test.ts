@@ -43,6 +43,9 @@ describe("ListGoals", () => {
         id: goal.id,
         title: "Trabalho de Algoritmos",
         deadline: null,
+        kind: "goal",
+        plannedDate: null,
+        estimatedMinutes: 240,
         colorIndex: 2,
         progressPct: 25,
         done: 1,
@@ -61,5 +64,59 @@ describe("ListGoals", () => {
     const output = await useCase.execute({ userId: USER_A });
 
     expect(output.goals.map((item) => item.createdAt)).toEqual([createdAt]);
+  });
+
+  describe("8.2 cenario 3: filtro por kind e campos novos", () => {
+    const goalA = buildGoal({ userId: USER_A, title: "Objetivo" });
+    const taskA = buildGoal({
+      userId: USER_A,
+      title: "Tarefa",
+      kind: "single",
+      deadline: null,
+      plannedDate: "2026-11-21",
+      steps: [{ estimatedMinutes: 30 }],
+    });
+    const taskB = buildGoal({ userId: USER_B, kind: "single", deadline: null });
+    const useCase = new ListGoals(new FakeGoalRepository([goalA, taskA, taskB]));
+
+    test("kind single devolve so as tarefas do usuario", async () => {
+      const output = await useCase.execute({ userId: USER_A, kind: "single" });
+
+      expect(output.goals.map((item) => item.id)).toEqual([taskA.id]);
+      expect(output.goals[0]).toMatchObject({
+        kind: "single",
+        plannedDate: "2026-11-21",
+        estimatedMinutes: 30,
+      });
+    });
+
+    test("kind goal devolve so os objetivos", async () => {
+      const output = await useCase.execute({ userId: USER_A, kind: "goal" });
+
+      expect(output.goals.map((item) => item.id)).toEqual([goalA.id]);
+      expect(output.goals[0]).toMatchObject({ kind: "goal", plannedDate: null });
+    });
+
+    test("sem kind devolve todos", async () => {
+      const output = await useCase.execute({ userId: USER_A });
+
+      expect(output.goals.map((item) => item.id).sort()).toEqual([goalA.id, taskA.id].sort());
+    });
+  });
+
+  test("8.2: estimatedMinutes soma so as etapas nao superseded", async () => {
+    const goal = buildGoal({
+      userId: USER_A,
+      steps: [
+        { estimatedMinutes: 60, progressPct: 50, status: "superseded" },
+        { estimatedMinutes: 45 },
+        { estimatedMinutes: 30, progressPct: 100 },
+      ],
+    });
+    const useCase = new ListGoals(new FakeGoalRepository([goal]));
+
+    const output = await useCase.execute({ userId: USER_A });
+
+    expect(output.goals[0].estimatedMinutes).toBe(75);
   });
 });

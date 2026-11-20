@@ -4,6 +4,7 @@ export class FakeGoalRepository implements GoalRepository {
   private readonly storage = new Map<string, Goal>();
   createCalls = 0;
   updateCalls = 0;
+  deleteCalls = 0;
 
   constructor(initialGoals: Goal[] = []) {
     for (const goal of initialGoals) {
@@ -38,5 +39,14 @@ export class FakeGoalRepository implements GoalRepository {
 
   async findAllByUser(userId: string): Promise<Goal[]> {
     return this.goals.filter((goal) => goal.userId === userId);
+  }
+
+  async delete(userId: string, goalId: string): Promise<void> {
+    const current = this.storage.get(goalId);
+    if (!current || current.userId !== userId) {
+      throw new Error("Objetivo não encontrado para este usuário.");
+    }
+    this.deleteCalls += 1;
+    this.storage.delete(goalId);
   }
 }

@@ -214,4 +214,36 @@ describe("CreateGoal", () => {
     ).rejects.toThrow(ValidationException);
     expect(goalRepository.goals).toEqual([]);
   });
+
+  test("8.2 cenario 2: kind single grava o plannedDate", async () => {
+    const { goalRepository, useCase } = makeSut();
+
+    await useCase.execute(
+      makeInput({
+        kind: "single",
+        deadline: null,
+        plannedDate: "2026-11-21",
+        steps: [{ title: "Arrumar o guarda-roupa", estimatedMinutes: 30 }],
+      }),
+    );
+
+    expect(goalRepository.goals[0].plannedDate).toBe("2026-11-21");
+  });
+
+  test("8.2: sem plannedDate grava null (objetivos continuam iguais)", async () => {
+    const { goalRepository, useCase } = makeSut();
+
+    await useCase.execute(makeInput());
+
+    expect(goalRepository.goals[0].plannedDate).toBeNull();
+  });
+
+  test("8.2: kind goal com plannedDate lanca ValidationException e nao grava", async () => {
+    const { goalRepository, useCase } = makeSut();
+
+    await expect(useCase.execute(makeInput({ plannedDate: "2026-11-21" }))).rejects.toThrow(
+      ValidationException,
+    );
+    expect(goalRepository.createCalls).toBe(0);
+  });
 });

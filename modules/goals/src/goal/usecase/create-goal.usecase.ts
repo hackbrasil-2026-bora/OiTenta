@@ -15,6 +15,8 @@ export interface CreateGoalIn {
   userId: string;
   title: string;
   deadline?: string | null;
+  /** Data planejada da tarefa única (MC7); só com `kind: 'single'`. */
+  plannedDate?: string | null;
   kind: GoalKind;
   /** Padrão "manual"; "ai" quando o objetivo veio do rascunho do assistente (IA1). */
   source?: GoalSource;
@@ -35,6 +37,7 @@ export class CreateGoal implements UseCase<CreateGoalIn, CreateGoalOut> {
       userId: input.userId,
       title: input.title.trim(),
       deadline: input.deadline ?? null,
+      plannedDate: input.plannedDate ?? null,
       kind: input.kind,
       colorIndex,
       source: input.source ?? "manual",

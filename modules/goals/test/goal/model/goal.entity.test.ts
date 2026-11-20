@@ -24,6 +24,7 @@ function makeState(overrides: Partial<GoalState> = {}): GoalState {
     userId: USER_ID,
     title: "Trabalho de Algoritmos",
     deadline: "2026-11-24",
+    plannedDate: null,
     kind: "goal",
     colorIndex: 1,
     source: "manual",
@@ -51,6 +52,7 @@ describe("Goal", () => {
     expect(goal.userId).toBe(USER_ID);
     expect(goal.title).toBe("Trabalho de Algoritmos");
     expect(goal.deadline).toBe("2026-11-24");
+    expect(goal.plannedDate).toBeNull();
     expect(goal.kind).toBe("goal");
     expect(goal.colorIndex).toBe(1);
     expect(goal.source).toBe("manual");
@@ -251,5 +253,59 @@ describe("Goal", () => {
     expect(updated.steps[0].progressPct).toBe(50);
     expect(updated.steps[1]).toBe(goal.steps[1]);
     expect(updated.status).toBe("active");
+  });
+
+  describe("8.2 cenario 1: plannedDate (MC7)", () => {
+    test("kind single com plannedDate 2026-11-21 passa e expoe o getter", () => {
+      const goal = new Goal(
+        makeState({
+          kind: "single",
+          deadline: null,
+          plannedDate: "2026-11-21",
+          steps: [makeStep()],
+        }),
+      );
+
+      expect(goal.plannedDate).toBe("2026-11-21");
+      expect(() => goal.validate()).not.toThrow();
+    });
+
+    test("kind goal com plannedDate lanca goal.plannedDate.single", () => {
+      const goal = new Goal(makeState({ plannedDate: "2026-11-21" }));
+
+      expect(getValidationMessages(() => goal.validate())).toEqual(["goal.plannedDate.single"]);
+    });
+
+    test("plannedDate '21/11' lanca erro de data", () => {
+      const goal = new Goal(
+        makeState({ kind: "single", plannedDate: "21/11", steps: [makeStep()] }),
+      );
+
+      expect(getValidationMessages(() => goal.validate())).toEqual([
+        "goal.plannedDate.regex",
+        "goal.plannedDate.date.string",
+      ]);
+    });
+
+    test("plannedDate inexistente ou vazio lanca erro de data", () => {
+      const single = { kind: "single" as const, steps: [makeStep()] };
+
+      expect(
+        getValidationMessages(() =>
+          new Goal(makeState({ ...single, plannedDate: "2026-02-30" })).validate(),
+        ),
+      ).toEqual(["goal.plannedDate.date.string"]);
+      expect(
+        getValidationMessages(() => new Goal(makeState({ ...single, plannedDate: "" })).validate()),
+      ).toEqual(["goal.plannedDate.required"]);
+    });
+
+    test("withStep preserva o plannedDate", () => {
+      const goal = new Goal(
+        makeState({ kind: "single", plannedDate: "2026-11-21", steps: [makeStep()] }),
+      );
+
+      expect(goal.withStep(goal.steps[0].withProgress(100)).plannedDate).toBe("2026-11-21");
+    });
   });
 });
