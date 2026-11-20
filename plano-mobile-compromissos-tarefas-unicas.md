@@ -384,77 +384,81 @@ Regras comuns:
 - Dúvida que o plano não resolve: **parar e reportar**.
 
 ### D1. Domínio de compromissos (`feat/cp-r-dominio-compromisso`)
+> Feito: `13d8f7b` + `dca8513` (três estados do `recurrence`). 237 testes no scheduling, 100%. Testes antes do código (97 vermelhos → verdes).
 
 **Pastas:** `modules/scheduling/src/commitment/**`, `modules/scheduling/test/commitment/**` (ou onde o módulo guarda os testes) e, se precisar, `modules/scheduling/src/common/**`. **Skills:** `module-entity`, `module-repository`, `module-use-case`, `shared-validation-rule` (só se faltar uma regra reutilizável).
 
-- [ ] **Entidade `Commitment`** (testes primeiro, cenários da §3.2):
+- [x] **Entidade `Commitment`** (testes primeiro, cenários da §3.2):
   - `category` obrigatória em `aula|trabalho|saude|pessoal`;
   - `title` de 2 a 80 caracteres;
   - horário em múltiplos de 5 (C2) com `endMinute > startMinute` no mesmo dia (ou `durationMinutes`, conforme a modelagem fixada no passo 0.5);
   - `exceptions` (C1): data local válida; `moved` com `newDate`, `startMinute` e `endMinute` válidos; data da exceção que é uma ocorrência da série; sem duas exceções no mesmo dia;
   - recorrência: `weekdays` não vazio, únicos, de 0 a 6; `endDate ≥ startDate`;
   - métodos puros que devolvem um clone: `withException(date, …)`, `withoutException(date)`, `endingBefore(date)` (null se ficar sem nenhum dia) e `splitFrom(date, changes)` → `[antiga|null, nova]`, levando as exceções ≥ data (C12).
-- [ ] **`RecurrenceExpander`**:
+- [x] **`RecurrenceExpander`**:
   - devolve ocorrências com `status` (normal/cancelled/moved), `date` e `originalDate`;
   - a `cancelled` aparece na listagem, mas **não** conta como ocupação;
   - a `moved` sai do dia original e aparece no `newDate` com o novo horário, mesmo fora da janela original;
   - o único continua igual;
   - testes de fronteira: `endDate`, `startDate`, troca de horário de verão inexistente (o fuso é fixo; manter o teste atual).
-- [ ] **`CommitmentBusySource`**: ignora as canceladas e usa o horário movido. Teste com uma etapa que seria encaixada no horário liberado.
-- [ ] **Repositório** (`module-repository`): `create`, `update`, `delete`, `findById(userId, id)`, `findAllByUser(userId)`; implementação em memória para os testes; teste negativo de posse (o usuário B não vê nem altera o compromisso de A).
-- [ ] **Casos de uso** (`module-use-case`), cada um com os cenários da modelagem e o teste negativo de posse:
+- [x] **`CommitmentBusySource`**: ignora as canceladas e usa o horário movido. Teste com uma etapa que seria encaixada no horário liberado.
+- [x] **Repositório** (`module-repository`): `create`, `update`, `delete`, `findById(userId, id)`, `findAllByUser(userId)`; implementação em memória para os testes; teste negativo de posse (o usuário B não vê nem altera o compromisso de A).
+- [x] **Casos de uso** (`module-use-case`), cada um com os cenários da modelagem e o teste negativo de posse:
   - `CreateCommitment`, `GetCommitment`;
   - `ListCommitmentOccurrences` (intervalo de no máximo 62 dias; `from ≤ to`);
   - `UpdateCommitment` (todas);
   - `SplitCommitmentFrom` (desse dia em diante);
   - `DeleteCommitment`, `EndCommitmentBefore`;
   - `SetOccurrenceException`, `ClearOccurrenceException`.
-- [ ] `npm run test --workspace @oitenta/scheduling` com **100%** de cobertura; build e lint do módulo; grep de framework.
-- [ ] **Parar** e reportar (a parte do backend é a Fase 2).
+- [x] `npm run test --workspace @oitenta/scheduling` com **100%** de cobertura; build e lint do módulo; grep de framework.
+- [x] **Parar** e reportar (a parte do backend é a Fase 2).
 
 ### D2. Domínio de tarefas únicas (`feat/cp-r-dominio-tarefa`)
+> Feito: `469e0f3`. goals 146 testes e scheduling 100%. Deixou o backend sem compilar até o B2, como previsto.
 
 **Pastas:** `modules/goals/**` e `modules/scheduling/src/plan/model/plan.calculator.ts` + o teste dele. **Skills:** `module-use-case`, `module-repository`.
 
-- [ ] **`Goal.plannedDate`** (testes primeiro): data local opcional, só com `kind: 'single'` (`goal` com `plannedDate` → inválido); `CreateGoal` aceita e grava.
-- [ ] **`SetSingleTaskDone({ userId, goalId, done })`**: só `single` (comum → `ValidationException`); `done: true` põe a etapa em 100% e o objetivo em concluído; `done: false` volta a 0% e a ativo; teste de posse.
-- [ ] **`DeleteGoal({ userId, goalId })`** + `GoalRepository.delete(userId, goalId)` (e na implementação em memória); teste de posse (B não apaga o de A → `NotFoundError`).
-- [ ] **`ListGoals`**: aceita filtro `kind` e devolve `kind`, `plannedDate`, `estimatedMinutes` e `done` na visão.
-- [ ] **`PlanCalculator`** (C7 = a; testes primeiro):
+- [x] **`Goal.plannedDate`** (testes primeiro): data local opcional, só com `kind: 'single'` (`goal` com `plannedDate` → inválido); `CreateGoal` aceita e grava.
+- [x] **`SetSingleTaskDone({ userId, goalId, done })`**: só `single` (comum → `ValidationException`); `done: true` põe a etapa em 100% e o objetivo em concluído; `done: false` volta a 0% e a ativo; teste de posse.
+- [x] **`DeleteGoal({ userId, goalId })`** + `GoalRepository.delete(userId, goalId)` (e na implementação em memória); teste de posse (B não apaga o de A → `NotFoundError`).
+- [x] **`ListGoals`**: aceita filtro `kind` e devolve `kind`, `plannedDate`, `estimatedMinutes` e `done` na visão.
+- [x] **`PlanCalculator`** (C7 = a; testes primeiro):
   - um `single` com `plannedDate` não recebe bloco antes desse dia;
   - recebe no próprio dia, se houver horário livre e limite diário;
   - se não couber no dia, vai para o próximo dia livre;
   - entre `single`s, o de data mais cedo vem antes;
   - um `single` sem data fica depois dos objetivos com prazo (P3);
   - objetivo com prazo **não muda** de comportamento (rodar os testes antigos sem alterar).
-- [ ] `npm run test --workspace @oitenta/goals` e `--workspace @oitenta/scheduling` com 100%; grep de framework. **Parar** e reportar.
+- [x] `npm run test --workspace @oitenta/goals` e `--workspace @oitenta/scheduling` com 100%; grep de framework. **Parar** e reportar.
 
 ### M1. Mobile: compromissos na Semana, no Hoje (C6 = b) e sheet da ocorrência (`feat/cp-r-mobile-semana`)
+> Feito: `ee5dc36`, mais as correções do revisor em `7176f76`. Três testes de cobertura foram escritos depois do código.
 
 **Pastas:** `features/scheduling/presentation/week_*`, `today_controller.dart`, `today_screen.dart` (C6 = b), `scheduling_pages.dart`, `calendar_widgets.dart`, `commitment_occurrence_sheet.dart` (novo), `commitment_card.dart` (novo), `features/scheduling/data/http_commitments_repository.dart` e os testes correspondentes. **Ler:** template `<!-- SEMANA / CALENDÁRIO -->` (procurar `cpAddDia`, `isCp`), o sheet `sheetCpOcc` e a lógica `ocAcoes`, `ocEscopos` e `ocContinuar` do `Bora App.dc.html`; `screens/44, 45, 48–51`.
 
-- [ ] **`HttpCommitmentsRepository`** (testes primeiro, com o `fake_api.dart`): cada método da seção 3 com rota, verbo, corpo, query e o mapeamento de 401/404/409/422 para as falhas do app.
-- [ ] **`WeekController`** (testes primeiro):
+- [x] **`HttpCommitmentsRepository`** (testes primeiro, com o `fake_api.dart`): cada método da seção 3 com rota, verbo, corpo, query e o mapeamento de 401/404/409/422 para as falhas do app.
+- [x] **`WeekController`** (testes primeiro):
   - carrega as ocorrências da semana junto com o plano;
   - `dayItems` mistura etapas e compromissos ordenados pela hora;
   - o compromisso cancelado continua na lista com o estado "Não vai ter";
   - `repetitionLabel` ("Toda terça", "Toda seg, qua e sex", "Toda sábado" → "Todo sábado" e "Todo domingo", como `cpRepTxt`, e "Só uma vez");
   - erro de carga dos compromissos não esconde as etapas (mostra a mensagem);
   - recarrega depois de qualquer ação.
-- [ ] **`CommitmentOccurrenceController`** (o sheet; testes primeiro):
+- [x] **`CommitmentOccurrenceController`** (o sheet; testes primeiro):
   - ações conforme o estado: recorrente sem exceção (Editar, Não vai ter, Excluir); com dia movido (Editar, Voltar pro horário normal, Excluir); único (Editar, Excluir); cancelado ("Vai ter sim");
   - passo de escopo com "Só nesse dia" selecionado por padrão;
   - "Continuar": no editar navega para o formulário com escopo e data; no excluir chama o método certo (`so` → cancelar o dia; `following` → `DELETE ?scope=following`; `all` → `DELETE ?scope=all`);
   - os toasts do design; `busy`; erro.
-- [ ] **Hoje (C6 = b)** (testes primeiro): o `TodayController` carrega as ocorrências do dia junto com o plano; a linha do tempo mistura etapas e compromissos pela hora, com o mesmo cartão da Semana; o toque abre o mesmo sheet; ações recarregam o Hoje. Os testes antigos do Hoje continuam passando. Elemento sem design no Hoje: registrar como diferença.
-- [ ] **Telas** (widget tests primeiro): botão "+ Compromisso" no título do dia só no modo Execução (abre `/semana/compromisso` com a data do dia e "Só uma vez"); card do compromisso igual ao design; o sheet com os 3 estados e o passo de escopo. Só tokens.
-- [ ] `flutter analyze`, `flutter test` e cobertura de 100% nos controladores e no repositório HTTP.
+- [x] **Hoje (C6 = b)** (testes primeiro): o `TodayController` carrega as ocorrências do dia junto com o plano; a linha do tempo mistura etapas e compromissos pela hora, com o mesmo cartão da Semana; o toque abre o mesmo sheet; ações recarregam o Hoje. Os testes antigos do Hoje continuam passando. Elemento sem design no Hoje: registrar como diferença.
+- [x] **Telas** (widget tests primeiro): botão "+ Compromisso" no título do dia só no modo Execução (abre `/semana/compromisso` com a data do dia e "Só uma vez"); card do compromisso igual ao design; o sheet com os 3 estados e o passo de escopo. Só tokens.
+- [x] `flutter analyze`, `flutter test` e cobertura de 100% nos controladores e no repositório HTTP.
 
 ### M2. Mobile: formulário Novo/Editar compromisso (`feat/cp-r-mobile-form`)
+> Feito: `acfdc03`. 100% nos 4 arquivos. O `makeSingle` (`recurrence: null` explícito) foi acrescentado pelo orquestrador depois do merge, com teste antes.
 
 **Pastas:** `features/scheduling/presentation/commitment_form_*` (substitui o esqueleto), `features/scheduling/presentation/time_range_field.dart` (novo) e os testes. **Ler:** template `<!-- NOVO COMPROMISSO -->` e a lógica `cpBlank`, `cpEdit`, `cpSalvar`, `cpOk`, `cpAtes`, `cpSubTxt` e `conflito`; `screens/46, 47, 52`; `features/goals/presentation/date_picker_sheet.dart`.
 
-- [ ] **`CommitmentFormController`** (testes primeiro):
+- [x] **`CommitmentFormController`** (testes primeiro):
   - modos novo, editar todas (`all`), desse dia em diante (`following`) e só nesse dia (`so`), com título, subtítulo, campos visíveis e texto do botão exatamente como `cpSubTxt`/`cpSalvarTxt`;
   - validação (`cpOk`): nome ≥ 2; fim > início; semanal com ≥ 1 dia e data escolhida quando "Escolher data"; único com data;
   - "Até quando?": "Sem fim" → sem `endDate`; "Fim do semestre" → `AppConfig.semesterEnd` (C3); "Escolher data" → date picker;
@@ -462,98 +466,103 @@ Regras comuns:
   - `save()` chama o método certo do repositório para cada modo (seção 3) e devolve o toast certo;
   - `delete()` (só em `all`);
   - erros 404/422 mostram a mensagem; `busy`.
-- [ ] **`TimeRangeField`**: dois campos "início" e "fim" com seletor de horário de 5 em 5 min (C2). Usar o `CupertinoTimerPicker`/`CupertinoDatePicker` do Flutter em modo hora, **sem pacote novo**, num bottom sheet com os tokens. Erro "O fim precisa ser depois do início".
-- [ ] **Tela e página** (widget tests primeiro): tudo do template, com chips de tipo, cards de repetição, dias S T Q Q S S D com rótulos de acessibilidade completos ("Segunda" etc.), "Até quando?", data, horário, aviso de conflito, "Salvar…", "Cancelar" e "Excluir compromisso". Ao salvar, toast e `pop` (ou `go(AppRoutes.week)`).
-- [ ] `flutter analyze`, `flutter test` e cobertura de 100% no controlador e no `TimeRangeField`.
+- [x] **`TimeRangeField`**: dois campos "início" e "fim" com seletor de horário de 5 em 5 min (C2). Usar o `CupertinoTimerPicker`/`CupertinoDatePicker` do Flutter em modo hora, **sem pacote novo**, num bottom sheet com os tokens. Erro "O fim precisa ser depois do início".
+- [x] **Tela e página** (widget tests primeiro): tudo do template, com chips de tipo, cards de repetição, dias S T Q Q S S D com rótulos de acessibilidade completos ("Segunda" etc.), "Até quando?", data, horário, aviso de conflito, "Salvar…", "Cancelar" e "Excluir compromisso". Ao salvar, toast e `pop` (ou `go(AppRoutes.week)`).
+- [x] `flutter analyze`, `flutter test` e cobertura de 100% no controlador e no `TimeRangeField`.
 
 ### M3. Mobile: Tarefas únicas (`feat/cp-r-mobile-tarefas`)
+> Feito: `5be75cf`, mais a correção do revisor em `6753862`. MC8 filtrado no `GoalsController` (o `listGoals` também alimenta Hoje e Semana). O botão do Hoje (MC9) foi feito pelo orquestrador (`5f9dc6e`).
 
 **Pastas:** `features/goals/presentation/single_tasks_*` (substitui o esqueleto), `features/goals/data/http_single_tasks_repository.dart`, os testes, e (C8 = a) o filtro da lista de Objetivos em `goals_controller.dart`. **Ler:** template `<!-- TAREFAS ÚNICAS -->` e a lógica `uniVals` (tarefas), `screens/53, 54`.
 
-- [ ] **`HttpSingleTasksRepository`** (testes primeiro): `list` (`GET /goals?kind=single`), `create` (`POST /goals` com `kind: single`, 1 etapa com o título, `estimatedMinutes` e `plannedDate`), `setDone` (`PATCH /goals/:id/done`) e `delete` (`DELETE /goals/:id`).
-- [ ] **`SingleTasksController`** (testes primeiro):
+- [x] **`HttpSingleTasksRepository`** (testes primeiro): `list` (`GET /goals?kind=single`), `create` (`POST /goals` com `kind: single`, 1 etapa com o título, `estimatedMinutes` e `plannedDate`), `setDone` (`PATCH /goals/:id/done`) e `delete` (`DELETE /goals/:id`).
+- [x] **`SingleTasksController`** (testes primeiro):
   - grupos Hoje (data ≤ hoje), Próximos dias (ordenado), Sem data e Feitas, com "1 tarefa"/"N tarefas" e grupos vazios escondidos;
   - adicionar: o painel abre ao digitar; duração padrão 30 min; "Quando?" padrão Hoje; "Escolher dia" abre o date picker; texto ≥ 2;
   - os toasts "Tarefa anotada" com o subtítulo certo para cada caso;
   - marcar e desmarcar (toast "Feito!" só ao marcar); excluir;
   - erros e `busy`; guarda `_disposed`.
-- [ ] **Tela e página** (widget tests primeiro), fiéis a `screens/53–54`; voltar → `pop` ou `go(AppRoutes.today)`.
-- [ ] **Objetivos** (C8 = a): a lista mostra só `kind: goal`. Teste.
-- [ ] `flutter analyze`, `flutter test` e cobertura de 100% no controlador e no repositório HTTP.
+- [x] **Tela e página** (widget tests primeiro), fiéis a `screens/53–54`; voltar → `pop` ou `go(AppRoutes.today)`.
+- [x] **Objetivos** (C8 = a): a lista mostra só `kind: goal`. Teste.
+- [x] `flutter analyze`, `flutter test` e cobertura de 100% no controlador e no repositório HTTP.
 
 ---
 
 ## Fase 2: backend (orquestrador → [PARALELO] B1, B2)
 
-- [ ] Receber D1 e D2, conferir os relatórios e fazer merge na integração (D1 → D2). Rodar `npm run test --workspaces --if-present` e o build. Conflito: parar e reportar.
-- [ ] **Prisma** (skill `backend-prisma-sync-module`):
+- [x] Receber D1 e D2, conferir os relatórios e fazer merge na integração (D1 → D2). Rodar `npm run test --workspaces --if-present` e o build. Conflito: parar e reportar.
+- [x] **Prisma** (skill `backend-prisma-sync-module`):
   - `scheduling.model.prisma` ganha `Commitment` (userId, title, category, startDate, startMinute, endMinute, weekdays `Int[]`, endDate?, createdAt) e `CommitmentException` (commitmentId com `onDelete: Cascade`, date, type, newDate?, startMinute?, endMinute?, único por (commitmentId, date));
   - `goals.model.prisma` ganha `plannedDate String?`;
   - migration incremental nomeada (`compromissos_e_tarefas_unicas`); `prisma migrate dev`; `prisma:generate`.
-- [ ] Commit; criar as worktrees de B1 e B2 a partir da integração (P28).
+- [x] Commit; criar as worktrees de B1 e B2 a partir da integração (P28).
 
 ### B1. Backend de compromissos [PARALELO] (`feat/cp-r-backend-compromisso`, continua o D1)
+> Feito: `0a392aa`. e2e de compromissos com 79 testes (71 vermelhos → verdes).
 
 **Pastas:** `apps/backend/src/modules/scheduling/**`, `apps/backend/src/orchestrators/commitment-*.ts` (novos), `apps/backend/test/commitments.e2e-spec.ts` (novo) e `apps/backend/test/scheduling.e2e-spec.ts` (só o que tocar o repositório vazio). **Skills:** `backend-prisma-repository`, `backend-nest-controller`.
 
-- [ ] **e2e primeiro** (`commitments.e2e-spec.ts`), para cada rota da seção 3: caminho feliz; 401; 404 de compromisso de outro usuário; 400 (campo a mais, `userId` no corpo, tipo errado); 422 (regras); **efeito no plano**: um compromisso que cobre o horário de uma etapa faz o `GET /scheduling/plan/day` deixar de ter bloco ali; o "Não vai ter nesse dia" devolve o horário ao plano. Rodar e guardar o **vermelho**.
-- [ ] `PrismaCommitmentRepository` no lugar do `EmptyCommitmentRepository` (apagar o vazio e o comentário da P8), registrado no `SchedulingModule`.
-- [ ] Controller no módulo `scheduling` (`GET :id`, `GET occurrences`) e orquestradores por fluxo (`commitment-create.orchestrator.ts`, `commitment-update.orchestrator.ts`, `commitment-delete.orchestrator.ts`, `commitment-occurrence.orchestrator.ts`), cada um "caso de uso → `regeneratePlan`". DTOs com `class-validator` e Swagger. `*.integration.http` atualizado.
-- [ ] **Pedir ao orquestrador** o registro em `orchestrators.module.ts` (não alterar).
-- [ ] e2e verde; `npm --workspace apps/backend run test:e2e` inteiro verde; lint.
+- [x] **e2e primeiro** (`commitments.e2e-spec.ts`), para cada rota da seção 3: caminho feliz; 401; 404 de compromisso de outro usuário; 400 (campo a mais, `userId` no corpo, tipo errado); 422 (regras); **efeito no plano**: um compromisso que cobre o horário de uma etapa faz o `GET /scheduling/plan/day` deixar de ter bloco ali; o "Não vai ter nesse dia" devolve o horário ao plano. Rodar e guardar o **vermelho**.
+- [x] `PrismaCommitmentRepository` no lugar do `EmptyCommitmentRepository` (apagar o vazio e o comentário da P8), registrado no `SchedulingModule`.
+- [x] Controller no módulo `scheduling` (`GET :id`, `GET occurrences`) e orquestradores por fluxo (`commitment-create.orchestrator.ts`, `commitment-update.orchestrator.ts`, `commitment-delete.orchestrator.ts`, `commitment-occurrence.orchestrator.ts`), cada um "caso de uso → `regeneratePlan`". DTOs com `class-validator` e Swagger. `*.integration.http` atualizado.
+- [x] **Pedir ao orquestrador** o registro em `orchestrators.module.ts` (não alterar).
+- [x] e2e verde; `npm --workspace apps/backend run test:e2e` inteiro verde; lint.
 
 ### B2. Backend de tarefas únicas [PARALELO] (`feat/cp-r-backend-tarefa`, continua o D2)
+> Feito: `16c7281` (compilação) e `cc06f40`. e2e com 27 testes (23 vermelhos → verdes).
 
 **Pastas:** `apps/backend/src/modules/goals/**`, `apps/backend/src/orchestrators/goals-view.*`, `single-task-*.orchestrator.ts` (novos), `goal-delete.orchestrator.ts` (novo) e `apps/backend/test/goals*.e2e-spec.ts`.
 
-- [ ] **e2e primeiro:**
+- [x] **e2e primeiro:**
   - `POST /goals` com `plannedDate` (single → 201 e um bloco a partir do dia; goal → 422);
   - `GET /goals?kind=single` e `?kind=xyz` → 400;
   - `PATCH /goals/:id/done` (single → 200 e os blocos futuros somem; desfazer → voltam; objetivo comum → 422; outro usuário → 404; 401; 400);
   - `DELETE /goals/:id` (200 e os blocos somem; outro usuário → 404; 401).
   - Guardar o **vermelho**.
-- [ ] Prisma repository (`plannedDate`, `delete`), DTOs, controller/orquestradores e recálculo do plano.
-- [ ] **Pedir ao orquestrador** o registro dos orquestradores novos.
-- [ ] e2e verde, `test:e2e` inteiro verde e lint.
+- [x] Prisma repository (`plannedDate`, `delete`), DTOs, controller/orquestradores e recálculo do plano.
+- [x] **Pedir ao orquestrador** o registro dos orquestradores novos.
+- [x] e2e verde, `test:e2e` inteiro verde e lint.
 
-- [ ] **Orquestrador:** registrar os orquestradores em `orchestrators.module.ts` conforme os pedidos de B1 e B2; fazer merge de B1 e B2 na integração; `npm --workspace apps/backend run openapi:export` e commit do `packages/contracts/openapi.json`; conferir os testes HTTP do M1 e do M3 contra o `openapi.json` (rotas, campos e status).
+- [x] **Orquestrador:** registrar os orquestradores em `orchestrators.module.ts` conforme os pedidos de B1 e B2; fazer merge de B1 e B2 na integração; `npm --workspace apps/backend run openapi:export` e commit do `packages/contracts/openapi.json`; conferir os testes HTTP do M1 e do M3 contra o `openapi.json` (rotas, campos e status).
 
 ---
 
 ## Fase 3: integração do mobile, ponta a ponta e visual (orquestrador, simulador iOS)
+> Os 4 ponta a ponta passaram (compromissos_tarefas 54 s, acesso_perfil 27 s, fluxo_principal 47 s, novo_objetivo_ia 30 s), também depois das correções do revisor. O compromisso movido entrou pela API: o seletor de hora do iOS não é girado no teste. Comparações em `docs/mobile/comparacoes/`: m01-hoje-tarefas-unicas, m44, m45, m46b, m47, m48, m49, m52, m52b (seletor de hora) e m53. A 50, a 51 e a 54 ficaram cobertas só pelo ponta a ponta e pelos widget tests.
 
-- [ ] Merge de M1, M2 e M3 na integração (ordem M1 → M2 → M3); `flutter analyze` e `flutter test` depois de cada um; conflito: parar e reportar. Ajustar só testes de integração entre telas (como o "conta de leituras" da rodada anterior), registrando o motivo.
-- [ ] Backend **novo** no ar (build atual). **Não usar um backend antigo** que esteja na porta 4000: conferir com `lsof` e, se houver um processo antigo, pedir ao usuário para encerrar ou usar outra porta com um `env` temporário.
-- [ ] **Teste novo primeiro**, `integration_test/compromissos_tarefas_test.dart` (usuário novo por execução, como o `acesso_perfil_test.dart`):
-  - [ ] cadastro e onboarding com a grade inteira livre;
-  - [ ] criar um objetivo com uma etapa → anotar o horário do bloco de hoje (ou do próximo dia);
-  - [ ] Semana → "+ Compromisso" → "Toda semana" no dia e horário daquele bloco → o aviso "Bate com …" aparece → Salvar → toast "Plano recalculado" → o compromisso aparece na lista e a etapa mudou de horário (conferir no `GET /scheduling/plan/day`);
-  - [ ] tocar no compromisso → "Não vai ter nesse dia" → pílula "Não vai ter" → "Vai ter sim" → some a pílula;
-  - [ ] Editar → "Só nesse dia" → mudar o horário → "Horário alterado" → "Voltar pro horário normal";
-  - [ ] Excluir → "Desse dia em diante" → o compromisso some desse dia e dos seguintes e continua nos anteriores (`GET …/occurrences`);
-  - [ ] compromisso "Só uma vez" pelo botão do dia → aparece só naquele dia → Excluir;
-  - [ ] Tarefas únicas (pela entrada da C9) → "Pagar a conta" 15 min Hoje → grupo Hoje e um bloco hoje no plano → marcar como feita → grupo Feitas e o bloco some → desmarcar → excluir;
-  - [ ] "Sem data" e "Escolher dia" (o dia depois de amanhã) nos grupos certos;
-  - [ ] Objetivos não lista as tarefas únicas (C8).
-- [ ] Rodar o novo e os 3 antigos (`acesso_perfil`, `fluxo_principal` com `db:reset-demo`, `novo_objetivo_ia` com `AI_PROVIDER=rules`). Todos verdes.
-- [ ] **Comparação visual** no simulador com as telas 44–54 (JPEG em `docs/mobile/comparacoes/`, só a rodada atual). Para preencher texto, usar o ponta a ponta ou o modo `sample` (o controle do simulador digitou no campo errado na rodada anterior). Listar as diferenças intencionais (C5, C9) e corrigir as não intencionais com o subagente dono.
-- [ ] Encerrar os processos que esta rodada abriu (`flutter run`, backends extras), com `TaskStop`.
+- [x] Merge de M1, M2 e M3 na integração (ordem M1 → M2 → M3); `flutter analyze` e `flutter test` depois de cada um; conflito: parar e reportar. Ajustar só testes de integração entre telas (como o "conta de leituras" da rodada anterior), registrando o motivo.
+- [x] Backend **novo** no ar (build atual). **Não usar um backend antigo** que esteja na porta 4000: conferir com `lsof` e, se houver um processo antigo, pedir ao usuário para encerrar ou usar outra porta com um `env` temporário.
+- [x] **Teste novo primeiro**, `integration_test/compromissos_tarefas_test.dart` (usuário novo por execução, como o `acesso_perfil_test.dart`):
+  - [x] cadastro e onboarding com a grade inteira livre;
+  - [x] criar um objetivo com uma etapa → anotar o horário do bloco de hoje (ou do próximo dia);
+  - [x] Semana → "+ Compromisso" → "Toda semana" no dia e horário daquele bloco → o aviso "Bate com …" aparece → Salvar → toast "Plano recalculado" → o compromisso aparece na lista e a etapa mudou de horário (conferir no `GET /scheduling/plan/day`);
+  - [x] tocar no compromisso → "Não vai ter nesse dia" → pílula "Não vai ter" → "Vai ter sim" → some a pílula;
+  - [x] Editar → "Só nesse dia" → mudar o horário → "Horário alterado" → "Voltar pro horário normal";
+  - [x] Excluir → "Desse dia em diante" → o compromisso some desse dia e dos seguintes e continua nos anteriores (`GET …/occurrences`);
+  - [x] compromisso "Só uma vez" pelo botão do dia → aparece só naquele dia → Excluir;
+  - [x] Tarefas únicas (pela entrada da C9) → "Pagar a conta" 15 min Hoje → grupo Hoje e um bloco hoje no plano → marcar como feita → grupo Feitas e o bloco some → desmarcar → excluir;
+  - [x] "Sem data" e "Escolher dia" (o dia depois de amanhã) nos grupos certos;
+  - [x] Objetivos não lista as tarefas únicas (C8).
+- [x] Rodar o novo e os 3 antigos (`acesso_perfil`, `fluxo_principal` com `db:reset-demo`, `novo_objetivo_ia` com `AI_PROVIDER=rules`). Todos verdes.
+- [x] **Comparação visual** no simulador com as telas 44–54 (JPEG em `docs/mobile/comparacoes/`, só a rodada atual). Para preencher texto, usar o ponta a ponta ou o modo `sample` (o controle do simulador digitou no campo errado na rodada anterior). Listar as diferenças intencionais (C5, C9) e corrigir as não intencionais com o subagente dono.
+- [x] Encerrar os processos que esta rodada abriu (`flutter run`, backends extras), com `TaskStop`.
 
 ---
 
 ## Fase 4: verificação completa + revisor
+> Verde: build e lint 9/9, domínio com 100%, e2e 244/244 em 99 s, `flutter analyze` sem problemas e 824 testes no mobile; cobertura de 99,5% nas linhas novas do mobile. Revisor: nenhum bloqueante; os itens 1, 2, 3 e 6 foram corrigidos (orquestrador, M1, M3) e os 4, 5, 7, 8 e 9 foram para o `afazeres.md`.
 
-- [ ] Trazer a `developer` mais recente para a integração (conflito: parar e reportar).
-- [ ] Verificação completa, com a máquina livre (sem simulador nem backends extras):
-  - [ ] `npm run build`
-  - [ ] `npx turbo run lint`
-  - [ ] `npm run test --workspaces --if-present` (100% no domínio)
-  - [ ] `npm --workspace apps/backend run test:e2e` (se falhar só por estouro de tempo de 5 s, confirmar com a suíte sozinha e repetir com a máquina livre antes de concluir qualquer coisa)
-  - [ ] `cd apps/mobile && flutter analyze` e `flutter test`
-  - [ ] ponta a ponta da Fase 3 (já verdes)
-  - [ ] grep de framework no domínio
-- [ ] Cobertura de linhas dos arquivos novos ou alterados do mobile (`coverage/lcov.info`, só os arquivos do diff), para o relatório.
-- [ ] **REVISOR** (subagente que não escreveu código; só aponta):
+- [x] Trazer a `developer` mais recente para a integração (conflito: parar e reportar).
+- [x] Verificação completa, com a máquina livre (sem simulador nem backends extras):
+  - [x] `npm run build`
+  - [x] `npx turbo run lint`
+  - [x] `npm run test --workspaces --if-present` (100% no domínio)
+  - [x] `npm --workspace apps/backend run test:e2e` (se falhar só por estouro de tempo de 5 s, confirmar com a suíte sozinha e repetir com a máquina livre antes de concluir qualquer coisa)
+  - [x] `cd apps/mobile && flutter analyze` e `flutter test`
+  - [x] ponta a ponta da Fase 3 (já verdes)
+  - [x] grep de framework no domínio
+- [x] Cobertura de linhas dos arquivos novos ou alterados do mobile (`coverage/lcov.info`, só os arquivos do diff), para o relatório.
+- [x] **REVISOR** (subagente que não escreveu código; só aponta):
   - as regras;
   - as decisões MC1–MC14 cumpridas;
   - o contrato da seção 3 contra o código e o `openapi.json`;
@@ -562,7 +571,7 @@ Regras comuns:
   - recálculo do plano em toda mutação;
   - bugs (estado `busy`, `dispose`, `context` depois de `await`, edição sem carregar, como o bloqueante da rodada anterior);
   - os textos do design.
-- [ ] Bloqueante → corrigido pelo autor original (SendMessage); não bloqueante → `afazeres.md`. Repetir a verificação depois das correções.
+- [x] Bloqueante → corrigido pelo autor original (SendMessage); não bloqueante → `afazeres.md`. Repetir a verificação depois das correções.
 
 ---
 

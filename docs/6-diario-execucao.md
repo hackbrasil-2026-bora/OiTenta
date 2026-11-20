@@ -250,4 +250,9 @@ Pedido: fazer o backend usar o Ollama local no rascunho do objetivo, com autoriz
 - Plano: `plano-mobile-compromissos-tarefas-unicas.md`, decisões MC1–MC14 (`docs/2-decisoes-mvp.md`); o usuário escolheu as recomendadas, menos C6 (compromissos também no Hoje) e C14 (ícone `plant`).
 - Branch `feat/compromissos-tarefas-unicas`, criada da `developer` (sem mudanças no remoto). Linha de base verde (582 testes no mobile; e2e 139/139).
 - Modelagem §8 e contrato §5b e §3 (tarefas únicas) fixados antes do paralelo. O `done` numérico do `GET /goals` foi mantido; a tarefa feita é `status: done`.
+- Fase 1 em paralelo (D1, D2, M1, M2, M3), Fase 2 com B1 e B2 em paralelo (o B2 destravou a compilação que o domínio de tarefas quebrou de propósito). Prisma: `commitments`, `commitment_exceptions` (cascata) e `goals.planned_date`, só acréscimos. O `reset-demo` passou a apagar os compromissos do demo.
+- Lacuna do contrato achada pelo M2 e fechada sem nova decisão (era o design aprovado): `recurrence: null` no `PATCH` transforma a série em compromisso único.
+- B1 e B2 foram autorizados a acrescentar entradas no `orchestrators.module.ts` (desvio pequeno da regra 8, para não travar o e2e); não houve conflito.
+- Ponta a ponta novo (`compromissos_tarefas_test.dart`) verde na primeira execução; os 3 antigos continuam verdes.
+- Revisor: nenhum bloqueante; 4 correções feitas antes do merge (inclusive "Preencher à mão" mandando prazo em vez de `plannedDate`, contra a MC7) e 5 itens no `afazeres.md`.
 
