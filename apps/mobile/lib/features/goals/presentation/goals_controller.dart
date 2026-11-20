@@ -37,7 +37,8 @@ class GoalsController extends ChangeNotifier {
     notifyListeners();
     try {
       _goals = (await _repo.listGoals())
-          .where((g) => g.status == 'active')
+          // MC8: tarefas únicas ficam só na tela Tarefas únicas.
+          .where((g) => g.status == 'active' && g.kind == 'goal')
           .toList();
     } catch (_) {
       error = 'Não deu pra carregar seus objetivos.';

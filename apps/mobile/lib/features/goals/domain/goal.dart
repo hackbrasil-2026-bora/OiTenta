@@ -1,6 +1,6 @@
 import '../../scheduling/domain/plan.dart';
 
-/// Item de `GET /goals`: `{id, title, deadline, colorIndex, progressPct, done, total, status, slackDays}`.
+/// Item de `GET /goals`: `{id, title, deadline, colorIndex, progressPct, done, total, status, slackDays, kind}`.
 class GoalSummary {
   const GoalSummary({
     required this.id,
@@ -12,6 +12,7 @@ class GoalSummary {
     required this.total,
     required this.status,
     required this.slackDays,
+    this.kind = 'goal',
   });
 
   final String id;
@@ -30,6 +31,9 @@ class GoalSummary {
   /// Folga no plano atual; `null` quando não há prazo.
   final int? slackDays;
 
+  /// `'goal' | 'single'` (MC8); `goal` quando o backend não manda.
+  final String kind;
+
   factory GoalSummary.fromJson(Map<String, dynamic> json) => GoalSummary(
     id: json['id'] as String,
     title: json['title'] as String,
@@ -40,6 +44,7 @@ class GoalSummary {
     total: json['total'] as int,
     status: json['status'] as String,
     slackDays: json['slackDays'] as int?,
+    kind: json['kind'] as String? ?? 'goal',
   );
 }
 

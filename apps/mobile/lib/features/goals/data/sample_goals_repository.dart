@@ -58,6 +58,7 @@ class SampleGoalsRepository implements GoalsRepository {
         'total': g.steps.length,
         'status': 'active',
         'slackDays': g.slackDays,
+        'kind': g.kind,
       }),
   ];
 
@@ -123,6 +124,7 @@ class SampleGoalsRepository implements GoalsRepository {
       deadline: goal.deadline,
       colorIndex: _goals.length % 4 + 1,
       slackDays: null,
+      kind: goal.kind,
       steps: [
         for (final s in goal.steps)
           _StoredStep(
@@ -160,6 +162,7 @@ class _StoredGoal {
     required this.colorIndex,
     required this.slackDays,
     required this.steps,
+    this.kind = 'goal',
   });
 
   final String id;
@@ -168,6 +171,9 @@ class _StoredGoal {
   final int colorIndex;
   final int? slackDays;
   final List<_StoredStep> steps;
+
+  /// `'goal' | 'single'` (MC8).
+  final String kind;
 
   int get done => steps.where((s) => s.progressPct == 100).length;
 
