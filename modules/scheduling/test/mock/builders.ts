@@ -1,5 +1,7 @@
 import {
   AvailabilityWindow,
+  Commitment,
+  CommitmentState,
   ScheduledBlock,
   ScheduledBlockState,
   WeeklyAvailability,
@@ -32,4 +34,24 @@ export function makeBlock(overrides: Partial<ScheduledBlockState> = {}): Schedul
     origin: "auto",
     ...overrides,
   });
+}
+
+/** Compromisso recorrente padrão: "Aula de violão", toda terça, 19:00–20:00, desde 04/11/2025. */
+export function makeCommitmentState(overrides: Partial<CommitmentState> = {}): CommitmentState {
+  return {
+    userId: USER_A,
+    title: "Aula de violão",
+    category: "pessoal",
+    kind: "commitment",
+    startDate: "2025-11-04",
+    startMinute: 19 * 60,
+    endMinute: 20 * 60,
+    recurrence: { weekdays: [1] },
+    exceptions: [],
+    ...overrides,
+  };
+}
+
+export function makeCommitment(overrides: Partial<CommitmentState> = {}): Commitment {
+  return new Commitment(makeCommitmentState(overrides));
 }
