@@ -66,7 +66,10 @@ export interface CommitmentState extends EntityState {
   exceptions: CommitmentException[];
 }
 
-/** Campos que a edição da série ("todas" ou "desse dia em diante") pode trocar. */
+/**
+ * Campos que a edição da série ("todas" ou "desse dia em diante") pode trocar.
+ * `undefined` = mantém; em `recurrence`, `null` = vira compromisso único.
+ */
 export type CommitmentChanges = Partial<
   Pick<
     CommitmentState,

@@ -62,6 +62,40 @@ describe("SplitCommitmentFrom", () => {
     expect(next.recurrence).toEqual({ weekdays: [2] });
   });
 
+  test("recurrence null: a nova vira unica em fromDate e as excecoes que deixaram de ser ocorrencia sao descartadas", async () => {
+    const series = makeSeries();
+    const repository = new FakeCommitmentRepository([series]);
+
+    const { commitment: next } = await new SplitCommitmentFrom(repository).execute({
+      userId: USER_A,
+      commitmentId: series.id,
+      fromDate: "2025-11-17",
+      recurrence: null,
+    });
+
+    expect(next.recurrence).toBeNull();
+    expect(next.startDate).toBe("2025-11-17");
+    expect(next.exceptions).toEqual([]);
+    expect((await repository.findById(USER_A, series.id))?.recurrence?.endDate).toBe(
+      "2025-11-16",
+    );
+  });
+
+  test("recurrence ausente: a nova mantem a recorrencia da serie", async () => {
+    const series = makeSeries();
+    const repository = new FakeCommitmentRepository([series]);
+
+    const { commitment: next } = await new SplitCommitmentFrom(repository).execute({
+      userId: USER_A,
+      commitmentId: series.id,
+      fromDate: "2025-11-17",
+      title: "Violão",
+    });
+
+    expect(next.recurrence).toEqual({ weekdays: [0, 2] });
+    expect(next.exceptions).toEqual([{ date: "2025-11-19", type: "cancelled" }]);
+  });
+
   test("cenario 5: se a anterior fica sem ocorrencia, ela e apagada", async () => {
     const series = makeSeries();
     const repository = new FakeCommitmentRepository([series]);

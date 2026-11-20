@@ -57,6 +57,45 @@ describe("UpdateCommitment", () => {
     expect(output.commitment.exceptions).toEqual([]);
   });
 
+  test("recurrence null + startDate 11/11: o semanal vira unico em 11/11 e as excecoes que deixaram de ser ocorrencia sao descartadas", async () => {
+    const commitment = makeCommitment({
+      exceptions: [
+        { date: "2025-11-18", type: "cancelled" },
+        { date: "2025-11-25", type: "cancelled" },
+      ],
+    });
+    const repository = new FakeCommitmentRepository([commitment]);
+
+    const output = await new UpdateCommitment(repository).execute({
+      userId: USER_A,
+      commitmentId: commitment.id,
+      startDate: "2025-11-11",
+      recurrence: null,
+    });
+
+    expect(output.commitment.recurrence).toBeNull();
+    expect(output.commitment.startDate).toBe("2025-11-11");
+    expect(output.commitment.exceptions).toEqual([]);
+    expect(await repository.findById(USER_A, commitment.id)).toBe(output.commitment);
+  });
+
+  test("recurrence ausente: a recorrencia e as excecoes nao mudam", async () => {
+    const commitment = makeCommitment({
+      recurrence: { weekdays: [1], endDate: "2025-12-16" },
+      exceptions: [{ date: "2025-11-18", type: "cancelled" }],
+    });
+    const repository = new FakeCommitmentRepository([commitment]);
+
+    const output = await new UpdateCommitment(repository).execute({
+      userId: USER_A,
+      commitmentId: commitment.id,
+      title: "Violão",
+    });
+
+    expect(output.commitment.recurrence).toEqual({ weekdays: [1], endDate: "2025-12-16" });
+    expect(output.commitment.exceptions).toEqual([{ date: "2025-11-18", type: "cancelled" }]);
+  });
+
   test("dados invalidos -> ValidationException e nao grava", async () => {
     const commitment = makeCommitment();
     const repository = new FakeCommitmentRepository([commitment]);

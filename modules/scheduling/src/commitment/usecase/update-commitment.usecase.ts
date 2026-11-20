@@ -11,6 +11,7 @@ export interface UpdateCommitmentIn {
   startDate?: string;
   startMinute?: number;
   endMinute?: number;
+  /** Ausente = mantém; `null` = vira compromisso único (na data de início); objeto = nova recorrência. */
   recurrence?: CommitmentRecurrence | null;
 }
 
