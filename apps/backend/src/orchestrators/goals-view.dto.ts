@@ -12,6 +12,7 @@ import type { NextBlockView } from '@oitenta/scheduling';
 import { Type } from 'class-transformer';
 import {
   IsArray,
+  IsBoolean,
   IsIn,
   IsInt,
   IsOptional,
@@ -76,6 +77,19 @@ export class CreateGoalBody implements Omit<CreateGoalIn, 'userId'> {
     message: 'deadline deve estar no formato YYYY-MM-DD',
   })
   deadline?: string | null;
+
+  @ApiPropertyOptional({
+    type: String,
+    nullable: true,
+    example: '2026-11-21',
+    description:
+      'Data local YYYY-MM-DD a partir da qual a tarefa única entra no plano (MC7); só com kind "single" (com "goal" → 422). null ou ausente: "Sem data".',
+  })
+  @IsOptional()
+  @Matches(/^\d{4}-\d{2}-\d{2}$/, {
+    message: 'plannedDate deve estar no formato YYYY-MM-DD',
+  })
+  plannedDate?: string | null;
 
   @ApiProperty({ enum: ['goal', 'single'] })
   @IsIn(['goal', 'single'])
@@ -177,6 +191,17 @@ export class GoalListItemResponse implements GoalListItemView {
   createdAt!: Date;
 }
 
+export class GoalListQuery {
+  @ApiPropertyOptional({
+    enum: ['goal', 'single'],
+    description:
+      'Filtro por tipo (MC8): "goal" para Objetivos, "single" para Tarefas únicas; ausente devolve os dois.',
+  })
+  @IsOptional()
+  @IsIn(['goal', 'single'])
+  kind?: GoalKind;
+}
+
 export class GoalListResponse {
   @ApiProperty({ type: [GoalListItemResponse] })
   goals!: GoalListItemResponse[];
@@ -220,4 +245,27 @@ export class GoalDetailResponse implements GoalDetailView {
 
   @ApiProperty({ example: 2 })
   total!: number;
+}
+
+export class SingleTaskDoneBody {
+  @ApiProperty({
+    example: true,
+    description:
+      'true: a etapa vai a 100% e o status a "done"; false: volta a 0% e "active" (MC10).',
+  })
+  @IsBoolean()
+  done!: boolean;
+}
+
+export class SingleTaskDoneResponse {
+  @ApiProperty({ type: GoalViewResponse })
+  goal!: GoalViewResponse;
+
+  @ApiProperty({ type: PlanResponse })
+  plan!: PlanResponse;
+}
+
+export class GoalDeleteResponse {
+  @ApiProperty({ type: PlanResponse })
+  plan!: PlanResponse;
 }
