@@ -1,5 +1,7 @@
 import 'package:flutter_test/flutter_test.dart';
+import 'package:oitenta/features/goals/data/goals_repository.dart';
 import 'package:oitenta/features/goals/data/sample_goals_repository.dart';
+import 'package:oitenta/features/goals/domain/goal.dart';
 import 'package:oitenta/features/goals/presentation/manual_task_controller.dart';
 
 void main() {
@@ -39,4 +41,37 @@ void main() {
     final d = await repo.getGoal(list.last.id);
     expect(d.steps.single.estimatedMinutes, 90);
   });
+
+  test('a data escolhida vai como plannedDate, sem prazo (MC7, MC8)', () async {
+    final spy = _SpyGoals();
+    final m = ManualTaskController(spy);
+    m.setTitle('Pagar a conta');
+    m.chooseDuration('15 min');
+    m.setDeadline(DateTime(2025, 11, 20));
+    await m.save();
+    final body = spy.sent!.toJson();
+    expect(body['deadline'], isNull);
+    expect(body['plannedDate'], '2025-11-20');
+    expect(body['kind'], 'single');
+  });
+
+  test('sem data: plannedDate nulo (vai pra "Sem data")', () async {
+    final spy = _SpyGoals();
+    final m = ManualTaskController(spy);
+    m.setTitle('Comprar presente');
+    await m.save();
+    final body = spy.sent!.toJson();
+    expect(body['deadline'], isNull);
+    expect(body['plannedDate'], isNull);
+  });
+}
+
+class _SpyGoals extends SampleGoalsRepository implements GoalsRepository {
+  NewGoal? sent;
+
+  @override
+  Future<CreateGoalResult> createGoal(NewGoal goal) {
+    sent = goal;
+    return super.createGoal(goal);
+  }
 }

@@ -194,10 +194,15 @@ class NewGoal {
     required this.kind,
     required this.steps,
     this.source,
+    this.plannedDate,
   });
 
   final String title;
   final String? deadline;
+
+  /// Dia planejado da tarefa única (`kind: 'single'`, MC7): o motor não
+  /// encaixa antes dele. Vai no corpo só quando for `single`.
+  final String? plannedDate;
 
   /// `'goal' | 'single'`.
   final String kind;
@@ -212,6 +217,7 @@ class NewGoal {
     'deadline': deadline,
     'kind': kind,
     if (source != null) 'source': source,
+    if (kind == 'single') 'plannedDate': plannedDate,
     'steps': steps
         .map((s) => s.toJson(withAiEstimate: source == 'ai'))
         .toList(),
