@@ -16,6 +16,7 @@ export async function toPlanGoals(
       return {
         goalId: goal.id,
         deadline: goal.deadline,
+        plannedDate: goal.plannedDate,
         createdAt: goal.createdAt,
         steps: steps.map((step) => ({
           stepId: step.id,
