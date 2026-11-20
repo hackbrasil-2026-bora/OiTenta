@@ -110,10 +110,23 @@ class TodayController extends ChangeNotifier {
       const [];
   final Set<String> _checked = {};
 
+  bool _disposed = false;
+
+  @override
+  void dispose() {
+    _disposed = true;
+    super.dispose();
+  }
+
+  /// Não avisa depois do `dispose` (a tela pode sair durante um `await`).
+  void _notify() {
+    if (!_disposed) notifyListeners();
+  }
+
   Future<void> load() async {
     loading = true;
     error = null;
-    notifyListeners();
+    _notify();
     try {
       final date = BoraFormat.dateKey(_clock.now());
       gamification = await _gamification.getSnapshot();
@@ -135,7 +148,7 @@ class TodayController extends ChangeNotifier {
     }
     await _loadCommitments();
     loading = false;
-    notifyListeners();
+    _notify();
   }
 
   Future<void> _loadCommitments() async {
@@ -260,6 +273,6 @@ class TodayController extends ChangeNotifier {
   /// Marcar tarefa leve: só visual nesta fase (UC13 fora do contrato).
   void toggleLightTask(String id) {
     if (!_checked.remove(id)) _checked.add(id);
-    notifyListeners();
+    _notify();
   }
 }

@@ -1,3 +1,5 @@
+import 'dart:async';
+
 import 'package:flutter_test/flutter_test.dart';
 import 'package:go_router/go_router.dart';
 import 'package:oitenta/core/clock/clock.dart';
@@ -28,12 +30,16 @@ class _Commitments extends SampleCommitmentsRepository {
 
   bool failMutation = false;
 
+  /// Segura a resposta da mutação até o teste completar.
+  Completer<void>? hold;
+
   @override
   Future<Commitment> setOccurrence(
     String id,
     String date,
     OccurrenceChange change,
-  ) {
+  ) async {
+    if (hold != null) await hold!.future;
     if (failMutation) throw StateError('fora do ar');
     return super.setOccurrence(id, date, change);
   }
@@ -305,5 +311,24 @@ void main() {
     );
     expect(find.text('Editar'), findsOneWidget);
     expect(find.text('Horário liberado'), findsNothing);
+  });
+
+  testWidgets('fechar o sheet durante a ação: a Semana recarrega quando a '
+      'ação termina', (tester) async {
+    await openFriday(tester);
+    await tester.tap(find.bySemanticsLabel('Opções de Estágio na Lumen Tech'));
+    await tester.pumpAndSettle();
+    commitments.hold = Completer<void>();
+    await tester.tap(find.text('Não vai ter nesse dia'));
+    await tester.pump();
+    // Arrasta/toca fora: o sheet fecha com a chamada ainda em andamento.
+    await tester.tapAt(const Offset(400, 20));
+    await tester.pumpAndSettle();
+    expect(find.text('Editar'), findsNothing);
+    final before = commitments.reads;
+    commitments.hold!.complete();
+    await tester.pumpAndSettle();
+    expect(commitments.reads, greaterThan(before));
+    expect(find.text('Não vai ter'), findsNWidgets(2));
   });
 }

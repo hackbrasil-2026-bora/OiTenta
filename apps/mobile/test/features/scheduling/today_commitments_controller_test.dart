@@ -1,3 +1,5 @@
+import 'dart:async';
+
 import 'package:flutter_test/flutter_test.dart';
 import 'package:oitenta/core/clock/clock.dart';
 import 'package:oitenta/features/auth/data/session_store.dart';
@@ -131,4 +133,33 @@ void main() {
     await c.load();
     expect(c.commitmentsError, isNull);
   });
+
+  test('descartado no meio do load: não avisa ninguém', () async {
+    final slow = _SlowCommitments();
+    final c = TodayController(
+      scheduling,
+      SampleGoalsRepository(),
+      SampleGamificationRepository(),
+      SessionStore(),
+      FixedClock(DateTime(2025, 11, 11, 9, 41)),
+      commitments: slow,
+    );
+    final loading = c.load();
+    c.dispose();
+    slow.hold.complete();
+    await loading;
+  });
+}
+
+class _SlowCommitments extends SampleCommitmentsRepository {
+  final hold = Completer<void>();
+
+  @override
+  Future<List<CommitmentOccurrence>> listOccurrences(
+    String from,
+    String to,
+  ) async {
+    await hold.future;
+    return super.listOccurrences(from, to);
+  }
 }
