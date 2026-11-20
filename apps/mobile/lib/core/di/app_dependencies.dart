@@ -12,13 +12,19 @@ import '../../features/gamification/data/gamification_repository.dart';
 import '../../features/gamification/data/sample_gamification_repository.dart';
 import '../../features/goals/data/goal_assistant_repository.dart';
 import '../../features/goals/data/goals_repository.dart';
+import '../../features/goals/data/http_single_tasks_repository.dart';
+import '../../features/goals/data/sample_single_tasks_repository.dart';
+import '../../features/goals/data/single_tasks_repository.dart';
 import '../../features/goals/data/http_goal_assistant_repository.dart';
 import '../../features/goals/data/http_goals_repository.dart';
 import '../../features/goals/data/sample_goal_assistant_repository.dart';
 import '../../features/goals/data/sample_goals_repository.dart';
 import '../../features/profile/data/feedback_repository.dart';
 import '../../features/profile/data/sample_feedback_repository.dart';
+import '../../features/scheduling/data/commitments_repository.dart';
+import '../../features/scheduling/data/http_commitments_repository.dart';
 import '../../features/scheduling/data/http_scheduling_repository.dart';
+import '../../features/scheduling/data/sample_commitments_repository.dart';
 import '../../features/scheduling/data/sample_scheduling_repository.dart';
 import '../../features/scheduling/data/scheduling_repository.dart';
 import '../clock/clock.dart';
@@ -42,8 +48,12 @@ class AppDependencies {
     RampSession? rampSession,
     ThemeController? theme,
     FeedbackRepository? feedback,
+    CommitmentsRepository? commitments,
+    SingleTasksRepository? singleTasks,
     this.showDemo = true,
-  }) : theme = theme ?? ThemeController(),
+  }) : commitments = commitments ?? SampleCommitmentsRepository(),
+       singleTasks = singleTasks ?? SampleSingleTasksRepository(),
+       theme = theme ?? ThemeController(),
        feedback = feedback ?? SampleFeedbackRepository(),
        goalAssistant =
            goalAssistant ?? SampleGoalAssistantRepository(clock: clock),
@@ -103,6 +113,8 @@ class AppDependencies {
       goalAssistant: HttpGoalAssistantRepository(api),
       session: session,
       showDemo: showDemo,
+      commitments: HttpCommitmentsRepository(api),
+      singleTasks: HttpSingleTasksRepository(api),
     );
   }
 
@@ -125,6 +137,12 @@ class AppDependencies {
 
   /// Sugestões do Perfil (M29): só exemplo nos dois modos (MP9).
   final FeedbackRepository feedback;
+
+  /// Compromissos da Semana e do Hoje (§5b, MC1–MC6).
+  final CommitmentsRepository commitments;
+
+  /// Tarefas únicas (MC7–MC11).
+  final SingleTasksRepository singleTasks;
 
   /// Mostra o botão de demo no login (MP5, `SHOW_DEMO`).
   final bool showDemo;

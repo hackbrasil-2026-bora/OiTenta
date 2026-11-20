@@ -25,4 +25,11 @@ class AppConfig {
   /// Mostra "Entrar direto como Arthur (demo)" no login (MP5): `true` em
   /// `local-*` e `developer`, `false` em `prod`.
   static const bool showDemo = bool.fromEnvironment('SHOW_DEMO');
+
+  /// Último dia do semestre, usado no "Fim do semestre" do formulário de
+  /// compromisso (MC3). Atualizar a cada semestre.
+  static const String semesterEnd = String.fromEnvironment(
+    'SEMESTER_END',
+    defaultValue: '2026-12-12',
+  );
 }

@@ -18,6 +18,15 @@ class AppRoutes {
   static const week = '/semana';
   static const garden = '/jardim';
 
+  /// Novo compromisso (M46/M47), aberto pelo "+ Compromisso" da Semana.
+  static const commitmentNew = '/semana/compromisso';
+
+  /// Editar compromisso (M46, M52): `/semana/compromisso/<id>`.
+  static String commitmentEdit(String id) => '$commitmentNew/$id';
+
+  /// Tarefas únicas (M53–M54), pelo botão do Hoje (MC9).
+  static const singleTasks = '/tarefas';
+
   /// Recuperação de senha (M36): placeholder pela MP4.
   static const forgotPassword = '/entrar/esqueci';
 

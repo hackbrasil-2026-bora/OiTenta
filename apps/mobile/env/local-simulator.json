@@ -2,5 +2,6 @@
   "ENV_NAME": "local-simulator",
   "API_URL": "http://localhost:4000",
   "DATA_SOURCE": "http",
-  "SHOW_DEMO": true
+  "SHOW_DEMO": true,
+  "SEMESTER_END": "2026-12-12"
 }

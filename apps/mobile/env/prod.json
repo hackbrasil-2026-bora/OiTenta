@@ -2,5 +2,6 @@
   "ENV_NAME": "prod",
   "API_URL": "https://DEFINIR-NA-SEXTA-prod.example.com",
   "DATA_SOURCE": "http",
-  "SHOW_DEMO": false
+  "SHOW_DEMO": false,
+  "SEMESTER_END": "2026-12-12"
 }
