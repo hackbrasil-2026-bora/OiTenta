@@ -345,6 +345,9 @@ Controller `scheduling` para as leituras; as mutações passam por orquestradore
 | `DELETE /scheduling/commitments/:id/occurrences/:date` | — | 200 `{ commitment, plan }` | 401, 404 (série inexistente ou sem exceção na data) | `ClearOccurrenceException` → `GeneratePlan` |
 
 - Horários em minutos desde 00:00, múltiplos de 5 (MC2); `endMinute > startMinute`, sem cruzar a meia-noite; `title` 2–80; a ocupação no plano usa o fuso do usuário.
+- **`recurrence` no `PATCH` (20/11/2026):** ausente = mantém; `null` = vira compromisso único na `startDate` (em `following`, no `fromDate`); objeto = nova recorrência. As exceções que deixam de ser ocorrências são descartadas (também no `following`).
+- **Intervalo das ocorrências:** no máximo 62 dias contando as duas pontas (`from=01/11`, `to=01/01` passa; `to=02/01` → 422 `occurrences.range`).
+- **Códigos de 422 além dos da modelagem §8.1:** `commitment.endMinute.after.start`, `commitment.exceptions.{newDate,startMinute,endMinute}.not.allowed` (em `cancelled`), `commitment.exceptions.endMinute.after.start`, `commitment.fromDate.local.date`, `occurrences.from|to.required|local.date`. 404 do `DELETE …/occurrences/:date` sem exceção: "Exceção não encontrada nesta data."
 - Ações do app: "Não vai ter nesse dia" e "Excluir só nesse dia" = `PUT …/occurrences/:date {cancelled}`; "Editar só nesse dia" = `{moved}`; "Vai ter sim" e "Voltar pro horário normal" = `DELETE …/occurrences/:date`; "Desse dia em diante" = `PATCH`/`DELETE` com `scope=following`.
 - **Telas:** mobile M44–M52 (Semana, sheet, formulário) e o Hoje (MC6). Web: sem tela nesta fase (os compromissos já ocupam o plano do web).
 
