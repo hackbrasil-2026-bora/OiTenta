@@ -4,8 +4,11 @@ import '../../../core/clock/clock.dart';
 import '../../../core/format/bora_format.dart';
 import '../../goals/data/goals_repository.dart';
 import '../../goals/domain/goal.dart';
+import '../data/commitments_repository.dart';
 import '../data/scheduling_repository.dart';
+import '../domain/commitment.dart';
 import '../domain/plan.dart';
+import 'commitment_occurrence_view.dart';
 
 /// Os dois calendários (M03/M19 e M21): Execução mostra os blocos das etapas;
 /// Prazos mostra só o objetivo inteiro, na data do prazo final.
@@ -90,6 +93,22 @@ class DeadlineView {
   final String progressLabel;
 }
 
+/// Item da lista do dia (Execução): uma etapa ou um compromisso.
+class WeekDayItem {
+  const WeekDayItem.block(WeekBlockView this.block, {required this.time})
+    : commitment = null;
+
+  WeekDayItem.commitment(CommitmentOccurrenceView this.commitment)
+    : block = null,
+      time = commitment.time;
+
+  final String time;
+  final WeekBlockView? block;
+  final CommitmentOccurrenceView? commitment;
+
+  bool get isCommitment => commitment != null;
+}
+
 class LegendItem {
   const LegendItem({required this.colorIndex, required this.title});
 
@@ -103,8 +122,13 @@ class LegendItem {
 /// O mês é montado com as semanas que o cobrem (`GET /scheduling/plan/week`,
 /// uma por segunda-feira); os prazos vêm de `GET /goals`.
 class WeekController extends ChangeNotifier {
-  WeekController(this._repo, this._clock, {GoalsRepository? goals})
-    : _goalsRepo = goals;
+  WeekController(
+    this._repo,
+    this._clock, {
+    GoalsRepository? goals,
+    CommitmentsRepository? commitments,
+  }) : _goalsRepo = goals,
+       _commitmentsRepo = commitments;
 
   final SchedulingRepository _repo;
   final Clock _clock;
@@ -112,16 +136,25 @@ class WeekController extends ChangeNotifier {
   /// Sem ele, Prazos fica vazio.
   final GoalsRepository? _goalsRepo;
 
+  /// Sem ele, a lista do dia mostra só as etapas.
+  final CommitmentsRepository? _commitmentsRepo;
+
   /// Objetivo `done` com prazo continua em Prazos (com 100%). [DECIDIR]: o
   /// protótipo não diz; trocar aqui se a decisão for escondê-los.
   static const showDoneGoalsInDeadlines = true;
 
   bool loading = true;
   String? error;
+
+  /// Erro só dos compromissos: as etapas continuam na tela.
+  String? commitmentsError;
   bool expanded = false;
   CalendarMode mode = CalendarMode.execution;
 
   final Map<String, WeekPlan> _weeks = {};
+
+  /// Ocorrências por segunda-feira (`GET …/occurrences?from&to`).
+  final Map<String, List<CommitmentOccurrence>> _occurrences = {};
   List<GoalSummary>? _goals;
   late DateTime _selected;
 
@@ -152,6 +185,42 @@ class WeekController extends ChangeNotifier {
     for (var i = 0; i < missing.length; i++) {
       _weeks[missing[i]] = plans[i];
     }
+    await _ensureOccurrences(mondays);
+  }
+
+  /// Compromissos das semanas que faltam; o erro fica só em
+  /// [commitmentsError].
+  Future<void> _ensureOccurrences(List<DateTime> mondays) async {
+    final repo = _commitmentsRepo;
+    if (repo == null) return;
+    final missing = [
+      for (final m in mondays)
+        if (!_occurrences.containsKey(BoraFormat.dateKey(m))) m,
+    ];
+    try {
+      final lists = await Future.wait([
+        for (final m in missing)
+          repo.listOccurrences(
+            BoraFormat.dateKey(m),
+            BoraFormat.dateKey(DateTime(m.year, m.month, m.day + 6)),
+          ),
+      ]);
+      for (var i = 0; i < missing.length; i++) {
+        _occurrences[BoraFormat.dateKey(missing[i])] = lists[i];
+      }
+      commitmentsError = null;
+    } catch (_) {
+      commitmentsError = 'Não deu pra carregar os compromissos.';
+    }
+  }
+
+  /// Depois de criar, editar ou excluir um compromisso: o backend recalcula
+  /// o plano, então busca de novo as semanas visíveis e os compromissos.
+  Future<void> reload() async {
+    final mondays = expanded ? _monthMondays : [_monday];
+    _weeks.clear();
+    _occurrences.clear();
+    await _guard(() => _ensureWeeks(mondays), expanded ? 'o mês' : 'a semana');
   }
 
   // --- Período visível ------------------------------------------------------
@@ -159,6 +228,9 @@ class WeekController extends ChangeNotifier {
   DateTime get _monday => BoraFormat.mondayOf(_selected);
 
   DateTime get selectedDate => _selected;
+
+  /// `YYYY-MM-DD` do dia escolhido ("+ Compromisso").
+  String get selectedDateKey => BoraFormat.dateKey(_selected);
 
   /// Posição do dia escolhido na semana visível (0 = segunda).
   int get selectedIndex => _selected.weekday - 1;
@@ -312,6 +384,45 @@ class WeekController extends ChangeNotifier {
                   : null,
             ),
         ];
+
+  List<CommitmentOccurrence> _occurrencesOn(DateTime d) {
+    final key = BoraFormat.dateKey(d);
+    return [
+      for (final o
+          in _occurrences[BoraFormat.dateKey(BoraFormat.mondayOf(d))] ??
+              const <CommitmentOccurrence>[])
+        if (o.date == key) o,
+    ];
+  }
+
+  /// Lista do dia em Execução: etapas e compromissos pela hora de início
+  /// (`dayList` do protótipo; no empate, a etapa vem antes).
+  List<WeekDayItem> get dayItems {
+    if (mode != CalendarMode.execution) return const [];
+    final blocks = _blocksOn(_selected);
+    final views = dayBlocks;
+    final keyed = <(int, int, WeekDayItem)>[
+      for (var i = 0; i < blocks.length; i++)
+        () {
+          final l = blocks[i].start.toLocal();
+          return (
+            l.hour * 60 + l.minute,
+            i,
+            WeekDayItem.block(views[i], time: views[i].time),
+          );
+        }(),
+      for (final (j, o) in _occurrencesOn(_selected).indexed)
+        (
+          o.startMinute,
+          blocks.length + j,
+          WeekDayItem.commitment(CommitmentOccurrenceView(o)),
+        ),
+    ];
+    keyed.sort(
+      (a, b) => a.$1 != b.$1 ? a.$1.compareTo(b.$1) : a.$2.compareTo(b.$2),
+    );
+    return [for (final k in keyed) k.$3];
+  }
 
   /// Entregas finais no dia escolhido (só em Prazos).
   List<DeadlineView> get dayDeadlines => mode != CalendarMode.deadlines

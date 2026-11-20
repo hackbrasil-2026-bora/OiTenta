@@ -6,6 +6,8 @@ import '../../../core/theme/bora_text.dart';
 import '../../../core/widgets/bora_scaffold.dart';
 import '../../../core/widgets/bora_widgets.dart';
 import '../../gamification/presentation/home_top_bar.dart';
+import 'commitment_card.dart';
+import 'commitment_occurrence_view.dart';
 import 'today_controller.dart';
 
 /// Hoje (M01).
@@ -16,6 +18,7 @@ class TodayScreen extends StatelessWidget {
     required this.onStart,
     required this.onToggleLight,
     required this.onProfile,
+    required this.onOpenCommitment,
     this.onBroto,
   });
 
@@ -28,6 +31,9 @@ class TodayScreen extends StatelessWidget {
 
   /// Broto do topo: abre o Jardim (M39).
   final VoidCallback? onBroto;
+
+  /// Toque no compromisso (MC6 = b): abre o sheet da ocorrência.
+  final ValueChanged<CommitmentOccurrenceView> onOpenCommitment;
 
   @override
   Widget build(BuildContext context) {
@@ -55,12 +61,15 @@ class TodayScreen extends StatelessWidget {
         if (state.loading) const SizedBox(height: 40),
         if (state.error != null)
           Text(state.error!, style: BoraText.small(c.danger)),
+        if (state.commitmentsError != null)
+          Text(state.commitmentsError!, style: BoraText.small(c.danger)),
         for (var i = 0; i < items.length; i++)
           _TimelineRow(
             item: items[i],
             first: i == 0,
             last: i == items.length - 1,
             onToggleLight: onToggleLight,
+            onOpenCommitment: onOpenCommitment,
           ),
         if (state.slackLabel != null) ...[
           const SizedBox(height: 24),
@@ -175,17 +184,20 @@ class _TimelineRow extends StatelessWidget {
     required this.first,
     required this.last,
     required this.onToggleLight,
+    required this.onOpenCommitment,
   });
 
   final TodayItem item;
   final bool first;
   final bool last;
   final ValueChanged<String> onToggleLight;
+  final ValueChanged<CommitmentOccurrenceView> onOpenCommitment;
 
   @override
   Widget build(BuildContext context) {
     final c = context.bora;
     final b = item.block;
+    final cp = item.commitment;
     return IntrinsicHeight(
       child: Row(
         crossAxisAlignment: CrossAxisAlignment.stretch,
@@ -214,7 +226,10 @@ class _TimelineRow extends StatelessWidget {
                       color: b != null ? c.objective(b.colorIndex) : c.surface,
                       border: b != null
                           ? null
-                          : Border.all(color: c.border, width: 2),
+                          : Border.all(
+                              color: cp != null ? c.tx2 : c.border,
+                              width: 2,
+                            ),
                     ),
                   ),
                   if (!last)
@@ -235,6 +250,11 @@ class _TimelineRow extends StatelessWidget {
               padding: EdgeInsets.only(bottom: last ? 0 : 12),
               child: b != null
                   ? _BlockCard(b: b)
+                  : cp != null
+                  ? CommitmentCard(
+                      commitment: cp,
+                      onTap: () => onOpenCommitment(cp),
+                    )
                   : _LightCard(
                       l: item.light!,
                       onTap: () => onToggleLight(item.light!.id),
