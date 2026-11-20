@@ -292,20 +292,24 @@ Fase 6: relatório, afazeres, diário, COMO-TESTAR
   > **C6 = b:** o M1 também mostra os compromissos do dia na linha do tempo do Hoje (mesmo cartão e mesmo sheet), carregando as ocorrências do dia junto com o plano. **C14 = b:** o ícone do Jardim não muda (o item da tab bar sai do 0.6). **Contrato:** o `GET /goals` já tinha `done` numérico (contagem de etapas); a tarefa feita é indicada por `status: done`, sem campo `done` booleano novo.
 
 ### 0.2 Branch
-- [ ] `git checkout developer && git pull --ff-only origin developer` (anotar se a remota trouxe algo).
-- [ ] `git checkout -b feat/compromissos-tarefas-unicas`.
-- [ ] Anotar o hash de `origin/main` para conferir no fim que não mudou.
-- [ ] Commitar este plano e o zip novo (como na rodada anterior), se C13 = a.
+- [x] `git checkout developer && git pull --ff-only origin developer` (anotar se a remota trouxe algo).
+  > A remota não trouxe nada (20/11).
+- [x] `git checkout -b feat/compromissos-tarefas-unicas`.
+- [x] Anotar o hash de `origin/main` para conferir no fim que não mudou.
+  > `7b8a85e`.
+- [x] Commitar este plano e o zip novo (como na rodada anterior), se C13 = a.
+  > `ed75505`.
 
 ### 0.3 Linha de base
-- [ ] `npm --workspace apps/backend run db:start` e `npm --workspace apps/backend run prisma:generate`.
-- [ ] `npm run build`, `npx turbo run lint`, `npm run test --workspaces --if-present` e `npm --workspace apps/backend run test:e2e`, com a máquina livre: sem simulador, sem `flutter run` e sem backends extras (as falhas por estouro de 5 s da rodada anterior vieram de máquina carregada).
-- [ ] `cd apps/mobile && flutter pub get && flutter analyze && flutter test` (esperado: 582 testes).
-- [ ] Anotar o resultado aqui. Se algo já falhar, **parar e reportar**.
+- [x] `npm --workspace apps/backend run db:start` e `npm --workspace apps/backend run prisma:generate`.
+- [x] `npm run build`, `npx turbo run lint`, `npm run test --workspaces --if-present` e `npm --workspace apps/backend run test:e2e`, com a máquina livre: sem simulador, sem `flutter run` e sem backends extras (as falhas por estouro de 5 s da rodada anterior vieram de máquina carregada).
+- [x] `cd apps/mobile && flutter pub get && flutter analyze && flutter test` (esperado: 582 testes).
+- [x] Anotar o resultado aqui. Se algo já falhar, **parar e reportar**.
+  > Verde: build e lint (9/9), testes de todos os workspaces, e2e 139/139 em 71 s, `flutter analyze` sem problemas, 582 testes no mobile.
 
 ### 0.4 Design (C13 = a)
-- [ ] Extrair o zip numa pasta temporária; copiar `Bora App.dc.html`, `Bora Telas.dc.html`, `README.md` e `vendor/` para `design/mobile/app/source/`; conferir com `cmp` que os demais são idênticos.
-- [ ] Capturar com Playwright (390×844, deviceScaleFactor 2, só a moldura `[data-bora]`, botões do painel pelo nome; script numa pasta temporária):
+- [x] Extrair o zip numa pasta temporária; copiar `Bora App.dc.html`, `Bora Telas.dc.html`, `README.md` e `vendor/` para `design/mobile/app/source/`; conferir com `cmp` que os demais são idênticos.
+- [x] Capturar com Playwright (390×844, deviceScaleFactor 2, só a moldura `[data-bora]`, botões do painel pelo nome; script numa pasta temporária):
   - `44-semana-botao-compromisso.png` (Semana com "+ Compromisso");
   - `45-semana-com-compromissos.png` (dia 11 com "Consulta no dentista" e as pílulas);
   - `46-novo-compromisso-semanal.png` (com rolagem expandida);
@@ -318,37 +322,40 @@ Fase 6: relatório, afazeres, diário, COMO-TESTAR
   - `53-tarefas-unicas.png`;
   - `54-tarefas-unicas-adicionando.png` (com "Quanto tempo leva?" aberto).
   - Os estados que exigem cliques extras (escopo, cancelado, editar só nesse dia, adicionando) usam interações do Playwright descritas no próprio script.
-- [ ] Atualizar o `SCREENS.md`: linhas 44–54; a M41 marcada como removida e a M42 substituída pela 46/47; nas Observações, a tab bar sem Compromissos, o ícone `leaf` e a ausência de caminho para as Tarefas únicas (C9).
-- [ ] Commit `docs(design): compromissos no calendário e tarefas únicas (zip de 20/11)`.
+- [x] Atualizar o `SCREENS.md`: linhas 44–54; a M41 marcada como removida e a M42 substituída pela 46/47; nas Observações, a tab bar sem Compromissos, o ícone `leaf` e a ausência de caminho para as Tarefas únicas (C9).
+- [x] Commit `docs(design): compromissos no calendário e tarefas únicas (zip de 20/11)`.
+  > `7ca8e4b`. Capturas 44, 45, 46, 46b, 47–54.
 
 ### 0.5 Documentação, decisões e contrato
-- [ ] `docs/2-decisoes-mvp.md`: seção "Decisões da rodada de compromissos e tarefas únicas (MC1–MC14), 20/11/2026", no formato das P. **Atualizar a P8** (compromissos passam a ter tela, endpoint e tabela) e citar a **P9** na MC7.
-- [ ] `docs/3-modelagem-dominio.md`:
+- [x] `docs/2-decisoes-mvp.md`: seção "Decisões da rodada de compromissos e tarefas únicas (MC1–MC14), 20/11/2026", no formato das P. **Atualizar a P8** (compromissos passam a ter tela, endpoint e tabela) e citar a **P9** na MC7.
+- [x] `docs/3-modelagem-dominio.md`:
   - na §3.2, os atributos novos de `Commitment` (`category`, `endMinute` ou duração em múltiplos de 5, `exceptions`), as regras, os casos de uso e os cenários de teste (Dado/Quando/Então) de cada um;
   - na §3.4, o `RecurrenceExpander` com as exceções;
   - em `Goal`, o campo `plannedDate` e as regras (só `single`; data local);
   - no `PlanCalculator`, a regra do `plannedDate` (C7);
   - os cenários de `SetSingleTaskDone` e `DeleteGoal`.
   - **Os subagentes de domínio implementam exatamente esses cenários.**
-- [ ] `docs/4-contrato-api.md`: a nova §7 Compromissos e as mudanças da §3 (seção 3 deste plano), com a lista de testes de integração de cada rota (caminho feliz, 401, 404 de recurso de outro usuário, 400 com campo a mais, 422) e a tabela §6 atualizada.
-- [ ] `afazeres.md`:
+- [x] `docs/4-contrato-api.md`: a nova §7 Compromissos e as mudanças da §3 (seção 3 deste plano), com a lista de testes de integração de cada rota (caminho feliz, 401, 404 de recurso de outro usuário, 400 com campo a mais, 422) e a tabela §6 atualizada.
+- [x] `afazeres.md`:
   - fechar `[x]` o "[DECIDIR] Compromissos fixos (Aula/Estágio) fora do contrato" e o "[DECIDIR] Compromissos e Tarefas únicas têm design novo", com a referência às MC;
   - abrir os itens que as decisões criarem (ex.: `SEMESTER_END` a atualizar por semestre; caminho das Tarefas únicas sem design; web sem tela de compromissos).
-- [ ] `docs/6-diario-execucao.md`: entrada "20/11/2026: início da rodada de compromissos e tarefas únicas".
-- [ ] Commit `docs: decisões MC, modelagem e contrato de compromissos e tarefas únicas`.
+- [x] `docs/6-diario-execucao.md`: entrada "20/11/2026: início da rodada de compromissos e tarefas únicas".
+- [x] Commit `docs: decisões MC, modelagem e contrato de compromissos e tarefas únicas`.
+  > `1a3d9a4`. Contrato na §5b (compromissos) e na §3 (tarefas únicas) do `docs/4`; modelagem na §8 do `docs/3`.
 
 ### 0.6 Esqueleto compartilhado do mobile (TDD: vermelho → verde, guardar as saídas)
 
 Objetivo: deixar rotas, DI, os modelos de domínio do app e os repositórios (interface + exemplo + HTTP **vazio**) prontos, para M1, M2 e M3 mexerem só nas próprias pastas.
 
-- [ ] **Testes primeiro** (`test/core/shell_compromissos_tarefas_test.dart`, `test/features/scheduling/commitment_model_test.dart`, `test/features/goals/single_task_model_test.dart`):
+- [x] **Testes primeiro** (`test/core/shell_compromissos_tarefas_test.dart`, `test/features/scheduling/commitment_model_test.dart`, `test/features/goals/single_task_model_test.dart`):
   - **modelos:** `Commitment` e `CommitmentOccurrence` com `fromJson`/`toJson` iguais ao contrato da seção 3, `category` (enum aula/trabalho/saude/pessoal) e `status` (normal/cancelled/moved); `SingleTask` (`id`, `title`, `estimatedMinutes`, `plannedDate?`, `done`) a partir do item de `GET /goals`;
   - **rotas:** `/semana/compromisso` (novo; `extra` com a data inicial) e `/semana/compromisso/:id` (editar; `extra` com escopo e data) abrem `CommitmentFormPage`; `/tarefas` abre `SingleTasksPage`; as três ficam dentro do shell; `tabFor` devolve `week` para `/semana/compromisso*` e `today` para `/tarefas`;
   - **DI:** `deps.commitments` é o exemplo no modo `sample` e o HTTP no modo `http`; `deps.singleTasks` idem;
   - **config:** `AppConfig.semesterEnd` lê `SEMESTER_END` (C3 = a), com padrão `2026-12-12`;
   - ~~**tab bar:** o Jardim usa `leaf`~~ — não se aplica (C14 = b).
-- [ ] Rodar e guardar o **vermelho**.
-- [ ] **Implementar:**
+- [x] Rodar e guardar o **vermelho**.
+  > Não compilava (124 erros de símbolos inexistentes). Os testes dos repositórios de exemplo foram escritos junto com o código de exemplo (dados do protótipo), não antes.
+- [x] **Implementar:**
   - `features/scheduling/domain/commitment.dart` (modelos);
   - `features/scheduling/data/commitments_repository.dart` (interface com os 7 métodos da seção 3);
   - `sample_commitments_repository.dart` (com os 5 compromissos do protótipo, `cpDefaults`, e a expansão com exceções em memória, para o modo `sample`);
@@ -356,12 +363,13 @@ Objetivo: deixar rotas, DI, os modelos de domínio do app e os repositórios (in
   - `features/goals/domain/single_task.dart`, `features/goals/data/single_tasks_repository.dart` + exemplo (com as 6 tarefas do protótipo) + HTTP vazio;
   - páginas esqueleto `CommitmentFormPage` (em `features/scheduling/presentation/commitment_form_pages.dart`) e `SingleTasksPage` (em `features/goals/presentation/single_tasks_pages.dart`), como `PlaceholderScreen`;
   - rotas, DI, `AppConfig.semesterEnd` e `SEMESTER_END` nos `env/*.json`.
-- [ ] Rodar e guardar o **verde**; `flutter analyze` e `flutter test` inteiros verdes.
-- [ ] Commit `feat(mobile): esqueleto de compromissos e tarefas únicas (rotas, DI, modelos, repositórios)`.
+- [x] Rodar e guardar o **verde**; `flutter analyze` e `flutter test` inteiros verdes.
+- [x] Commit `feat(mobile): esqueleto de compromissos e tarefas únicas (rotas, DI, modelos, repositórios)`.
+  > `e317747`; 622 testes. Entrou também `patch`/`delete` no `ApiClient` (com teste antes). O botão "Tarefas únicas" do Hoje (MC9) fica para o orquestrador depois do M1, que mexe na mesma tela (C6 = b).
 
 ### 0.7 Worktrees
-- [ ] Uma worktree por subagente da Fase 1 em `/Users/arthursetragni/Hackaton/OiTenta-wt/<nome>`, cada uma com a sua branch saindo da integração.
-- [ ] P28: `npm ci` (D1, D2), `npm --workspace apps/backend run prisma:generate` (D1, D2) e `flutter pub get` (M1, M2, M3). Copiar `apps/backend/.env` **antes** do `prisma:generate`, e `apps/mobile/env/local-iphone.json` para as do mobile.
+- [x] Uma worktree por subagente da Fase 1 em `/Users/arthursetragni/Hackaton/OiTenta-wt/<nome>`, cada uma com a sua branch saindo da integração.
+- [x] P28: `npm ci` (D1, D2), `npm --workspace apps/backend run prisma:generate` (D1, D2) e `flutter pub get` (M1, M2, M3). Copiar `apps/backend/.env` **antes** do `prisma:generate`, e `apps/mobile/env/local-iphone.json` para as do mobile.
 
 ---
 
