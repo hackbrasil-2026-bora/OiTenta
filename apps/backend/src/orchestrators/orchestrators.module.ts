@@ -4,6 +4,11 @@ import { AuthModule } from '../modules/auth/auth.module';
 import { GoalsModule } from '../modules/goals/goals.module';
 import { SchedulingModule } from '../modules/scheduling/scheduling.module';
 import { AvailabilityController } from './availability.controller';
+import { CommitmentCreateOrchestrator } from './commitment-create.orchestrator';
+import { CommitmentDeleteOrchestrator } from './commitment-delete.orchestrator';
+import { CommitmentMutationsController } from './commitment-mutations.controller';
+import { CommitmentOccurrenceOrchestrator } from './commitment-occurrence.orchestrator';
+import { CommitmentUpdateOrchestrator } from './commitment-update.orchestrator';
 import { CreateGoalOrchestrator } from './create-goal.orchestrator';
 import { DayViewOrchestrator } from './day-view.orchestrator';
 import { GoalAssistantController } from './goal-assistant.controller';
@@ -26,6 +31,7 @@ import { WeekViewOrchestrator } from './week-view.orchestrator';
   imports: [AuthModule, GoalsModule, SchedulingModule, ActivationModule],
   controllers: [
     AvailabilityController,
+    CommitmentMutationsController,
     GoalAssistantController,
     GoalsViewController,
     PlanViewsController,
@@ -34,6 +40,10 @@ import { WeekViewOrchestrator } from './week-view.orchestrator';
   ],
   providers: [
     SetAvailabilityOrchestrator,
+    CommitmentCreateOrchestrator,
+    CommitmentUpdateOrchestrator,
+    CommitmentDeleteOrchestrator,
+    CommitmentOccurrenceOrchestrator,
     CreateGoalOrchestrator,
     GoalDraftOrchestrator,
     GoalsViewOrchestrator,

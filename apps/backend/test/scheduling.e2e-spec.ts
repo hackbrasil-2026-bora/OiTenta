@@ -9,7 +9,6 @@ import { App } from 'supertest/types';
 import { AppModule } from '../src/app.module';
 import { configureApp } from '../src/app.setup';
 import { PrismaGoalRepository } from '../src/modules/goals/goal.prisma';
-import { EmptyCommitmentRepository } from '../src/modules/scheduling/commitment.empty';
 import { PrismaScheduledBlockRepository } from '../src/modules/scheduling/scheduled-block.prisma';
 import { PrismaWeeklyAvailabilityRepository } from '../src/modules/scheduling/weekly-availability.prisma';
 
@@ -307,14 +306,6 @@ describe('scheduling (integração)', () => {
       .set('Authorization', `Bearer ${token}`);
 
     expect(res.status).toBe(404);
-  });
-
-  describe('EmptyCommitmentRepository', () => {
-    it('devolve lista vazia (sem tabela de compromissos, P8)', async () => {
-      const repository = new EmptyCommitmentRepository();
-
-      expect(await repository.findAllByUser(randomUUID())).toEqual([]);
-    });
   });
 
   describe('PrismaScheduledBlockRepository', () => {
