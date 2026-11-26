@@ -123,6 +123,28 @@ describe('readAiSettings', () => {
     );
   });
 
+  test('sem AI_REASONING_EFFORT (ou vazio) → não define o esforço de raciocínio', () => {
+    expect(readAiSettings(env({})).reasoningEffort).toBeUndefined();
+    expect(
+      readAiSettings(env({ AI_REASONING_EFFORT: ' ' })).reasoningEffort,
+    ).toBeUndefined();
+  });
+
+  test.each(['none', 'low', 'medium', 'high'])(
+    'AI_REASONING_EFFORT=%s é aceito',
+    (value) => {
+      expect(
+        readAiSettings(env({ AI_REASONING_EFFORT: value })).reasoningEffort,
+      ).toBe(value);
+    },
+  );
+
+  test('AI_REASONING_EFFORT desconhecido → erro que diz os valores aceitos', () => {
+    expect(() => readAiSettings(env({ AI_REASONING_EFFORT: 'max' }))).toThrow(
+      'AI_REASONING_EFFORT inválido ("max"): use none, low, medium ou high.',
+    );
+  });
+
   test('AI_LOG_CONTENT diferente de true/false → erro', () => {
     expect(() => readAiSettings(env({ AI_LOG_CONTENT: 'sim' }))).toThrow(
       'AI_LOG_CONTENT deve ser true ou false.',
@@ -149,5 +171,20 @@ describe('createGoalAssistant', () => {
     expect(createGoalAssistant(settings, rules)).toBeInstanceOf(
       OpenAiCompatibleGoalAssistantProvider,
     );
+  });
+
+  test('openai-compatible repassa o AI_REASONING_EFFORT ao adaptador', () => {
+    const settings = readAiSettings(
+      env({
+        AI_PROVIDER: 'openai-compatible',
+        AI_BASE_URL: 'https://api.groq.com/openai/v1',
+        AI_MODEL: 'openai/gpt-oss-120b',
+        AI_REASONING_EFFORT: 'low',
+      }),
+    );
+
+    expect(createGoalAssistant(settings, rules)).toMatchObject({
+      options: { reasoningEffort: 'low' },
+    });
   });
 });

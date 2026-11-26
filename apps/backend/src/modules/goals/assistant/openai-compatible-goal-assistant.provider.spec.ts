@@ -109,6 +109,7 @@ function setup(
         model: string;
         temperature: number;
         response_format: { type: string };
+        reasoning_effort?: string;
         messages: { role: string; content: string }[];
       },
       rawBody: init!.body as string,
@@ -386,6 +387,29 @@ describe('OpenAiCompatibleGoalAssistantProvider', () => {
       expect(logger.log.mock.calls[0][0]).toMatch(
         /^assistant op=suggestSteps provider=openai-compatible model=test-model prompt=suggest-steps@v1 ms=\d+ outcome=ok tokens_in=- tokens_out=-$/,
       );
+    });
+  });
+
+  describe('esforço de raciocínio (reasoning_effort)', () => {
+    test('com reasoningEffort → manda reasoning_effort no corpo', async () => {
+      const { provider, request } = setup(
+        () => Promise.resolve(completion(PARSED_OK)),
+        { reasoningEffort: 'low' },
+      );
+
+      await provider.parseGoal(PARSE_INPUT);
+
+      expect(request().body.reasoning_effort).toBe('low');
+    });
+
+    test('sem reasoningEffort → não manda o campo (Ollama e modelos sem raciocínio)', async () => {
+      const { provider, request } = setup(() =>
+        Promise.resolve(completion(STEPS_OK)),
+      );
+
+      await provider.suggestSteps(SUGGEST_INPUT);
+
+      expect(request().body).not.toHaveProperty('reasoning_effort');
     });
   });
 

@@ -269,6 +269,8 @@ Toda mutação devolve o `plan` recalculado. O contrato completo está em `docs/
 
 ## 8b. Assistente do novo objetivo (IA)
 
+**Guia completo da IA, inclusive como ligá-la no backend hospedado (Render) com o Groq:** `docs/backend/CONFIGURAR-IA.md`.
+
 O `POST /goals/assistant/draft` transforma um texto livre num rascunho de objetivo com etapas (decisões IA1–IA7, contrato em `docs/4-contrato-api.md` §3). **Não grava nada**; quem grava é o `POST /goals`. O motor é escolhido no `apps/backend/.env`:
 
 | Variável | Valores | Padrão |
@@ -279,6 +281,7 @@ O `POST /goals/assistant/draft` transforma um texto livre num rascunho de objeti
 | `AI_TIMEOUT_MS` | orçamento total do rascunho, em ms | `15000` |
 | `AI_FALLBACK` | `rules` (a IA falhou ou demorou → rascunho do motor de regras) ou `none` (503 → o app abre o formulário manual) | `rules` (provisório até 13/11, IA6) |
 | `AI_LOG_CONTENT` | `true` põe o texto do usuário e a resposta no log (só desenvolvimento) | `false` |
+| `AI_REASONING_EFFORT` | `none`, `low`, `medium` ou `high`: esforço de raciocínio, só para modelos que raciocinam (ex.: `openai/gpt-oss-120b` no Groq). `low` gasta menos tokens da cota gratuita | vazio (o campo não vai ao fornecedor) |
 
 Valor desconhecido (ex.: `AI_PROVIDER=fake`) ou `openai-compatible` sem `AI_BASE_URL`/`AI_MODEL` → o backend **não sobe** e diz o que falta (sem mostrar a chave).
 
