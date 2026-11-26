@@ -269,6 +269,8 @@ Toda mutação devolve o `plan` recalculado. O contrato completo está em `docs/
 
 ## 8b. Assistente do novo objetivo (IA)
 
+**Guia completo da IA, inclusive como ligá-la no backend hospedado (Render) com o Groq:** `docs/backend/CONFIGURAR-IA.md`.
+
 O `POST /goals/assistant/draft` transforma um texto livre num rascunho de objetivo com etapas (decisões IA1–IA7, contrato em `docs/4-contrato-api.md` §3). **Não grava nada**; quem grava é o `POST /goals`. O motor é escolhido no `apps/backend/.env`:
 
 | Variável | Valores | Padrão |
