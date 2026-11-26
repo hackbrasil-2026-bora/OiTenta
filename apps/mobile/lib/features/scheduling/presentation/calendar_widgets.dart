@@ -11,8 +11,9 @@ import 'week_controller.dart';
 const calendarDragThreshold = 28.0;
 
 /// Card do calendário (M03/M19 semana, M20/M21 mês) com o traço embaixo.
-/// Como no Google Agenda: arrastar para baixo abre o mês; para cima volta à
-/// semana. Tocar no traço também alterna.
+/// Como no Google Agenda: arrastar para baixo abre o mês; com o mês aberto,
+/// arrastar o traço para cima volta à semana (arrastar a grade rola os meses).
+/// Tocar no traço também alterna.
 class CalendarCard extends StatefulWidget {
   const CalendarCard({
     super.key,
@@ -51,55 +52,61 @@ class _CalendarCardState extends State<CalendarCard> {
     }
   }
 
+  /// Detector do arraste que abre/recolhe.
+  Widget _dragArea({required Widget child}) => GestureDetector(
+    behavior: HitTestBehavior.opaque,
+    dragStartBehavior: DragStartBehavior.down,
+    onVerticalDragStart: (_) {
+      _dy = 0;
+      _fired = false;
+    },
+    onVerticalDragUpdate: _update,
+    child: child,
+  );
+
   @override
   Widget build(BuildContext context) {
     final c = context.bora;
-    return GestureDetector(
-      behavior: HitTestBehavior.opaque,
-      dragStartBehavior: DragStartBehavior.down,
-      onVerticalDragStart: (_) {
-        _dy = 0;
-        _fired = false;
-      },
-      onVerticalDragUpdate: _update,
-      child: BoraCard(
-        padding: const EdgeInsets.fromLTRB(6, 10, 6, 0),
-        child: Column(
-          children: [
-            AnimatedSize(
-              duration: const Duration(milliseconds: 200),
-              curve: Curves.easeOut,
-              alignment: Alignment.topCenter,
-              child: widget.expanded ? widget.month : widget.week,
-            ),
-            Semantics(
-              button: true,
-              label: 'Arraste pra expandir ou recolher o calendário',
-              excludeSemantics: true,
-              onTap: widget.onToggle,
-              child: GestureDetector(
-                behavior: HitTestBehavior.opaque,
-                onTap: widget.onToggle,
-                child: SizedBox(
-                  height: 24,
-                  width: double.infinity,
-                  child: Center(
-                    child: Container(
-                      width: 40,
-                      height: 5,
-                      decoration: BoxDecoration(
-                        color: c.border,
-                        borderRadius: BorderRadius.circular(999),
-                      ),
-                    ),
-                  ),
-                ),
+    final handle = Semantics(
+      button: true,
+      label: 'Arraste pra expandir ou recolher o calendário',
+      excludeSemantics: true,
+      onTap: widget.onToggle,
+      child: GestureDetector(
+        behavior: HitTestBehavior.opaque,
+        onTap: widget.onToggle,
+        child: SizedBox(
+          height: 24,
+          width: double.infinity,
+          child: Center(
+            child: Container(
+              width: 40,
+              height: 5,
+              decoration: BoxDecoration(
+                color: c.border,
+                borderRadius: BorderRadius.circular(999),
               ),
             ),
-          ],
+          ),
         ),
       ),
     );
+    final card = BoraCard(
+      padding: const EdgeInsets.fromLTRB(6, 10, 6, 0),
+      child: Column(
+        children: [
+          AnimatedSize(
+            duration: const Duration(milliseconds: 200),
+            curve: Curves.easeOut,
+            alignment: Alignment.topCenter,
+            child: widget.expanded ? widget.month : widget.week,
+          ),
+          // Com o mês aberto, a grade rola os meses: só o traço recolhe.
+          widget.expanded ? _dragArea(child: handle) : handle,
+        ],
+      ),
+    );
+    return widget.expanded ? card : _dragArea(child: card);
   }
 }
 
@@ -201,6 +208,76 @@ class WeekStrip extends StatelessWidget {
       ],
     );
   }
+}
+
+/// Chave da lista de meses (rolagem vertical), para os testes.
+const monthPagerKey = ValueKey('month-pager');
+
+/// Meses disponíveis para rolar antes e depois do mês aberto.
+const monthPagerPast = 36;
+const monthPagerFuture = 60;
+
+/// Altura de um mês: cabeçalho dos dias + 6 linhas (a maior grade possível).
+const monthPagerHeight = 22.0 + 6 * 46.0;
+
+/// Meses empilhados: arrastar para cima mostra os próximos, para baixo os
+/// anteriores (um mês por vez). A grade só desenha; quem carrega os dados é
+/// o controlador, avisado por [onMonthChanged].
+class MonthPager extends StatefulWidget {
+  const MonthPager({
+    super.key,
+    required this.initialMonth,
+    required this.weeksOf,
+    required this.onSelectDate,
+    required this.onMonthChanged,
+  });
+
+  /// Primeiro dia do mês mostrado ao abrir.
+  final DateTime initialMonth;
+  final List<List<MonthDayView>> Function(DateTime month) weeksOf;
+  final ValueChanged<DateTime> onSelectDate;
+  final ValueChanged<DateTime> onMonthChanged;
+
+  @override
+  State<MonthPager> createState() => _MonthPagerState();
+}
+
+class _MonthPagerState extends State<MonthPager> {
+  late final PageController _controller = PageController(
+    initialPage: monthPagerPast,
+  );
+
+  /// Âncora fixa: se acompanhasse `widget.initialMonth` (que muda a cada mês
+  /// rolado), as páginas se deslocariam.
+  late final DateTime _anchor = widget.initialMonth;
+
+  DateTime _monthAt(int page) =>
+      DateTime(_anchor.year, _anchor.month + page - monthPagerPast);
+
+  @override
+  void dispose() {
+    _controller.dispose();
+    super.dispose();
+  }
+
+  @override
+  Widget build(BuildContext context) => SizedBox(
+    height: monthPagerHeight,
+    child: PageView.builder(
+      key: monthPagerKey,
+      controller: _controller,
+      scrollDirection: Axis.vertical,
+      itemCount: monthPagerPast + 1 + monthPagerFuture,
+      onPageChanged: (page) => widget.onMonthChanged(_monthAt(page)),
+      itemBuilder: (_, page) => Align(
+        alignment: Alignment.topCenter,
+        child: MonthGrid(
+          weeks: widget.weeksOf(_monthAt(page)),
+          onSelectDate: widget.onSelectDate,
+        ),
+      ),
+    ),
+  );
 }
 
 /// Mês expandido (M20/M21): cabeçalho dos dias e a grade das semanas.

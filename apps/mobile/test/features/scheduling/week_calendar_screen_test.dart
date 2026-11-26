@@ -1,5 +1,7 @@
 import 'package:flutter_test/flutter_test.dart';
 
+import 'package:oitenta/features/scheduling/presentation/calendar_widgets.dart';
+
 import '../../helpers/test_app.dart';
 
 const _handle = 'Arraste pra expandir ou recolher o calendário';
@@ -19,7 +21,10 @@ void main() {
 
     await _drag(tester, 120);
     expect(find.text('Novembro'), findsOneWidget);
-    expect(find.text('Arraste pra cima pra voltar à semana'), findsOneWidget);
+    expect(
+      find.text('Arraste o traço pra cima pra voltar à semana'),
+      findsOneWidget,
+    );
     expect(find.bySemanticsLabel('Qui 20'), findsOneWidget);
     expect(find.bySemanticsLabel('Dom 30'), findsOneWidget);
 
@@ -27,6 +32,46 @@ void main() {
     expect(find.text('3 a 9 de novembro'), findsOneWidget);
     expect(find.text('Novembro'), findsNothing);
     expect(find.bySemanticsLabel('Qui 20'), findsNothing);
+  });
+
+  testWidgets('no mês, arrastar a grade para cima mostra os próximos meses', (
+    tester,
+  ) async {
+    await pumpApp(tester, location: '/semana');
+    await _drag(tester, 120);
+    expect(find.text('Novembro'), findsOneWidget);
+
+    await tester.drag(find.byKey(monthPagerKey), const Offset(0, -300));
+    await tester.pumpAndSettle();
+    expect(find.text('Dezembro'), findsOneWidget);
+    expect(find.text('Novembro'), findsNothing);
+    // Continua expandido: arrastar a grade não recolhe.
+    expect(
+      find.text('Arraste o traço pra cima pra voltar à semana'),
+      findsOneWidget,
+    );
+
+    await tester.tap(find.bySemanticsLabel('Qua 10'));
+    await tester.pumpAndSettle();
+    expect(find.text('QUARTA, 10 DE DEZEMBRO'), findsOneWidget);
+  });
+
+  testWidgets('no mês, arrastar a grade para baixo mostra meses antigos', (
+    tester,
+  ) async {
+    await pumpApp(tester, location: '/semana');
+    await _drag(tester, 120);
+    await tester.drag(find.byKey(monthPagerKey), const Offset(0, 300));
+    await tester.pumpAndSettle();
+    expect(find.text('Outubro'), findsOneWidget);
+
+    await tester.tap(find.bySemanticsLabel('Qua 15'));
+    await tester.pumpAndSettle();
+    expect(find.text('QUARTA, 15 DE OUTUBRO'), findsOneWidget);
+
+    await tester.drag(find.byKey(monthPagerKey), const Offset(0, 300));
+    await tester.pumpAndSettle();
+    expect(find.text('Setembro'), findsOneWidget);
   });
 
   testWidgets('arrastar pouco (menos que o limite) não muda a visualização', (
