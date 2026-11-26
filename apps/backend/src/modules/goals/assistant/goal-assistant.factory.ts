@@ -1,5 +1,8 @@
 import type { GoalAssistantProvider } from '@oitenta/goals';
-import { OpenAiCompatibleGoalAssistantProvider } from './openai-compatible-goal-assistant.provider';
+import {
+  OpenAiCompatibleGoalAssistantProvider,
+  type ReasoningEffort,
+} from './openai-compatible-goal-assistant.provider';
 import { RulesGoalAssistantProvider } from './rules-goal-assistant.provider';
 
 // Escolha do motor do assistente pelo .env (docs/7-proposta-ia.md §c.4, IA1, IA6).
@@ -21,6 +24,8 @@ export interface AiSettings {
   timeoutMs: number;
   fallback: AiFallback;
   logContent: boolean;
+  /** AI_REASONING_EFFORT; ausente → não vai ao fornecedor. */
+  reasoningEffort?: ReasoningEffort;
 }
 
 export const DEFAULT_AI_TIMEOUT_MS = 15_000;
@@ -29,6 +34,12 @@ export const MAX_AI_TIMEOUT_MS = 120_000;
 
 const PROVIDERS: readonly AiProviderName[] = ['rules', 'openai-compatible'];
 const FALLBACKS: readonly AiFallback[] = ['rules', 'none'];
+const REASONING_EFFORTS: readonly ReasoningEffort[] = [
+  'none',
+  'low',
+  'medium',
+  'high',
+];
 
 function isHttpUrl(value: string): boolean {
   try {
@@ -86,6 +97,16 @@ export function readAiSettings(
     throw new Error('AI_LOG_CONTENT deve ser true ou false.');
   }
 
+  const reasoningEffort = read('AI_REASONING_EFFORT');
+  if (
+    reasoningEffort !== undefined &&
+    !REASONING_EFFORTS.includes(reasoningEffort as ReasoningEffort)
+  ) {
+    throw new Error(
+      `AI_REASONING_EFFORT inválido ("${reasoningEffort}"): use none, low, medium ou high.`,
+    );
+  }
+
   return {
     provider: provider as AiProviderName,
     baseUrl,
@@ -94,6 +115,7 @@ export function readAiSettings(
     timeoutMs,
     fallback: fallback as AiFallback,
     logContent: logContent === 'true',
+    reasoningEffort: reasoningEffort as ReasoningEffort | undefined,
   };
 }
 
@@ -109,6 +131,7 @@ export function createGoalAssistant(
       apiKey: settings.apiKey,
       timeoutMs: settings.timeoutMs,
       logContent: settings.logContent,
+      reasoningEffort: settings.reasoningEffort,
     });
   }
   return rules;

@@ -35,7 +35,14 @@ export interface OpenAiCompatibleGoalAssistantOptions {
   timeoutMs: number;
   /** true → o texto do usuário e a resposta entram no log (só desenvolvimento). */
   logContent: boolean;
+  /**
+   * Esforço de raciocínio (`reasoning_effort`) para modelos que raciocinam (ex.: gpt-oss no Groq).
+   * Ausente → o campo não vai no corpo (Ollama e modelos sem raciocínio).
+   */
+  reasoningEffort?: ReasoningEffort;
 }
+
+export type ReasoningEffort = 'none' | 'low' | 'medium' | 'high';
 
 export interface AssistantLogger {
   log(message: string): void;
@@ -212,6 +219,9 @@ export class OpenAiCompatibleGoalAssistantProvider implements GoalAssistantProvi
         model: this.options.model,
         temperature: TEMPERATURE,
         response_format: { type: 'json_object' },
+        ...(this.options.reasoningEffort
+          ? { reasoning_effort: this.options.reasoningEffort }
+          : {}),
         messages: [
           { role: 'system', content: system },
           { role: 'user', content: user },
