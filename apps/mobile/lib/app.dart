@@ -42,6 +42,13 @@ class _BoraAppState extends State<BoraApp> {
       darkTheme: AppTheme.dark(),
       themeMode: widget.deps.theme.mode,
       routerConfig: _router,
+      // Tocar fora de um campo de texto fecha o teclado (no celular não há
+      // como "clicar fora" de outro jeito).
+      builder: (context, child) => GestureDetector(
+        behavior: HitTestBehavior.translucent,
+        onTap: () => FocusManager.instance.primaryFocus?.unfocus(),
+        child: child,
+      ),
     ),
   );
 }

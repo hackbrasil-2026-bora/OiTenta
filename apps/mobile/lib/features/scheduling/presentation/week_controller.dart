@@ -158,6 +158,9 @@ class WeekController extends ChangeNotifier {
   List<GoalSummary>? _goals;
   late DateTime _selected;
 
+  /// Primeiro dia do mês que a grade mostra (muda ao rolar entre os meses).
+  late DateTime _visibleMonth;
+
   bool _disposed = false;
 
   @override
@@ -174,6 +177,7 @@ class WeekController extends ChangeNotifier {
   Future<void> load() async {
     final now = _clock.now();
     _selected = DateTime(now.year, now.month, now.day);
+    _visibleMonth = DateTime(now.year, now.month);
     loading = true;
     _notify();
     try {
@@ -252,16 +256,25 @@ class WeekController extends ChangeNotifier {
 
   /// `Semana` ou o nome do mês (`Novembro`).
   String get title => expanded
-      ? BoraFormat.monthYear(_selected.year, _selected.month).split(' ').first
+      ? BoraFormat.monthYear(
+          _visibleMonth.year,
+          _visibleMonth.month,
+        ).split(' ').first
       : 'Semana';
 
   String get subtitle =>
-      expanded ? 'Arraste pra cima pra voltar à semana' : rangeLabel;
+      expanded ? 'Arraste o traço pra cima pra voltar à semana' : rangeLabel;
 
-  /// Segundas-feiras das semanas que cobrem o mês do dia escolhido.
-  List<DateTime> get _monthMondays {
-    final first = DateTime(_selected.year, _selected.month, 1);
-    final last = DateTime(_selected.year, _selected.month + 1, 0);
+  /// Primeiro dia do mês mostrado na grade.
+  DateTime get visibleMonth => _visibleMonth;
+
+  /// Segundas-feiras das semanas que cobrem o mês mostrado.
+  List<DateTime> get _monthMondays => _mondaysOf(_visibleMonth);
+
+  /// Segundas-feiras das semanas que cobrem [month].
+  List<DateTime> _mondaysOf(DateTime month) {
+    final first = DateTime(month.year, month.month, 1);
+    final last = DateTime(month.year, month.month + 1, 0);
     return [
       for (
         var m = BoraFormat.mondayOf(first);
@@ -326,16 +339,18 @@ class WeekController extends ChangeNotifier {
     ];
   }
 
-  List<List<MonthDayView>> get monthWeeks {
+  List<List<MonthDayView>> get monthWeeks => monthWeeksOf(_visibleMonth);
+
+  /// Semanas de [month] para a grade (dias de fora do mês vêm sem destaque).
+  List<List<MonthDayView>> monthWeeksOf(DateTime month) {
     final today = _clock.now();
     return [
-      for (final m in _monthMondays)
+      for (final m in _mondaysOf(month))
         [
           for (var i = 0; i < 7; i++)
             () {
               final d = DateTime(m.year, m.month, m.day + i);
-              final inMonth =
-                  d.year == _selected.year && d.month == _selected.month;
+              final inMonth = d.year == month.year && d.month == month.month;
               return MonthDayView(
                 date: d,
                 weekday: BoraFormat.weekdayShort(d),
@@ -457,14 +472,17 @@ class WeekController extends ChangeNotifier {
   void selectDay(int i) {
     final m = _monday;
     _selected = DateTime(m.year, m.month, m.day + i);
+    _visibleMonth = DateTime(_selected.year, _selected.month);
     _notify();
   }
 
   /// Dia da grade do mês; dia de fora do mês é ignorado.
   void selectDate(DateTime d) {
-    final outOfMonth = d.year != _selected.year || d.month != _selected.month;
+    final outOfMonth =
+        d.year != _visibleMonth.year || d.month != _visibleMonth.month;
     if (expanded && outOfMonth) return;
     _selected = DateTime(d.year, d.month, d.day);
+    _visibleMonth = DateTime(d.year, d.month);
     _notify();
   }
 
@@ -472,6 +490,7 @@ class WeekController extends ChangeNotifier {
   Future<void> expand() async {
     if (expanded) return;
     expanded = true;
+    _visibleMonth = DateTime(_selected.year, _selected.month);
     _notify();
     await _guard(() => _ensureWeeks(_monthMondays), 'o mês');
   }
@@ -482,6 +501,16 @@ class WeekController extends ChangeNotifier {
     expanded = false;
     _notify();
     await _guard(() => _ensureWeeks([_monday]), 'a semana');
+  }
+
+  /// Rolou a grade para [month] (qualquer mês, passado ou futuro): mostra e
+  /// carrega as semanas dele que ainda faltam.
+  Future<void> showMonth(DateTime month) async {
+    final first = DateTime(month.year, month.month);
+    if (first == _visibleMonth) return;
+    _visibleMonth = first;
+    _notify();
+    await _guard(() => _ensureWeeks(_mondaysOf(first)), 'o mês');
   }
 
   Future<void> toggleExpanded() => expanded ? collapse() : expand();

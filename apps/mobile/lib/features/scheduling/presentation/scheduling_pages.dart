@@ -207,6 +207,7 @@ class WeekPage extends StatelessWidget {
       onExpand: c.expand,
       onCollapse: c.collapse,
       onToggleExpanded: c.toggleExpanded,
+      onShowMonth: c.showMonth,
       onMode: c.setMode,
       onAddCommitment: () async {
         await context.push(

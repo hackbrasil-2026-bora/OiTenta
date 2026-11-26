@@ -80,6 +80,81 @@ void main() {
     await c.load();
   });
 
+  group('navegar entre meses', () {
+    test('mostrar o mês seguinte carrega só as semanas que o cobrem', () async {
+      await c.expand();
+      repo.starts.clear();
+      await c.showMonth(DateTime(2025, 12, 1));
+      expect(c.title, 'Dezembro');
+      expect(c.visibleMonth, DateTime(2025, 12, 1));
+      expect(repo.starts, [
+        '2025-12-01',
+        '2025-12-08',
+        '2025-12-15',
+        '2025-12-22',
+        '2025-12-29',
+      ]);
+      final weeks = c.monthWeeks;
+      expect(weeks.first.map((d) => d.number), [1, 2, 3, 4, 5, 6, 7]);
+      expect(weeks.last.map((d) => d.number), [29, 30, 31, 1, 2, 3, 4]);
+      expect(weeks.last.first.inMonth, isTrue);
+      expect(weeks.last.last.inMonth, isFalse);
+      // A seleção (6/11) continua em novembro: nenhum dia de dezembro marcado.
+      expect(weeks.expand((w) => w).any((d) => d.isSelected), isFalse);
+    });
+
+    test('mês passado também carrega e aparece', () async {
+      await c.expand();
+      await c.showMonth(DateTime(2025, 9, 1));
+      expect(c.title, 'Setembro');
+      expect(repo.starts, contains('2025-09-01'));
+      expect(c.monthWeeks.first.map((d) => d.number), [1, 2, 3, 4, 5, 6, 7]);
+    });
+
+    test('voltar a um mês já carregado não repete as chamadas', () async {
+      await c.expand();
+      await c.showMonth(DateTime(2025, 12, 1));
+      final calls = repo.starts.length;
+      await c.showMonth(DateTime(2025, 11, 1));
+      await c.showMonth(DateTime(2025, 12, 1));
+      expect(repo.starts, hasLength(calls));
+    });
+
+    test('dá pra escolher um dia do mês que está na tela', () async {
+      await c.expand();
+      await c.showMonth(DateTime(2025, 12, 1));
+      c.selectDate(DateTime(2025, 12, 10));
+      expect(c.selectedDate, DateTime(2025, 12, 10));
+      expect(
+        c.monthWeeks.expand((w) => w).where((d) => d.isSelected).single.number,
+        10,
+      );
+      // Dia de fora do mês na tela segue ignorado.
+      c.selectDate(DateTime(2026, 1, 2));
+      expect(c.selectedDate, DateTime(2025, 12, 10));
+    });
+
+    test(
+      'recolher volta para a semana do dia escolhido no outro mês',
+      () async {
+        await c.expand();
+        await c.showMonth(DateTime(2025, 12, 1));
+        c.selectDate(DateTime(2025, 12, 10));
+        await c.collapse();
+        expect(c.title, 'Semana');
+        expect(c.subtitle, '8 a 14 de dezembro');
+      },
+    );
+
+    test('expandir de novo abre no mês do dia escolhido', () async {
+      await c.expand();
+      await c.showMonth(DateTime(2026, 2, 1));
+      await c.collapse();
+      await c.expand();
+      expect(c.title, 'Novembro');
+    });
+  });
+
   group('semana × mês', () {
     test('começa na semana de hoje, em Execução', () {
       expect(c.expanded, isFalse);
@@ -95,7 +170,7 @@ void main() {
         await c.expand();
         expect(c.expanded, isTrue);
         expect(c.title, 'Novembro');
-        expect(c.subtitle, 'Arraste pra cima pra voltar à semana');
+        expect(c.subtitle, 'Arraste o traço pra cima pra voltar à semana');
         // A semana de 3/11 já estava carregada: não pede de novo.
         expect(repo.starts, [
           '2025-11-03',

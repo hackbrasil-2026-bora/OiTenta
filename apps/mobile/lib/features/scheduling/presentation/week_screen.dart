@@ -22,6 +22,7 @@ class WeekScreen extends StatelessWidget {
     required this.onExpand,
     required this.onCollapse,
     required this.onToggleExpanded,
+    required this.onShowMonth,
     required this.onMode,
     required this.onAddCommitment,
     required this.onOpenCommitment,
@@ -33,6 +34,9 @@ class WeekScreen extends StatelessWidget {
   final VoidCallback onExpand;
   final VoidCallback onCollapse;
   final VoidCallback onToggleExpanded;
+
+  /// Rolou a grade para outro mês (primeiro dia dele).
+  final ValueChanged<DateTime> onShowMonth;
   final ValueChanged<CalendarMode> onMode;
 
   /// "+ Compromisso" (só em Execução): formulário "Só uma vez" no dia.
@@ -98,7 +102,12 @@ class WeekScreen extends StatelessWidget {
             selectedIndex: state.selectedIndex,
             onSelectDay: onSelectDay,
           ),
-          month: MonthGrid(weeks: state.monthWeeks, onSelectDate: onSelectDate),
+          month: MonthPager(
+            initialMonth: state.visibleMonth,
+            weeksOf: state.monthWeeksOf,
+            onSelectDate: onSelectDate,
+            onMonthChanged: onShowMonth,
+          ),
           onExpand: onExpand,
           onCollapse: onCollapse,
           onToggle: onToggleExpanded,
