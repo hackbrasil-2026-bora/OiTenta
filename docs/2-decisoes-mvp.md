@@ -715,3 +715,6 @@ Dependências técnicas indispensáveis para as aprovadas funcionarem (ex.: `@vi
   - **Sair da conta:** limpa a sessão e volta ao login (no app, o token já fica só em memória; ver o item "Sair da conta no mobile").
   - **Apagar conta:** `DELETE /auth/me` `{ currentPassword }` → 204. Apaga de verdade a conta e todos os dados dela (sessões, blocos, objetivos e etapas, disponibilidade, compromissos), numa transação (LGPD; Google Play e App Store exigem a exclusão dentro do app). Confirmação com a senha. A conta demo não pode ser apagada (403), para o "Entrar como demo" continuar funcionando.
 - **Elemento sem design.** **Status:** provisória até o design.
+
+### AT10 — Trilha do Hack Brasil: Saúde & bem-estar
+- **Decisão (28/11/2026):** o projeto concorre na trilha **Saúde & bem-estar**. O problema é contado como o ciclo de travar, se culpar e travar de novo (sobrecarga, ansiedade, culpa), e o impacto como bem-estar na rotina: limite diário de foco, replanejamento sem culpa, aquecimentos de autocuidado na rampa e, no futuro, bloqueio voluntário de distrações. O Bora não se apresenta como ferramenta clínica. README, `docs/9-pitch-e-descricao.md` e a descrição da submissão seguem esse ângulo. **Status:** definitiva.

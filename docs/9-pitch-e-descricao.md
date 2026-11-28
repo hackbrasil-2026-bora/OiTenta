@@ -26,14 +26,22 @@ Você vai me ajudar a preparar o vídeo de pitch de 3 minutos do meu projeto no 
   2. **Implementação técnica:** arquitetura, qualidade do código, escolha e uso de tecnologias e APIs.
   3. **Impacto:** efeito sobre o problema e o público da trilha.
   4. **Qualidade da comunicação:** o vídeo.
-- Cada projeto concorre em **uma trilha**, e o problema e o público precisam estar dentro dela. Trilhas possíveis para nós: **Acesso à educação** ou **Saúde & bem-estar**. [Escreva aqui qual trilha escolhemos.]
+- Cada projeto concorre em **uma trilha**, e o problema e o público precisam estar dentro dela; citar o tema não basta, e o júri pode realocar o projeto ou deixá-lo inelegível. **Nossa trilha é Saúde & bem-estar.** Por isso o roteiro precisa deixar claro, desde o gancho, que o problema é de bem-estar (sobrecarga, ansiedade antes de começar, culpa quando o plano falha, uso do celular como fuga) e que o impacto é na saúde mental e na relação da pessoa com a própria rotina, não só em produtividade.
 - Demos não podem mostrar dados pessoais reais de terceiros. Vamos usar o usuário de demonstração.
 
 ## O produto: Bora
 
 **Frase:** um planejador com IA para quem sabe o que precisa fazer, mas trava na hora de começar.
 
-**Problema:** saber o que fazer não basta para começar. As tarefas se acumulam, escolher por onde ir vira mais uma tarefa, e o celular vira fuga. Os apps de produtividade assumem que o difícil é lembrar; para muita gente o difícil é começar. E quando o plano dá errado, a agenda fica vermelha e gera culpa. Público principal: estudantes que conciliam aula, estágio e entregas.
+**Problema:** saber o que fazer não basta para começar. As tarefas se acumulam, escolher por onde ir vira mais uma tarefa, e o celular vira fuga. Os apps de produtividade assumem que o difícil é lembrar; para muita gente o difícil é começar. E quando o plano dá errado, a agenda fica vermelha e gera culpa. Esse ciclo de travar, se culpar e travar de novo gera ansiedade e esgotamento. Público principal: pessoas sobrecarregadas que procrastinam por excesso, não por falta de vontade, a começar por estudantes que conciliam aula, estágio e entregas.
+
+**Por que é saúde & bem-estar (o ângulo do pitch):**
+- **Limite diário de foco:** a pessoa escolhe quanto aguenta por dia, e o motor nunca passa disso. O plano protege o descanso em vez de lotar cada horário livre.
+- **Sem culpa:** registrar "parcial" ou "não rolou" só refaz o plano. Não tem tela vermelha nem cobrança; o dia ruim não vira regra.
+- **Rampa que cuida do corpo e da cabeça:** os degraus de aquecimento são atividades de autocuidado com tempo definido: alongamento de 3 min, um copo d'água e 5 respirações lentas, uma volta pela casa, arrumar a mesa. Depois vem um desafio curto (ex.: 5 contas), o micro-passo e só então o foco, em blocos de 10 a 45 min, escolhidos pela energia do momento.
+- **Menos decisões:** o app escolhe o próximo passo, o que reduz a sobrecarga de ter que reorganizar tudo de cabeça.
+- **Visão:** bloqueio voluntário dos apps que distraem, liberados com as gotas conquistadas, para a pessoa retomar o controle do tempo de tela.
+- **Cuidado para não prometer demais:** o Bora não é tratamento nem ferramenta clínica, e não mede saúde. É apoio para a rotina. O roteiro não deve falar em diagnóstico, TDAH ou ansiedade como condição clínica.
 
 **Solução, em três ideias:**
 1. **Dois calendários:** Prazos (até quando entregar) e Execução (quando vou trabalhar nisso e por quanto tempo).
@@ -94,21 +102,24 @@ Se faltar alguma informação (nomes do time, trilha, link da demo), pergunte an
 
 ### Antes de colar, preencha
 
-- A **trilha** escolhida (veja a recomendação abaixo).
 - Os **nomes do time** e quem vai falar.
 - O **link do web** na Vercel, se já existir.
 
-### Recomendação de trilha
+### Trilha: Saúde & bem-estar (decidida em 28/11/2026)
 
-**Acesso à educação**, se o foco for estudante: o público dos exemplos e do app inteiro é quem concilia aula, estágio, trabalhos e provas, e o impacto é "estudante consegue começar e entregar". **Saúde & bem-estar** cabe se a história for sobre ansiedade, sobrecarga e procrastinação em geral. O regulamento diz que o júri pode realocar o projeto ou deixá-lo inelegível se o problema não estiver dentro da trilha, então a história do vídeo e da descrição precisa falar a língua da trilha escolhida. Decisão do time.
+O regulamento exige que o problema e o público estejam dentro da trilha (itens 5.3 a 5.5). Na prática:
+- **Conte a história pelo bem-estar:** o problema é o ciclo de travar, se culpar e travar de novo, não "falta de organização". A produtividade é consequência.
+- **Mostre na demo o que é de bem-estar:** o limite diário no onboarding, um degrau de aquecimento (água e respirações, ou alongamento) na rampa, e o "Parcial" refazendo o plano sem bronca.
+- **Não prometa o que o app não faz:** nada de diagnóstico, tratamento ou medição de saúde.
+- O exemplo do trabalho de faculdade pode continuar: ele mostra a sobrecarga de quem concilia aula, estágio e entregas.
 
 ### O que mostrar nos 3 minutos (sugestão rápida)
 
 | Tempo | Conteúdo |
 |---|---|
-| 0:00–0:15 | Gancho: a cena de quem trava diante de um trabalho |
-| 0:15–0:40 | Problema e solução em três ideias (slides) |
-| 0:40–2:00 | Demo no web: texto livre → IA quebra em etapas → encaixa no calendário → Hoje → rampa → registrar → plano recalculado |
+| 0:00–0:15 | Gancho: a cena de quem trava diante de um trabalho, abre o celular e termina o dia com culpa |
+| 0:15–0:40 | Problema (o ciclo trava → culpa → ansiedade) e solução em três ideias (slides) |
+| 0:40–2:00 | Demo no web: limite diário no onboarding → texto livre → IA quebra em etapas → encaixa no calendário → Hoje → rampa com aquecimento de autocuidado → registrar "Parcial" → plano recalculado sem bronca |
 | 2:00–2:20 | Mobile: o mesmo fluxo no celular, compromissos e tema escuro, em cortes rápidos |
 | 2:20–2:40 | Como foi feito: IA que nunca mexe na agenda e sempre tem reserva, arquitetura limpa, 100% de cobertura no domínio |
 | 2:40–2:50 | Visão (jardim, bloqueio de apps, estimativas que aprendem) e fechamento |
@@ -127,18 +138,20 @@ Um planejador com IA para quem sabe o que precisa fazer, mas trava na hora de co
 
 ### Descrição
 
-Saber o que precisa ser feito nem sempre basta para conseguir começar. As tarefas se acumulam, escolher por onde seguir vira mais uma tarefa e o celular vira fuga. Os apps de produtividade assumem que o difícil é lembrar; para muita gente, principalmente estudantes que conciliam aula, estágio e entregas, o difícil é começar. E quando o plano dá errado, a agenda fica vermelha e gera culpa.
+Saber o que precisa ser feito nem sempre basta para conseguir começar. As tarefas se acumulam, escolher por onde seguir vira mais uma tarefa e o celular vira fuga. Quando o plano dá errado, a agenda fica vermelha e vem a culpa, que deixa o próximo começo ainda mais difícil. Esse ciclo de travar, se culpar e travar de novo alimenta ansiedade e esgotamento, principalmente em quem concilia muitas frentes, como estudantes com aula, estágio e entregas. Os apps de produtividade assumem que o difícil é lembrar; para essas pessoas, o difícil é começar sem se sobrecarregar.
 
-O Bora resolve isso com três ideias:
+O Bora é um apoio de bem-estar para a rotina, com três ideias:
 
 **1. A IA transforma intenção em plano.** A pessoa escreve o que precisa entregar em texto livre, como falaria com um amigo ("trabalho de Algoritmos, comparar 3 algoritmos de ordenação, entrega 24/12"). A IA devolve um rascunho com título, prazo, categoria e etapas, cada uma com tempo estimado e um micro-passo para começar. Nada é salvo sem a confirmação do usuário.
 
-**2. Dois calendários e um plano que se refaz sozinho.** O Bora separa o calendário de Prazos (até quando entregar) do de Execução (quando trabalhar e por quanto tempo). Um motor de agendamento determinístico encaixa as etapas só nos horários livres, respeita compromissos fixos e recorrentes, não passa do limite diário de foco que a pessoa escolheu, deixa folga antes do prazo e avisa quando algo não cabe. Cada vez que a pessoa registra o que fez, inclusive "parcial" ou "não rolou", o plano futuro é recalculado na hora, sem bronca.
+**2. Dois calendários e um plano que se refaz sozinho.** O Bora separa o calendário de Prazos (até quando entregar) do de Execução (quando trabalhar e por quanto tempo). Um motor de agendamento determinístico encaixa as etapas só nos horários livres, respeita compromissos fixos e recorrentes, nunca passa do limite diário de foco que a própria pessoa escolheu (o plano protege o descanso em vez de lotar cada horário livre), deixa folga antes do prazo e avisa quando algo não cabe. Cada vez que a pessoa registra o que fez, inclusive "parcial" ou "não rolou", o plano futuro é recalculado na hora, sem tela vermelha e sem bronca: um dia ruim não vira regra.
 
-**3. Uma rampa para quando a pessoa trava.** Em vez de "foque por 2 horas", o app pergunta a energia do momento e sugere uma escada de cinco degraus: aquecimento, desafio curto, micro-passo, foco com cronômetro e registro. Cada degrau tem opções para escolher, e a pessoa sobe até conseguir se concentrar. O progresso vira um jardim que ela rega.
+**3. Uma rampa para quando a pessoa trava.** Em vez de "foque por 2 horas", o app pergunta a energia do momento e sugere uma escada de cinco degraus: um aquecimento de autocuidado com tempo definido (alongamento de 3 minutos, um copo d'água e cinco respirações lentas, uma volta pela casa), um desafio curto, um micro-passo, um bloco de foco de 10 a 45 minutos e o registro. Cada degrau tem opções para escolher, e a pessoa sobe no próprio ritmo até conseguir se concentrar. O progresso vira um jardim que ela rega.
+
+O Bora não é ferramenta clínica nem substitui cuidado profissional: é um apoio para reduzir a sobrecarga do dia a dia e tornar o recomeço mais leve.
 
 **IA com responsabilidade.** A IA só gera rascunhos; a agenda é sempre calculada por um motor testado, sem IA. Se o modelo falha ou passa de 15 segundos, um motor de regras em português (que entende "24/12", "amanhã", "em 10 dias") responde no lugar, então o usuário nunca fica sem resposta. O fornecedor é trocado só por configuração: Groq (gpt-oss-120b) em produção e Ollama local em desenvolvimento, sem dados saindo da máquina.
 
 **Como foi construído.** Monorepo com Turborepo em arquitetura limpa/hexagonal: o domínio (objetivos, agenda, rampa, autenticação) é TypeScript puro, sem framework, com 100% de cobertura de testes e teste de posse em todo caso de uso. Backend em NestJS, Prisma e PostgreSQL, com Swagger. Web em Next.js e app mobile em Flutter para iOS e Android, ambos completos: cadastro, onboarding, novo objetivo com IA ou à mão, compromissos recorrentes, calendário de execução e de prazos, Hoje, rampa, registro e perfil. Desenvolvido com TDD, testes de integração HTTP e testes ponta a ponta (Playwright no web, integration_test no simulador iOS). Backend no Render e web na Vercel.
 
-**Próximos passos.** Gamificação calculada a partir das sessões, bloqueio de apps que distraem com liberação pelas gotas conquistadas, tarefas leves do dia como aquecimento da rampa, rotina descrita em texto livre e estimativas que aprendem com o tempo real de cada pessoa.
+**Próximos passos.** Bloqueio voluntário dos apps que distraem, com liberação pelas gotas conquistadas, para a pessoa retomar o controle do tempo de tela; gamificação calculada a partir das sessões; tarefas leves do dia como aquecimento da rampa, rotina descrita em texto livre e estimativas que aprendem com o tempo real de cada pessoa.
