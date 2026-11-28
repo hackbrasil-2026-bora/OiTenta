@@ -1,6 +1,6 @@
 import type { HttpClient } from "@/modules/core/data/http-client";
 import type { AuthRepository } from "./auth.repository";
-import type { LoginInput, LoginResponse, MeResponse, RegisterInput, RegisterResponse } from "./auth.types";
+import type { LoginInput, LoginResponse, MeResponse, RegisterInput, RegisterResponse, UpdateProfileInput } from "./auth.types";
 
 // /auth/* no backend real (docs/4-contrato-api.md §1). Login e demo guardam o token.
 export class HttpAuthRepository implements AuthRepository {
@@ -20,6 +20,11 @@ export class HttpAuthRepository implements AuthRepository {
 
   me(): Promise<MeResponse> {
     return this.http.get<MeResponse>("/auth/me");
+  }
+
+  updateProfile(input: UpdateProfileInput): Promise<MeResponse> {
+    const body = Object.fromEntries(Object.entries(input).filter(([, v]) => v !== undefined));
+    return this.http.request<MeResponse>("PATCH", "/auth/me", { body });
   }
 
   async logout(): Promise<void> {

@@ -30,3 +30,10 @@ export interface RegisterResponse {
 export interface MeResponse {
   user: AuthUser;
 }
+
+/** PATCH /auth/me (AT3). `currentPassword` é obrigatória quando o e-mail muda. */
+export interface UpdateProfileInput {
+  name?: string;
+  email?: string;
+  currentPassword?: string;
+}

@@ -95,4 +95,23 @@ describe("HttpAuthRepository", () => {
     expect(tokens.get()).toBeNull();
     expect(fetch).not.toHaveBeenCalled();
   });
+
+  it("updateProfile faz PATCH /auth/me com Bearer e só os campos informados (AT3)", async () => {
+    const fetch = stubFetch({ status: 200, body: { user: { ...user, name: "Arthur Lima" } } });
+    const { repo } = setup("tok-1");
+    expect(await repo.updateProfile({ name: "Arthur Lima" })).toEqual({ user: { ...user, name: "Arthur Lima" } });
+    const call = callOf(fetch);
+    expect(call.method).toBe("PATCH");
+    expect(call.url.pathname).toBe("/auth/me");
+    expect(call.body).toEqual({ name: "Arthur Lima" });
+    expect(call.headers.get("Authorization")).toBe("Bearer tok-1");
+  });
+
+  it("updateProfile com a senha errada lança ApiError 403 sem avisar o 401", async () => {
+    stubFetch({ status: 403, body: { statusCode: 403, error: "ForbiddenError", message: "Senha atual incorreta." } });
+    const { repo, onUnauthorized } = setup("tok-1");
+    const err = await repo.updateProfile({ email: "x@bora.app", currentPassword: "errada" }).catch((e) => e);
+    expect(err).toMatchObject({ statusCode: 403, message: "Senha atual incorreta." });
+    expect(onUnauthorized).not.toHaveBeenCalled();
+  });
 });

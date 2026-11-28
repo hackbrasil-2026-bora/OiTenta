@@ -17,6 +17,7 @@ beforeEach(async () => {
   exampleBackend.reset();
   await settingsRepository.setTheme("light");
   await settingsRepository.setDailyEmail(true);
+  await settingsRepository.setLanguage("pt");
 });
 afterEach(() => {
   cleanup();
@@ -79,7 +80,7 @@ describe("W26 Configurações", () => {
     expect(sw.getAttribute("aria-checked")).toBe("true");
     await act(async () => fireEvent.click(sw));
     expect(sw.getAttribute("aria-checked")).toBe("false");
-    expect(await settingsRepository.getPreferences()).toEqual({ theme: "dark", dailyEmail: false });
+    expect(await settingsRepository.getPreferences()).toEqual({ theme: "dark", dailyEmail: false, language: "pt" });
   });
 
   it("a prévia do e-mail mostra o plano de hoje", async () => {
@@ -128,5 +129,69 @@ describe("W26 Configurações", () => {
       await new Promise((r) => setTimeout(r, 50));
     });
     expect(screen.getByText("Livre · 1h por semana")).toBeTruthy();
+  });
+
+  describe("Sua conta (AT3)", () => {
+    it("começa com o nome e o e-mail atuais e Salvar desligado", async () => {
+      await open();
+      expect((screen.getByLabelText("Nome") as HTMLInputElement).value).toBe("Arthur");
+      expect((screen.getByLabelText("E-mail") as HTMLInputElement).value).toBe("arthur@faculdade.edu.br");
+      expect(screen.queryByLabelText("Senha atual")).toBeNull();
+      expect((screen.getByRole("button", { name: "Salvar conta" }) as HTMLButtonElement).disabled).toBe(true);
+    });
+
+    it("trocar o nome grava (PATCH /auth/me) e o topo mostra o nome novo", async () => {
+      const save = vi.spyOn(authRepository, "updateProfile");
+      await open();
+      fireEvent.change(screen.getByLabelText("Nome"), { target: { value: "Arthur Lima" } });
+      fireEvent.click(screen.getByRole("button", { name: "Salvar conta" }));
+      await screen.findByText("Perfil atualizado.");
+      expect(save).toHaveBeenCalledWith({ name: "Arthur Lima" });
+      expect(screen.getByText("Arthur Lima · arthur@faculdade.edu.br")).toBeTruthy();
+    });
+
+    it("trocar o e-mail pede a senha atual e mostra o erro da senha errada", async () => {
+      await open();
+      fireEvent.change(screen.getByLabelText("E-mail"), { target: { value: "novo@bora.app" } });
+      expect(screen.getByText("Pra trocar o e-mail, confirme sua senha atual.")).toBeTruthy();
+      expect((screen.getByRole("button", { name: "Salvar conta" }) as HTMLButtonElement).disabled).toBe(true);
+      fireEvent.change(screen.getByLabelText("Senha atual"), { target: { value: "errada" } });
+      fireEvent.click(screen.getByRole("button", { name: "Salvar conta" }));
+      expect(await screen.findByText("Senha atual incorreta.")).toBeTruthy();
+      expect(push).not.toHaveBeenCalled();
+    });
+
+    it("com a senha certa, troca o e-mail", async () => {
+      const save = vi.spyOn(authRepository, "updateProfile");
+      await open();
+      fireEvent.change(screen.getByLabelText("E-mail"), { target: { value: "novo@bora.app" } });
+      fireEvent.change(screen.getByLabelText("Senha atual"), { target: { value: "bora1234" } });
+      fireEvent.click(screen.getByRole("button", { name: "Salvar conta" }));
+      await screen.findByText("Perfil atualizado.");
+      expect(save).toHaveBeenCalledWith({ email: "novo@bora.app", currentPassword: "bora1234" });
+      expect(screen.getByText("Arthur · novo@bora.app")).toBeTruthy();
+    });
+  });
+
+  it("Idioma (AT7): escolher marca a opção e guarda", async () => {
+    await open();
+    const english = screen.getByRole("button", { name: "English" });
+    expect(screen.getByRole("button", { name: "Português (Brasil)" }).getAttribute("aria-pressed")).toBe("true");
+    fireEvent.click(english);
+    await waitFor(() => expect(english.getAttribute("aria-pressed")).toBe("true"));
+    expect((await settingsRepository.getPreferences()).language).toBe("en");
+  });
+
+  it("Enviar sugestão (AT6): Enviar só com texto e mostra a confirmação", async () => {
+    const send = vi.spyOn(settingsRepository, "sendSuggestion");
+    await open();
+    const enviar = screen.getByRole("button", { name: "Enviar sugestão" }) as HTMLButtonElement;
+    expect(enviar.disabled).toBe(true);
+    fireEvent.change(screen.getByLabelText("O que podemos melhorar?"), { target: { value: "Queria mudar a cor" } });
+    expect(enviar.disabled).toBe(false);
+    fireEvent.click(enviar);
+    expect(await screen.findByText("Sugestão enviada. Valeu! A gente lê tudo.")).toBeTruthy();
+    expect(send).toHaveBeenCalledWith("Queria mudar a cor");
+    expect((screen.getByLabelText("O que podemos melhorar?") as HTMLTextAreaElement).value).toBe("");
   });
 });
