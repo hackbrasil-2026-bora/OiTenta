@@ -1,3 +1,4 @@
+import 'package:flutter/gestures.dart';
 import 'package:flutter/material.dart';
 import 'package:phosphor_flutter/phosphor_flutter.dart';
 
@@ -24,6 +25,8 @@ class RegisterScreen extends StatelessWidget {
     required this.onSubmit,
     required this.onBack,
     required this.onLogin,
+    required this.onTerms,
+    required this.onPrivacy,
   });
 
   static const passwordHint =
@@ -39,6 +42,8 @@ class RegisterScreen extends StatelessWidget {
   final VoidCallback onSubmit;
   final VoidCallback onBack;
   final VoidCallback onLogin;
+  final VoidCallback onTerms;
+  final VoidCallback onPrivacy;
 
   @override
   Widget build(BuildContext context) {
@@ -110,7 +115,12 @@ class RegisterScreen extends StatelessWidget {
             text: state.confirmText,
           ),
         const SizedBox(height: 20),
-        _TermsCheck(checked: state.termsAccepted, onToggle: onToggleTerms),
+        _TermsCheck(
+          checked: state.termsAccepted,
+          onToggle: onToggleTerms,
+          onTerms: onTerms,
+          onPrivacy: onPrivacy,
+        ),
         if (state.error != null) AuthError(state.error!),
         const SizedBox(height: 24),
         PrimaryButton(
@@ -131,15 +141,41 @@ class RegisterScreen extends StatelessWidget {
 }
 
 /// Caixa dos termos (24×24, raio 8, borda 2px): marcada fica `--pri` com o
-/// check `--priTx`. O toque em qualquer parte da linha alterna.
-class _TermsCheck extends StatelessWidget {
-  const _TermsCheck({required this.checked, required this.onToggle});
+/// check `--priTx`. O toque na linha alterna; os links abrem os Termos de uso
+/// e a Política de privacidade (28/11/2026) sem alternar.
+class _TermsCheck extends StatefulWidget {
+  const _TermsCheck({
+    required this.checked,
+    required this.onToggle,
+    required this.onTerms,
+    required this.onPrivacy,
+  });
 
   final bool checked;
   final VoidCallback onToggle;
+  final VoidCallback onTerms;
+  final VoidCallback onPrivacy;
+
+  @override
+  State<_TermsCheck> createState() => _TermsCheckState();
+}
+
+class _TermsCheckState extends State<_TermsCheck> {
+  late final _terms = TapGestureRecognizer()..onTap = () => widget.onTerms();
+  late final _privacy = TapGestureRecognizer()
+    ..onTap = () => widget.onPrivacy();
+
+  @override
+  void dispose() {
+    _terms.dispose();
+    _privacy.dispose();
+    super.dispose();
+  }
 
   @override
   Widget build(BuildContext context) {
+    final checked = widget.checked;
+    final onToggle = widget.onToggle;
     final c = context.bora;
     final link = BoraText.nunito(
       14,
@@ -181,9 +217,17 @@ class _TermsCheck extends StatelessWidget {
                   style: BoraText.small(c.tx),
                   children: [
                     const TextSpan(text: 'Li e aceito os '),
-                    TextSpan(text: 'Termos de uso', style: link),
+                    TextSpan(
+                      text: 'Termos de uso',
+                      style: link,
+                      recognizer: _terms,
+                    ),
                     const TextSpan(text: ' e a '),
-                    TextSpan(text: 'Política de privacidade', style: link),
+                    TextSpan(
+                      text: 'Política de privacidade',
+                      style: link,
+                      recognizer: _privacy,
+                    ),
                   ],
                 ),
               ),

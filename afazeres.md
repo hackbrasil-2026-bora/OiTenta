@@ -447,7 +447,7 @@ Siglas: W = tela do protótipo web (`design/web/SCREENS.md`); M = tela do mobile
   - **Contexto:** o zip de 19/11 trouxe a aba Compromissos, o formulário de compromisso e Tarefas únicas. Pela MP10, a tab bar ficou com o Jardim e essas telas ficaram fora da rodada.
   - **Alternativas:** 1. **rodada própria** com `Commitment` persistido (migration, CRUD, contrato) e as telas, trocando a 4ª aba conforme o design; 2. **manter fora do MVP** (P8).
   - **Recomendação:** 1, porque agora existe design e o motor do calendário já usa compromissos no domínio.
-- [ ] [DECIDIR] Sair da conta no mobile — (origem: plano-mobile-acesso-perfil-jardim, 19/11/2026)
+- [x] [DECIDIR] Sair da conta no mobile — (origem: plano-mobile-acesso-perfil-jardim, 19/11/2026) — fechado pela AT9 (28/11/2026): "Sair da conta" na Zona de risco do Perfil; a persistência do token continua pendente (D2)
   - **Contexto:** o design do Perfil não tem "Sair"; pela MP12 não foi criado (fechar o app desloga, porque o token fica em memória).
   - **Problema:** se o token passar a persistir (item "Token do mobile só em memória"), não haverá como trocar de conta.
   - **Alternativas:** 1. **criar "Sair da conta" no fim do Perfil junto com a persistência do token**; 2. **pedir o design**.
@@ -553,6 +553,48 @@ Siglas: W = tela do protótipo web (`design/web/SCREENS.md`); M = tela do mobile
   - **Contexto:** se a data `SEMESTER_END` já passou, o chip "Fim do semestre" manda `endDate < startDate` e o backend responde 422.
   - **Alternativas:** 1. **esconder ou desabilitar o chip quando a data já passou** (30 min); 2. **manter** (depende de atualizar o `env` a cada semestre).
   - **Recomendação:** 1.
+
+### Teste no Android físico (28/11/2026)
+
+Pedidos do usuário ao testar o app num Galaxy S23 (Android 17) e o web, depois da rodada de compromissos e IA.
+
+- [x] [EXECUTAR] Ícone do app com o Broto e nome "Bora" na lista de apps — (origem: teste no Android, 28/11/2026; nome "Bora" decidido pelo usuário em 28/11/2026) — branch `fix/mobile-android-icone-calendario-barra`
+  - O app aparecia como "oitenta", com o ícone padrão do Flutter, e o usuário não o achava. Agora o ícone é o Broto (humor `ok`) sobre o `priSoft` (#D1FAE5): adaptativo no Android 8+ e todos os tamanhos do iOS. Os PNGs saem de `apps/mobile/tool/app_icon/generate_app_icon_test.dart` (rodar de novo se o Broto mudar). Se o nome do app mudar, trocar `android:label` e `CFBundleDisplayName`.
+- [x] [EXECUTAR] "BOTTOM OVERFLOWED BY 2.0 PIXELS" no mês do calendário (Semana) — (origem: teste no Android, 28/11/2026) — branch `fix/mobile-android-icone-calendario-barra`
+  - Causa: `monthPagerHeight` reservava 298 px e um mês de 6 semanas ocupa 300 (célula de 45, não 46, mais os 5 espaços de 2). A altura agora sai das mesmas medidas da grade; teste `month_pager_layout_test.dart`.
+- [x] [EXECUTAR] Esconder a barra de navegação do Android (voltar, início, abas) — (origem: teste no Android, 28/11/2026; AT2) — branch `fix/mobile-android-icone-calendario-barra`, commits `2d6d5a1` e `db42905`
+  - **Ajuste de 28/11 (AT2):** enquanto os botões aparecem, a tab bar sobe inteira, sem esticar, e o app pinta o `#047857` translúcido atrás deles.
+  - A barra some ao abrir o app e ao voltar para ele; arrastar de baixo mostra, e ela some sozinha depois de 3 s. A barra de status (hora e bateria) continua. Não muda nada no iOS. `core/system/immersive_navigation_bar.dart`, teste `immersive_navigation_bar_test.dart`.
+- [ ] [EXECUTAR] Editar o perfil (nome e e-mail) no app e no web — **decidido em 28/11/2026 (AT3): alternativa 2, nome e e-mail, com a senha atual para trocar o e-mail.** Pronto quando `PATCH /auth/me` tiver testes de integração e o Perfil (app) e as Configurações (web) editarem os dois. Item original: — (origem: teste no Android, 28/11/2026) — afeta Backend, Frontend (W26) e Mobile (M26)
+  - **Contexto:** o Perfil do app e as Configurações do web mostram nome e e-mail, mas não deixam editar. Cada usuário já tem um ID único (UUID em `User.id`); o nome e o e-mail são só dados, então trocá-los não quebra objetivos, plano nem sessões.
+  - **Problema:** não existe rota para alterar a conta (só `register`, `login`, `me` e `demo`), nem tela no design para editar.
+  - **Alternativas:** 1. **só o nome** (`PATCH /auth/me` com `name`; linha "Nome" tocável no Perfil e campo nas Configurações; meio dia com testes); 2. **nome e e-mail**, pedindo a senha atual para trocar o e-mail (o e-mail é o login; 1 dia); 3. **nome, e-mail e senha** (troca de senha com a atual + nova; 1 dia e meio). Em todas, falta o design da tela de edição.
+  - **Recomendação:** 2 agora (é o que o usuário pediu e evita alguém trocar o e-mail com o celular desbloqueado de outra pessoa); senha junto com a recuperação de senha (item "Recuperação de senha de verdade").
+- [ ] [EXECUTAR] Interruptor do e-mail diário também no app — **decidido em 28/11/2026 (AT4): fica no web e entra no app, só visual, até o envio existir.** Pronto quando o Perfil do app tiver o interruptor. Item original: — (origem: teste no Android, 28/11/2026) — ver também Frontend (W26)
+  - **Contexto:** o web tem o interruptor "E-mail diário" nas Configurações (W26); o Perfil do app (M26) não tem, e o design mobile também não. O backend ainda não envia e-mail nenhum (UC23 fora da fatia): o interruptor do web grava só no repositório de exemplo.
+  - **Alternativas:** 1. **pôr o interruptor no Perfil do app** como só visual, igual ao web hoje (1 h); 2. **fazer o e-mail de verdade** (preferência no backend, provedor de e-mail, envio agendado; 2–3 dias) e aí pôr o interruptor nos dois; 3. **esconder no web** até existir o envio.
+  - **Recomendação:** 3 até o e-mail existir; não mostrar uma opção que não faz nada.
+- [ ] [EXECUTAR] "Máximo por dia" do Perfil não é editável direto — **decidido em 28/11/2026 (AT5): alternativa 1, seletor só do limite.** Pronto quando tocar na linha abrir o seletor, salvar e recalcular. Item original: — (origem: teste no Android, 28/11/2026)
+  - **Contexto:** o Perfil mostra o "Máximo por dia", mas para mudar é preciso entrar em "Redefinir minha rotina". O usuário achou pouco intuitivo.
+  - **Alternativas:** 1. **tocar na linha abre um seletor só do limite** (sheet com +/−, salva com `PUT /scheduling/availability` mantendo a grade e recalcula; meio dia); 2. **tocar na linha abre o "Redefinir minha rotina"** já rolado até o limite (1 h); 3. **manter**.
+  - **Recomendação:** 1.
+- [ ] [EXECUTAR] Idioma e "Enviar sugestão" no web — **decidido em 28/11/2026 (AT6, AT7): os dois aparecem no web, só visuais, como no app; backend e tradução depois.** Pronto quando as Configurações do web tiverem os dois. Item original: — (origem: teste no Android, 28/11/2026) — ver também os itens "Preferências do Perfil só visuais" e "Enviar sugestão sem backend", acima
+  - **Contexto:** o app tem Idioma e Enviar sugestão no Perfil; o web não tem nenhum dos dois. O `design/web/SCREENS.md` diz que no web "não há idioma e enviar sugestão" (UC32 parcial). No app os dois são só visuais (MP8, MP9).
+  - **Alternativas:** 1. **pôr os dois no web igual ao app** (visuais; 1 h, sem design web); 2. **fazer de verdade nos dois**: sugestão com `POST /feedback` (meio dia) e idioma com i18n (1–2 dias por plataforma); 3. **manter** como o design manda.
+  - **Recomendação:** 2 para a sugestão (o mesmo endpoint serve aos dois) e 3 para o idioma até haver tradução.
+
+- [ ] [EXECUTAR] "Lembrete da rampa" no Perfil não é editável e não explica o que é — **decidido em 28/11/2026 (AT8): alternativa 1, editável e só visual.** Item original: — (origem: teste no Android, 28/11/2026)
+  - **Contexto:** a linha mostra "09:30" fixo. A ideia do design (M26) é um aviso no celular, todo dia nesse horário, chamando para começar a rampa. Pela MP8 é só visual: notificações estão fora do MVP.
+  - **Alternativas:** 1. **editável e só visual**: tocar abre um seletor de horário e um subtítulo explica ("Um aviso por dia pra começar a rampa"); 1–2 h; 2. **de verdade**: notificação local (pacote novo, permissão do Android e do iOS); 1 dia; 3. **esconder** até existir.
+  - **Recomendação:** 1 agora (mantém o MVP completo nas telas, como o e-mail diário, AT4) e 2 depois.
+- [ ] [EXECUTAR] "Zona de risco": trocar senha, sair da conta e apagar conta (app e web) — **decidido em 28/11/2026 (AT9): alternativa 1, os três de verdade; a conta demo não pode ser apagada.** Item original: — (origem: teste no Android, 28/11/2026) — afeta Backend, Frontend (W26) e Mobile (M26)
+  - **Contexto:** não há como trocar a senha logado, sair da conta no app (o web tem "Sair"; no app, fechar desloga, MP12) nem apagar a conta. Nenhum dos três tem design.
+  - **Alternativas:** 1. **os três de verdade**: `PATCH /auth/me/password` (senha atual + nova, regra de senha forte), "Sair" no app (limpa a sessão e volta ao login) e `DELETE /auth/me` (apaga a conta com confirmação digitando a senha; o `User.deletedAt` já existe, então pode ser exclusão lógica); 1 dia e meio; 2. **só sair e trocar senha** de verdade, apagar conta só visual; 1 dia; 3. **os três só visuais**; 2 h.
+  - **Recomendação:** 1. Apagar a conta de verdade é exigido pela LGPD e pelas lojas (Google Play e App Store pedem exclusão de conta dentro do app).
+
+- [ ] [EXECUTAR] Revisar os Termos de uso e a Política de privacidade antes do lançamento — (origem: pedido do dono do produto, 28/11/2026) — afeta Frontend e Mobile
+  - **Contexto:** os textos estão em `apps/frontend/src/modules/legal/data/legal-texts.ts` (o app gera o seu com `bash apps/mobile/tool/legal/generate_legal_texts.sh`) e aparecem com o aviso "Versão preliminar". Responsável: "equipe do Bora (Hack Brasil 2026)"; contato: contato@bora.app; sem idade mínima, com consentimento dos pais abaixo de 12 anos (LGPD, art. 14).
+  - **Falta:** confirmar que contato@bora.app existe e é lido; pôr o fornecedor da IA e onde ficam o servidor e o banco quando forem escolhidos (§4 e §5 da política); revisão jurídica, de preferência. Pronto quando o aviso de versão preliminar puder sair.
 
 ## Backend (inclui domínio modules/*, banco e contrato)
 - [ ] [EXECUTAR] `SplitCommitmentFrom` atômico — (origem: revisor, rodada de compromissos e tarefas únicas, 20/11/2026)

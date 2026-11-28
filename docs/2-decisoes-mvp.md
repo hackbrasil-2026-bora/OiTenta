@@ -680,3 +680,38 @@ Dependências técnicas indispensáveis para as aprovadas funcionarem (ex.: `@vi
 ### Atualização da P8
 - Compromissos passam a ter tela (Semana, Hoje), endpoints (`/scheduling/commitments`, §7 do contrato) e tabela (`commitments`, `commitment_exceptions`). O `EmptyCommitmentRepository` sai.
 
+
+## Teste no Android físico (28/11/2026)
+
+**Origem:** o dono do produto testou o app num Galaxy S23 (Android 17) e o web, e decidiu os pedidos abaixo em 28/11/2026. Itens no `afazeres.md`, seção Mobile, "Teste no Android físico".
+
+### AT1 — Nome do app: Bora
+- **Decisão:** o app aparece como **Bora** na lista de apps (`android:label` e `CFBundleDisplayName`), com o ícone do Broto. **Status:** definitiva.
+
+### AT2 — Barra de navegação do Android escondida
+- **Decisão:** os botões do Android (voltar, início, abas) ficam escondidos; arrastar mostra, e eles somem sozinhos depois de 3 s. Enquanto aparecem, a tab bar sobe inteira, sem esticar, e o app pinta atrás dos botões o `#047857` translúcido. **Status:** definitiva.
+
+### AT3 — Editar o perfil: nome e e-mail
+- **Decisão:** dá para trocar o nome e o e-mail no Perfil do app e nas Configurações do web. Trocar o e-mail pede a senha atual (o e-mail é o login). O ID do usuário (UUID) não muda. Rota `PATCH /auth/me`. A troca de senha fica com a recuperação de senha. **Elemento sem design.** **Status:** provisória até o design.
+
+### AT4 — Interruptor do e-mail diário no app e no web, só visual
+- **Decisão:** o interruptor "E-mail diário" fica no web (W26) e entra no Perfil do app, mesmo sem envio (UC23 fora da fatia), para o MVP ficar completo nas telas. Fazer o envio de verdade fica para depois. **Status:** provisória.
+
+### AT5 — "Máximo por dia" editável direto no Perfil
+- **Decisão:** tocar na linha "Máximo por dia" abre um seletor só do limite; salvar grava com `PUT /scheduling/availability`, mantém a grade e recalcula o plano. **Elemento sem design.** **Status:** provisória até o design.
+
+### AT6 — "Enviar sugestão" no web, só visual
+- **Decisão:** o web ganha "Enviar sugestão" nas Configurações, igual ao app (MP9): mostra "Sugestão enviada", sem backend. O `POST /feedback` fica para depois. **Status:** provisória.
+
+### AT7 — Idioma no web, só visual
+- **Decisão:** o web ganha o seletor de Idioma nas Configurações, igual ao app (MP8), sem tradução. A tradução (i18n) fica para depois. **Status:** provisória.
+
+### AT8 — "Lembrete da rampa" editável, só visual
+- **Decisão (28/11/2026):** tocar na linha abre um seletor de horário e a linha explica o que é ("Um aviso por dia pra começar a rampa"). Não notifica ainda (notificações fora do MVP); a notificação local fica para depois. **Elemento sem design.** **Status:** provisória.
+
+### AT9 — Zona de risco: trocar senha, sair e apagar conta, de verdade
+- **Decisão (28/11/2026):** no Perfil (app) e nas Configurações (web), uma seção "Zona de risco" com:
+  - **Trocar senha:** `PATCH /auth/me/password` `{ currentPassword, newPassword }` → 204; senha atual errada → 403; senha nova fraca → 422.
+  - **Sair da conta:** limpa a sessão e volta ao login (no app, o token já fica só em memória; ver o item "Sair da conta no mobile").
+  - **Apagar conta:** `DELETE /auth/me` `{ currentPassword }` → 204. Apaga de verdade a conta e todos os dados dela (sessões, blocos, objetivos e etapas, disponibilidade, compromissos), numa transação (LGPD; Google Play e App Store exigem a exclusão dentro do app). Confirmação com a senha. A conta demo não pode ser apagada (403), para o "Entrar como demo" continuar funcionando.
+- **Elemento sem design.** **Status:** provisória até o design.

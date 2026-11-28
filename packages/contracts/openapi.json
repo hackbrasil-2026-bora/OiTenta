@@ -110,6 +110,117 @@
         "tags": [
           "auth"
         ]
+      },
+      "patch": {
+        "operationId": "AuthController_updateMe",
+        "parameters": [],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/UpdateProfileBody"
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/UserResponse"
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "Token ausente, inválido ou expirado."
+          },
+          "403": {
+            "description": "Troca de e-mail sem a senha atual ou com a senha errada."
+          },
+          "409": {
+            "description": "E-mail já cadastrado."
+          }
+        },
+        "security": [
+          {
+            "bearer": []
+          }
+        ],
+        "tags": [
+          "auth"
+        ]
+      },
+      "delete": {
+        "operationId": "AuthController_deleteMe",
+        "parameters": [],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/DeleteAccountBody"
+              }
+            }
+          }
+        },
+        "responses": {
+          "204": {
+            "description": "Conta e todos os dados dela apagados."
+          },
+          "401": {
+            "description": "Token ausente, inválido ou expirado."
+          },
+          "403": {
+            "description": "Senha atual incorreta, ou a conta é a demo."
+          }
+        },
+        "security": [
+          {
+            "bearer": []
+          }
+        ],
+        "tags": [
+          "auth"
+        ]
+      }
+    },
+    "/auth/me/password": {
+      "patch": {
+        "operationId": "AuthController_changePassword",
+        "parameters": [],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/ChangePasswordBody"
+              }
+            }
+          }
+        },
+        "responses": {
+          "204": {
+            "description": "Senha trocada."
+          },
+          "401": {
+            "description": "Token ausente, inválido ou expirado."
+          },
+          "403": {
+            "description": "Senha atual incorreta."
+          }
+        },
+        "security": [
+          {
+            "bearer": []
+          }
+        ],
+        "tags": [
+          "auth"
+        ]
       }
     },
     "/auth/demo": {
@@ -1252,6 +1363,54 @@
         "required": [
           "token",
           "user"
+        ]
+      },
+      "UpdateProfileBody": {
+        "type": "object",
+        "properties": {
+          "name": {
+            "type": "string",
+            "example": "Ana Clara"
+          },
+          "email": {
+            "type": "string",
+            "example": "ana.clara@bora.app"
+          },
+          "currentPassword": {
+            "type": "string",
+            "example": "Senha@123",
+            "description": "Obrigatória quando o e-mail muda; errada → 403."
+          }
+        }
+      },
+      "ChangePasswordBody": {
+        "type": "object",
+        "properties": {
+          "currentPassword": {
+            "type": "string",
+            "example": "Senha@123"
+          },
+          "newPassword": {
+            "type": "string",
+            "example": "Nova@4567",
+            "description": "Mínimo 8 caracteres, com maiúscula, minúscula, número e símbolo."
+          }
+        },
+        "required": [
+          "currentPassword",
+          "newPassword"
+        ]
+      },
+      "DeleteAccountBody": {
+        "type": "object",
+        "properties": {
+          "currentPassword": {
+            "type": "string",
+            "example": "Senha@123"
+          }
+        },
+        "required": [
+          "currentPassword"
         ]
       },
       "AvailabilityWindowBody": {

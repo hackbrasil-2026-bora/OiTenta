@@ -5,11 +5,15 @@ import 'package:oitenta/core/clock/clock.dart';
 import 'package:oitenta/core/di/app_dependencies.dart';
 import 'package:oitenta/core/routes/app_routes.dart';
 import 'package:oitenta/core/sample/bora_sample_data.dart';
+import 'package:oitenta/core/widgets/bora_widgets.dart';
 import 'package:oitenta/features/activation/data/sample_activation_repository.dart';
 import 'package:oitenta/features/auth/data/sample_auth_repository.dart';
 import 'package:oitenta/features/gamification/data/sample_gamification_repository.dart';
 import 'package:oitenta/features/gamification/presentation/garden_pages.dart';
 import 'package:oitenta/features/goals/data/sample_goals_repository.dart';
+import 'package:oitenta/features/auth/presentation/auth_pages.dart';
+import 'package:oitenta/features/legal/legal_screen.dart';
+import 'package:oitenta/features/profile/presentation/daily_limit_sheet.dart';
 import 'package:oitenta/features/profile/presentation/language_sheet.dart';
 import 'package:oitenta/features/profile/presentation/profile_pages.dart';
 import 'package:oitenta/features/profile/presentation/routine_suggestion_pages.dart';
@@ -147,5 +151,137 @@ void main() {
     expect(find.byType(ProfilePage), findsOneWidget);
     expect(scheduling.availabilityCalls, beforeBack + 1);
     expect(find.text('3h'), findsOneWidget);
+  });
+
+  testWidgets('Editar perfil: troca o nome, volta e o Perfil mostra (AT3)', (
+    tester,
+  ) async {
+    await pumpApp(tester, location: AppRoutes.profile);
+
+    await tester.tap(find.text('Arthur'));
+    await tester.pumpAndSettle();
+    expect(find.byType(EditProfilePage), findsOneWidget);
+
+    await tester.enterText(
+      find.widgetWithText(TextField, 'Arthur'),
+      'Arthur Lima',
+    );
+    await tester.pump();
+    await tester.tap(find.text('Salvar'));
+    await tester.pumpAndSettle();
+
+    expect(find.byType(ProfilePage), findsOneWidget);
+    expect(find.text('Arthur Lima'), findsOneWidget);
+    expect(find.text('Perfil atualizado'), findsOneWidget);
+    await tester.pump(const Duration(seconds: 5)); // o toast some
+  });
+
+  testWidgets('Máximo por dia: o seletor salva e atualiza a linha (AT5)', (
+    tester,
+  ) async {
+    final scheduling = _CountingScheduling();
+    await pumpApp(tester, location: AppRoutes.profile, deps: _deps(scheduling));
+
+    await tester.tap(find.text('Máximo por dia'));
+    await tester.pumpAndSettle();
+    expect(find.byType(DailyLimitSheet), findsOneWidget);
+
+    tester
+        .widget<BoraSlider>(
+          find.descendant(
+            of: find.byType(DailyLimitSheet),
+            matching: find.byType(BoraSlider),
+          ),
+        )
+        .onChanged(6);
+    await tester.pump();
+    await tester.tap(
+      find.descendant(
+        of: find.byType(DailyLimitSheet),
+        matching: find.text('Salvar'),
+      ),
+    );
+    await tester.pumpAndSettle();
+
+    expect(find.byType(DailyLimitSheet), findsNothing);
+    expect(find.text('Máximo por dia: 6h'), findsOneWidget);
+    expect(find.text('6h'), findsOneWidget);
+    final saved = await scheduling.getAvailability();
+    expect(saved!.dailyLimitMinutes, 360);
+    await tester.pump(const Duration(seconds: 5)); // o toast some
+  });
+
+  group('Zona de risco (AT9)', () {
+    testWidgets('Sair da conta: confirma, limpa a sessão e vai ao login', (
+      tester,
+    ) async {
+      final deps = await pumpApp(tester, location: AppRoutes.profile);
+      await tester.ensureVisible(find.text('Sair da conta'));
+      await tester.tap(find.text('Sair da conta'));
+      await tester.pumpAndSettle();
+      await tester.tap(find.text('Sair'));
+      await tester.pumpAndSettle();
+
+      expect(find.byType(LoginPage), findsOneWidget);
+      expect(deps.session.session, isNull);
+    });
+
+    testWidgets('Apagar conta: com a senha, apaga e vai ao login', (
+      tester,
+    ) async {
+      final deps = await pumpApp(tester, location: AppRoutes.profile);
+      await tester.ensureVisible(find.text('Apagar conta'));
+      await tester.tap(find.text('Apagar conta'));
+      await tester.pumpAndSettle();
+
+      await tester.enterText(find.byType(TextField), 'Senha@123');
+      await tester.pump();
+      await tester.tap(find.text('Apagar minha conta'));
+      await tester.pumpAndSettle();
+
+      expect(find.byType(LoginPage), findsOneWidget);
+      expect(find.text('Conta apagada'), findsOneWidget);
+      expect(deps.session.session, isNull);
+      await tester.pump(const Duration(seconds: 5)); // o toast some
+    });
+
+    testWidgets('Trocar senha: salva e volta ao Perfil', (tester) async {
+      await pumpApp(tester, location: AppRoutes.profile);
+      await tester.ensureVisible(find.text('Trocar senha'));
+      await tester.tap(find.text('Trocar senha'));
+      await tester.pumpAndSettle();
+
+      final fields = find.byType(TextField);
+      await tester.enterText(fields.at(0), 'Senha@123');
+      await tester.enterText(fields.at(1), 'Nova@4567');
+      await tester.enterText(fields.at(2), 'Nova@4567');
+      await tester.pump();
+      await tester.tap(find.text('Salvar senha'));
+      await tester.pumpAndSettle();
+
+      expect(find.byType(ProfilePage), findsOneWidget);
+      expect(find.text('Senha trocada'), findsOneWidget);
+      await tester.pump(const Duration(seconds: 5));
+    });
+  });
+
+  testWidgets('Termos de uso abre do Perfil e volta', (tester) async {
+    await pumpApp(tester, location: AppRoutes.profile);
+    await tester.ensureVisible(find.text('Termos de uso'));
+    await tester.tap(find.text('Termos de uso'));
+    await tester.pumpAndSettle();
+    expect(find.byType(LegalPage), findsOneWidget);
+
+    await tester.tap(find.bySemanticsLabel('Voltar').first);
+    await tester.pumpAndSettle();
+    expect(find.byType(ProfilePage), findsOneWidget);
+  });
+
+  testWidgets('a Política de privacidade abre antes do login (/privacidade)', (
+    tester,
+  ) async {
+    await pumpApp(tester, location: AppRoutes.privacy);
+    expect(find.byType(LegalPage), findsOneWidget);
+    expect(find.text('Política de privacidade'), findsOneWidget);
   });
 }

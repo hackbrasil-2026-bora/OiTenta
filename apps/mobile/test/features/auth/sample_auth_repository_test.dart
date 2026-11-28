@@ -33,4 +33,23 @@ void main() {
     final u = await repo.me();
     expect(u.name, 'Arthur');
   });
+
+  test('updateProfile devolve o usuário com o nome e o e-mail novos', () async {
+    final u = await SampleAuthRepository().updateProfile(
+      name: 'Arthur Lima',
+      email: 'novo@bora.app',
+      currentPassword: 'Senha@123',
+    );
+    expect(u.name, 'Arthur Lima');
+    expect(u.email, 'novo@bora.app');
+  });
+
+  test('changePassword e deleteAccount respondem sem erro (exemplo)', () async {
+    final repo = SampleAuthRepository();
+    await repo.changePassword(
+      currentPassword: 'Senha@123',
+      newPassword: 'Nova@4567',
+    );
+    await repo.deleteAccount(currentPassword: 'Senha@123');
+  });
 }

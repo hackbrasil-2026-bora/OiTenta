@@ -6,6 +6,7 @@ import '../../auth/data/auth_repository.dart';
 import '../../auth/data/session_store.dart';
 import '../../auth/domain/auth_user.dart';
 import '../../scheduling/data/scheduling_repository.dart';
+import '../../scheduling/domain/availability.dart';
 
 /// Opção do sheet "Idioma" (M28).
 typedef LanguageOptionData = ({String code, String name});
@@ -15,7 +16,10 @@ typedef LanguageOptionData = ({String code, String name});
 /// - nome e e-mail vêm de `GET /auth/me` (MP6: o subtítulo é o e-mail);
 /// - "Máximo por dia" vem de `GET /scheduling/availability`;
 /// - "Modo escuro" troca o tema do app de verdade (MP7);
-/// - bloquear apps, lembrete e idioma são só visuais, em memória (MP8).
+/// - "Máximo por dia" se edita direto (AT5): grava só o limite, mantendo a
+///   grade, com `PUT /scheduling/availability` (que recalcula o plano);
+/// - bloquear apps, lembrete, idioma (MP8) e e-mail diário (AT4) são só
+///   visuais, em memória.
 class ProfileController extends ChangeNotifier {
   ProfileController(this._auth, this._scheduling, this._session, this._theme)
     : _user = _session.user {
@@ -38,6 +42,8 @@ class ProfileController extends ChangeNotifier {
   AuthUser? _user;
   int? _dailyLimitMinutes;
   bool _blockApps = true;
+  bool _dailyEmail = true;
+  bool savingLimit = false;
   String _language = 'pt';
 
   /// Lê o usuário e a disponibilidade em paralelo. Uma falha não impede a
@@ -89,6 +95,53 @@ class ProfileController extends ChangeNotifier {
     return m == null ? '—' : BoraFormat.duration(m);
   }
 
+  /// Limite em horas inteiras (1–8), como no "Redefinir minha rotina".
+  int get dailyLimitHours =>
+      ((_dailyLimitMinutes ?? 240) / 60).round().clamp(1, 8);
+
+  /// Grava só o limite (AT5): relê a grade salva e manda de volta com o
+  /// limite novo. Sem rotina cadastrada não há o que manter.
+  Future<bool> saveDailyLimit(int hours) async {
+    savingLimit = true;
+    error = null;
+    notifyListeners();
+    try {
+      final current = await _scheduling.getAvailability();
+      if (current == null) {
+        error = 'Cadastre sua rotina antes de mudar o máximo por dia.';
+        return false;
+      }
+      final minutes = hours.clamp(1, 8) * 60;
+      await _scheduling.setAvailability(
+        WeeklyAvailability(
+          windows: current.windows,
+          dailyLimitMinutes: minutes,
+        ),
+      );
+      _dailyLimitMinutes = minutes;
+      return true;
+    } catch (_) {
+      error = 'Não deu pra salvar o máximo por dia. Tenta de novo?';
+      return false;
+    } finally {
+      savingLimit = false;
+      notifyListeners();
+    }
+  }
+
+  /// Relê nome e e-mail da sessão (depois de Editar perfil, AT3).
+  void refreshUser() {
+    _user = _session.user ?? _user;
+    notifyListeners();
+  }
+
+  bool get dailyEmail => _dailyEmail;
+
+  void toggleDailyEmail() {
+    _dailyEmail = !_dailyEmail;
+    notifyListeners();
+  }
+
   bool get isDark => _theme.isDark;
 
   String get themeText => isDark ? 'Escuro' : 'Claro';
@@ -102,7 +155,27 @@ class ProfileController extends ChangeNotifier {
     notifyListeners();
   }
 
-  String get reminderText => '09:30';
+  int _reminderHour = 9;
+  int _reminderMinute = 30;
+
+  int get reminderHour => _reminderHour;
+
+  int get reminderMinute => _reminderMinute;
+
+  /// "Lembrete da rampa" (AT8): só visual, em memória; a notificação vem
+  /// depois.
+  String get reminderText =>
+      '${_reminderHour.toString().padLeft(2, '0')}:'
+      '${_reminderMinute.toString().padLeft(2, '0')}';
+
+  void setReminder(int hour, int minute) {
+    _reminderHour = hour;
+    _reminderMinute = minute;
+    notifyListeners();
+  }
+
+  /// Sair da conta (AT9): limpa a sessão; quem navega para o login é a tela.
+  void logout() => _session.clear();
 
   String get language => _language;
 

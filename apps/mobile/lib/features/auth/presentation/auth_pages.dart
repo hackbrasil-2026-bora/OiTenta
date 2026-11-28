@@ -78,6 +78,8 @@ class RegisterPage extends StatelessWidget {
         onToggleTerms: c.toggleTerms,
         onBack: toLogin,
         onLogin: toLogin,
+        onTerms: () => context.push(AppRoutes.terms),
+        onPrivacy: () => context.push(AppRoutes.privacy),
         onSubmit: () async {
           final ok = await c.submit();
           if (!context.mounted || !ok) return;

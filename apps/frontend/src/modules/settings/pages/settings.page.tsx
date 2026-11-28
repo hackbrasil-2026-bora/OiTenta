@@ -1,5 +1,6 @@
 "use client";
 
+import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { useCallback, useEffect, useRef, useState } from "react";
 import { authRepository } from "@/modules/auth/data";
@@ -12,7 +13,12 @@ import Broto from "@/modules/landing/components/broto.component";
 import AvailGrid from "@/modules/scheduling/components/avail-grid.component";
 import { schedulingRepository, type PlanBlock } from "@/modules/scheduling/data";
 import { LIMIT_DEFAULT, LIMIT_MAX, LIMIT_MIN, emptyGrid, gridToWindows, windowsToGrid, type HourGrid } from "@/modules/scheduling/logic/availability-grid.logic";
-import { settingsRepository, type Preferences, type Theme } from "../data";
+import AccountSection from "../components/account-section.component";
+import DangerZoneSection from "../components/danger-zone-section.component";
+import LanguageSection from "../components/language-section.component";
+import { DESC, H2, PANEL } from "../components/settings-ui";
+import SuggestionSection from "../components/suggestion-section.component";
+import { settingsRepository, type Language, type Preferences, type Theme } from "../data";
 
 // W26 Configurações (AppConfig.dc.html).
 // - Disponibilidade e limite diário: GET/PUT /scheduling/availability (contrato §2). Grava sozinho, logo depois
@@ -20,9 +26,8 @@ import { settingsRepository, type Preferences, type Theme } from "../data";
 // - Tema e e-mail diário: sem endpoint; ficam nas preferências de exemplo (settingsRepository). O tema escolhido
 //   ainda não muda as cores do app (ver afazeres).
 // - Prévia do e-mail: o plano de hoje (GET /scheduling/plan/day); a tarefa leve e os dias regados são exemplo (P18).
-const PANEL = "rounded-[16px] border border-border bg-surface shadow-card";
-const H2 = "m-0 font-fredoka text-[20px]/[26px] font-semibold";
-const DESC = "mt-1 mb-0 text-[16px]/[24px] text-tx2";
+// - Sem design (28/11/2026): "Sua conta" troca nome e e-mail (PATCH /auth/me, AT3); "Idioma" (AT7) e
+//   "Enviar sugestão" (AT6) são só visuais, nas preferências de exemplo.
 const SAVE_DELAY_MS = 400;
 /** example: "Tarefas leves" está fora do MVP; a prévia usa a do protótipo. */
 const EXAMPLE_LIGHT_TASK = "Lavar a louça · 10 min";
@@ -33,6 +38,7 @@ const THEMES: { id: Theme; label: string; icon: string }[] = [
 ];
 
 interface Account {
+  id: string;
   name: string;
   email: string;
   timezone: string;
@@ -63,7 +69,7 @@ export default function SettingsPage() {
         schedulingRepository.getDayPlan(date),
       ]);
       if (!alive) return;
-      setAccount({ name: user.name, email: user.email, timezone: user.timezone, dateLabel: `${weekdayLong(date)}, ${dayOfMonth(date)} de ${monthName(date)}` });
+      setAccount({ id: user.id, name: user.name, email: user.email, timezone: user.timezone, dateLabel: `${weekdayLong(date)}, ${dayOfMonth(date)} de ${monthName(date)}` });
       if (avail && !edited.current && !pending.current) {
         setGrid(windowsToGrid(avail.availability.windows));
         setLimit(avail.availability.dailyLimitMinutes);
@@ -108,6 +114,7 @@ export default function SettingsPage() {
   };
 
   const pickTheme = async (theme: Theme) => setPrefs(await settingsRepository.setTheme(theme));
+  const pickLanguage = async (language: Language) => setPrefs(await settingsRepository.setLanguage(language));
   const toggleEmail = async () => {
     if (prefs) setPrefs(await settingsRepository.setDailyEmail(!prefs.dailyEmail));
   };
@@ -128,6 +135,13 @@ export default function SettingsPage() {
         <span className={KICKER}>{account ? `${account.name} · ${account.email}` : ""}</span>
         <h1 className="mt-1.5 mb-0 font-fredoka text-[40px]/[48px] font-semibold">Configurações</h1>
       </div>
+
+      {account && (
+        <AccountSection
+          user={account}
+          onSaved={(u) => setAccount((a) => (a ? { ...a, name: u.name, email: u.email } : a))}
+        />
+      )}
 
       <section className={`flex items-center justify-between gap-6 p-6 ${PANEL}`}>
         <div>
@@ -152,6 +166,8 @@ export default function SettingsPage() {
           })}
         </div>
       </section>
+
+      <LanguageSection value={prefs?.language} onChange={pickLanguage} />
 
       <section className={`flex flex-col gap-5 p-6 ${PANEL}`}>
         <div>
@@ -255,15 +271,22 @@ export default function SettingsPage() {
         </div>
       </section>
 
-      <section className="flex items-center justify-between py-2">
-        <span className="text-[14px]/[20px] font-semibold text-tx2">Bora · versão demo</span>
-        <button
-          type="button"
-          onClick={logout}
-          className="flex h-11 cursor-pointer items-center gap-1.5 rounded-full bg-transparent px-4 text-[15px]/none font-extrabold text-blue hover:bg-blue-soft"
-        >
-          <i className="ph-bold ph-sign-out text-[16px]" />Sair
-        </button>
+      <SuggestionSection onSend={(text) => settingsRepository.sendSuggestion(text)} />
+
+      <DangerZoneSection
+        onLogout={logout}
+        onDeleted={() => {
+          flush();
+          router.replace("/entrar");
+        }}
+      />
+
+      <section className="flex items-center justify-between py-2 text-[14px]/[20px] font-semibold text-tx2">
+        <span>Bora · versão demo</span>
+        <span className="flex gap-4">
+          <Link href="/termos" className="font-extrabold text-blue">Termos de uso</Link>
+          <Link href="/privacidade" className="font-extrabold text-blue">Política de privacidade</Link>
+        </span>
       </section>
     </div>
   );

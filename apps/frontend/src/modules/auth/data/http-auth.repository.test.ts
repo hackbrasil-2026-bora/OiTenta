@@ -95,4 +95,45 @@ describe("HttpAuthRepository", () => {
     expect(tokens.get()).toBeNull();
     expect(fetch).not.toHaveBeenCalled();
   });
+
+  it("updateProfile faz PATCH /auth/me com Bearer e só os campos informados (AT3)", async () => {
+    const fetch = stubFetch({ status: 200, body: { user: { ...user, name: "Arthur Lima" } } });
+    const { repo } = setup("tok-1");
+    expect(await repo.updateProfile({ name: "Arthur Lima" })).toEqual({ user: { ...user, name: "Arthur Lima" } });
+    const call = callOf(fetch);
+    expect(call.method).toBe("PATCH");
+    expect(call.url.pathname).toBe("/auth/me");
+    expect(call.body).toEqual({ name: "Arthur Lima" });
+    expect(call.headers.get("Authorization")).toBe("Bearer tok-1");
+  });
+
+  it("updateProfile com a senha errada lança ApiError 403 sem avisar o 401", async () => {
+    stubFetch({ status: 403, body: { statusCode: 403, error: "ForbiddenError", message: "Senha atual incorreta." } });
+    const { repo, onUnauthorized } = setup("tok-1");
+    const err = await repo.updateProfile({ email: "x@bora.app", currentPassword: "errada" }).catch((e) => e);
+    expect(err).toMatchObject({ statusCode: 403, message: "Senha atual incorreta." });
+    expect(onUnauthorized).not.toHaveBeenCalled();
+  });
+
+  it("changePassword faz PATCH /auth/me/password com a atual e a nova (AT9)", async () => {
+    const fetch = stubFetch({ status: 204 });
+    const { repo } = setup("tok-1");
+    await repo.changePassword({ currentPassword: "Senha@123", newPassword: "Nova@4567" });
+    const call = callOf(fetch);
+    expect(call.method).toBe("PATCH");
+    expect(call.url.pathname).toBe("/auth/me/password");
+    expect(call.body).toEqual({ currentPassword: "Senha@123", newPassword: "Nova@4567" });
+  });
+
+  it("deleteAccount faz DELETE /auth/me com a senha e apaga o token guardado (AT9)", async () => {
+    const fetch = stubFetch({ status: 204 });
+    const { repo, tokens } = setup("tok-1");
+    await repo.deleteAccount({ currentPassword: "Senha@123" });
+    const call = callOf(fetch);
+    expect(call.method).toBe("DELETE");
+    expect(call.url.pathname).toBe("/auth/me");
+    expect(call.body).toEqual({ currentPassword: "Senha@123" });
+    expect(call.headers.get("Authorization")).toBe("Bearer tok-1");
+    expect(tokens.get()).toBeNull();
+  });
 });

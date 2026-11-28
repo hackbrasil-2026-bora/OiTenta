@@ -6,6 +6,7 @@ import type {
   PublicUser,
   RegisterUserIn,
   RegisterUserOut,
+  UpdateProfileIn,
 } from '@oitenta/auth';
 
 // Classes para o Swagger enxergar o contrato; o tipo real é a interface do caso de uso.
@@ -46,6 +47,49 @@ export class LoginUserBody implements LoginUserIn {
   @ApiProperty({ example: 'Senha@123' })
   @IsString()
   password!: string;
+}
+
+/** Corpo do PATCH /auth/me (AT3). O dono vem do token, nunca do corpo. */
+export class UpdateProfileBody implements Omit<UpdateProfileIn, 'userId'> {
+  @ApiPropertyOptional({ example: 'Ana Clara' })
+  @IsOptional()
+  @IsString()
+  name?: string;
+
+  @ApiPropertyOptional({ example: 'ana.clara@bora.app' })
+  @IsOptional()
+  @IsString()
+  email?: string;
+
+  @ApiPropertyOptional({
+    example: 'Senha@123',
+    description: 'Obrigatória quando o e-mail muda; errada → 403.',
+  })
+  @IsOptional()
+  @IsString()
+  currentPassword?: string;
+}
+
+/** Corpo do PATCH /auth/me/password (AT9). */
+export class ChangePasswordBody {
+  @ApiProperty({ example: 'Senha@123' })
+  @IsString()
+  currentPassword!: string;
+
+  @ApiProperty({
+    example: 'Nova@4567',
+    description:
+      'Mínimo 8 caracteres, com maiúscula, minúscula, número e símbolo.',
+  })
+  @IsString()
+  newPassword!: string;
+}
+
+/** Corpo do DELETE /auth/me (AT9): confirma com a senha atual. */
+export class DeleteAccountBody {
+  @ApiProperty({ example: 'Senha@123' })
+  @IsString()
+  currentPassword!: string;
 }
 
 export class PublicUserResponse implements PublicUser {

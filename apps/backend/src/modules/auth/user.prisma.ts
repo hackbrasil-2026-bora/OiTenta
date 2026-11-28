@@ -14,6 +14,14 @@ export class PrismaUserRepository implements UserRepository {
     return this.toDomain(created);
   }
 
+  async update(data: User): Promise<User> {
+    const updated = await this.prisma.user.update({
+      where: { id: data.id },
+      data: this.toPersistence(data),
+    });
+    return this.toDomain(updated);
+  }
+
   async findById(id: string): Promise<User | null> {
     const found = await this.prisma.user.findFirst({
       where: { id, deletedAt: null },

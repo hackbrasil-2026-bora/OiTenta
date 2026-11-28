@@ -32,6 +32,15 @@ void main() {
             onRoutine: () => tap('routine'),
             onLanguage: () => tap('language'),
             onSuggestion: () => tap('suggestion'),
+            onEditProfile: () => tap('edit'),
+            onToggleDailyEmail: () => tap('email'),
+            onDailyLimit: () => tap('limit'),
+            onReminder: () => tap('reminder'),
+            onChangePassword: () => tap('password'),
+            onLogout: () => tap('logout'),
+            onDeleteAccount: () => tap('delete'),
+            onTerms: () => tap('terms'),
+            onPrivacy: () => tap('privacy'),
           ),
         ),
       ),
@@ -66,10 +75,12 @@ void main() {
     expect(find.text('4h'), findsOneWidget);
     expect(find.text('Lembrete da rampa'), findsOneWidget);
     expect(find.text('09:30'), findsOneWidget);
-    // Modo escuro desligado; bloquear apps ligado (como no design).
+    expect(find.text('E-mail diário'), findsOneWidget);
+    // Modo escuro desligado; bloquear apps ligado (como no design); e-mail
+    // diário ligado (AT4).
     expect(
       tester.widgetList<BoraSwitch>(find.byType(BoraSwitch)).map((s) => s.on),
-      [false, true],
+      [false, true, true],
     );
   });
 
@@ -82,11 +93,6 @@ void main() {
     expect(find.text('Idioma'), findsOneWidget);
     expect(find.text('Português (Brasil)'), findsOneWidget);
     expect(find.text('Enviar sugestão'), findsOneWidget);
-  });
-
-  testWidgets('não existe "Sair da conta" (MP12)', (tester) async {
-    await pump(tester);
-    expect(find.text('Sair da conta'), findsNothing);
   });
 
   testWidgets('cada linha avisa o seu toque', (tester) async {
@@ -111,13 +117,14 @@ void main() {
     await pump(tester);
     state.toggleDark();
     state.toggleBlockApps();
+    state.toggleDailyEmail();
     state.selectLanguage('es');
     await tester.pumpAndSettle();
     expect(find.text('Tema atual: Escuro'), findsOneWidget);
     expect(find.text('Español'), findsOneWidget);
     expect(
       tester.widgetList<BoraSwitch>(find.byType(BoraSwitch)).map((s) => s.on),
-      [true, false],
+      [true, false, false],
     );
   });
 
@@ -131,5 +138,69 @@ void main() {
     state.error = 'Não deu pra carregar o máximo por dia.';
     await pump(tester);
     expect(find.text('Não deu pra carregar o máximo por dia.'), findsOneWidget);
+  });
+
+  group('AT3–AT5 (28/11/2026)', () {
+    testWidgets('tocar no nome ou em "Editar perfil" abre a edição', (
+      tester,
+    ) async {
+      await pump(tester);
+      await tester.tap(find.text('Arthur'));
+      await tester.ensureVisible(find.text('Editar perfil'));
+      await tester.tap(find.text('Editar perfil'));
+      expect(taps['edit'], 2);
+    });
+
+    testWidgets('"E-mail diário" alterna pelo interruptor', (tester) async {
+      await pump(tester);
+      await tester.ensureVisible(find.text('E-mail diário'));
+      await tester.tap(find.text('E-mail diário'));
+      expect(taps['email'], 1);
+    });
+
+    testWidgets('tocar em "Máximo por dia" abre o seletor', (tester) async {
+      await pump(tester);
+      await tester.tap(find.text('Máximo por dia'));
+      expect(taps['limit'], 1);
+    });
+  });
+
+  group('AT8 e AT9 (28/11/2026)', () {
+    testWidgets('o lembrete explica o que é e abre o seletor', (tester) async {
+      await pump(tester);
+      expect(find.text('Um aviso por dia pra começar a rampa'), findsOneWidget);
+      await tester.tap(find.text('Lembrete da rampa'));
+      expect(taps['reminder'], 1);
+    });
+
+    testWidgets('Zona de risco com trocar senha, sair e apagar conta', (
+      tester,
+    ) async {
+      await pump(tester);
+      expect(find.text('ZONA DE RISCO'), findsOneWidget);
+      for (final (label, key) in [
+        ('Trocar senha', 'password'),
+        ('Sair da conta', 'logout'),
+        ('Apagar conta', 'delete'),
+      ]) {
+        await tester.ensureVisible(find.text(label));
+        await tester.tap(find.text(label));
+        expect(taps[key], 1, reason: label);
+      }
+    });
+  });
+
+  testWidgets('Termos de uso e Política de privacidade no Perfil', (
+    tester,
+  ) async {
+    await pump(tester);
+    for (final (label, key) in [
+      ('Termos de uso', 'terms'),
+      ('Política de privacidade', 'privacy'),
+    ]) {
+      await tester.ensureVisible(find.text(label));
+      await tester.tap(find.text(label));
+      expect(taps[key], 1, reason: label);
+    }
   });
 }

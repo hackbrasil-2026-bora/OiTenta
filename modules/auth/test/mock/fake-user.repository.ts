@@ -18,6 +18,16 @@ export class FakeUserRepository implements UserRepository {
     return data;
   }
 
+  async update(data: User): Promise<User> {
+    this.storage.set(data.id, data);
+    return data;
+  }
+
+  /** Usado pelo apagador falso da conta (DeleteAccount). */
+  async remove(id: string): Promise<void> {
+    this.storage.delete(id);
+  }
+
   async findById(id: string): Promise<User | null> {
     return this.storage.get(id) ?? null;
   }

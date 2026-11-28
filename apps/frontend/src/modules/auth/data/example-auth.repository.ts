@@ -1,6 +1,6 @@
 import { clone, ExampleBackend, exampleBackend, type ExampleUser } from "@/modules/core/data/example-backend";
 import type { AuthRepository } from "./auth.repository";
-import type { AuthUser, LoginInput, LoginResponse, MeResponse, RegisterInput, RegisterResponse } from "./auth.types";
+import type { AuthUser, LoginInput, LoginResponse, MeResponse, RegisterInput, RegisterResponse, UpdateProfileInput, ChangePasswordInput, DeleteAccountInput } from "./auth.types";
 
 const toUser = ({ id, name, email, timezone }: ExampleUser): AuthUser => clone({ id, name, email, timezone });
 const tokenOf = (u: ExampleUser) => `example-token-${u.id}`;
@@ -26,6 +26,18 @@ export class ExampleAuthRepository implements AuthRepository {
 
   async me(): Promise<MeResponse> {
     return { user: toUser(this.backend.currentUser()) };
+  }
+
+  async updateProfile(input: UpdateProfileInput): Promise<MeResponse> {
+    return { user: toUser(this.backend.updateProfile(input)) };
+  }
+
+  async changePassword(input: ChangePasswordInput): Promise<void> {
+    this.backend.changePassword(input.currentPassword, input.newPassword);
+  }
+
+  async deleteAccount(input: DeleteAccountInput): Promise<void> {
+    this.backend.deleteAccount(input.currentPassword);
   }
 
   async logout(): Promise<void> {

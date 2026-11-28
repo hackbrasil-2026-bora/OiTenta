@@ -36,4 +36,36 @@ void main() {
     expect(store.expired, isFalse);
     expect(store.token, 't');
   });
+
+  test('updateUser troca o usuário e mantém o token, sem avisar o router', () {
+    final store = SessionStore()
+      ..save(
+        const AuthSession(
+          token: 'tok',
+          user: AuthUser(
+            id: 'u1',
+            name: 'Ana',
+            email: 'ana@bora.app',
+            timezone: 'America/Sao_Paulo',
+          ),
+        ),
+      );
+    var notified = 0;
+    store.addListener(() => notified++);
+
+    store.updateUser(
+      const AuthUser(
+        id: 'u1',
+        name: 'Ana Clara',
+        email: 'ana@bora.app',
+        timezone: 'America/Sao_Paulo',
+      ),
+    );
+
+    expect(store.user!.name, 'Ana Clara');
+    expect(store.token, 'tok');
+    // Os ouvintes (o router) só reagem à expiração; avisar aqui recalcularia
+    // a navegação no meio do "voltar" do Editar perfil.
+    expect(notified, 0);
+  });
 }

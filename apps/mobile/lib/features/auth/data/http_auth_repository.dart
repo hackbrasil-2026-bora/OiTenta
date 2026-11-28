@@ -53,4 +53,36 @@ class HttpAuthRepository implements AuthRepository {
     final json = await _api.get('/auth/me') as Map<String, dynamic>;
     return AuthUser.fromJson(json['user'] as Map<String, dynamic>);
   }
+
+  @override
+  Future<AuthUser> updateProfile({
+    String? name,
+    String? email,
+    String? currentPassword,
+  }) async {
+    final json =
+        await _api.patch(
+              '/auth/me',
+              body: withoutNulls({
+                'name': name,
+                'email': email,
+                'currentPassword': currentPassword,
+              }),
+            )
+            as Map<String, dynamic>;
+    return AuthUser.fromJson(json['user'] as Map<String, dynamic>);
+  }
+
+  @override
+  Future<void> changePassword({
+    required String currentPassword,
+    required String newPassword,
+  }) => _api.patch(
+    '/auth/me/password',
+    body: {'currentPassword': currentPassword, 'newPassword': newPassword},
+  );
+
+  @override
+  Future<void> deleteAccount({required String currentPassword}) =>
+      _api.delete('/auth/me', body: {'currentPassword': currentPassword});
 }

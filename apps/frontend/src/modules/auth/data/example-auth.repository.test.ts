@@ -59,3 +59,77 @@ describe("ExampleAuthRepository logout", () => {
     expect(backend.sessionUserId).toBeNull();
   });
 });
+
+describe("ExampleAuthRepository updateProfile (AT3)", () => {
+  const setupDemo = async () => {
+    const backend = new ExampleBackend();
+    const repo = new ExampleAuthRepository(backend);
+    await repo.demo();
+    return { backend, repo };
+  };
+
+  it("troca o nome sem senha e mantém o id", async () => {
+    const { repo } = await setupDemo();
+    const before = (await repo.me()).user;
+    const { user } = await repo.updateProfile({ name: "Arthur Lima" });
+    expect(user).toEqual({ ...before, name: "Arthur Lima" });
+    expect((await repo.me()).user.name).toBe("Arthur Lima");
+  });
+
+  it("troca o e-mail com a senha atual e o login passa a ser o novo", async () => {
+    const { repo } = await setupDemo();
+    await repo.updateProfile({ email: " Novo@Bora.app ", currentPassword: "bora1234" });
+    const { user } = await repo.login({ email: "novo@bora.app", password: "bora1234" });
+    expect(user.email).toBe("novo@bora.app");
+  });
+
+  it("senha atual errada ou ausente → ApiError 403", async () => {
+    const { repo } = await setupDemo();
+    await expect(repo.updateProfile({ email: "x@bora.app", currentPassword: "errada" })).rejects.toMatchObject({ statusCode: 403 });
+    await expect(repo.updateProfile({ email: "x@bora.app" })).rejects.toMatchObject({ statusCode: 403 });
+  });
+
+  it("e-mail de outra conta → ApiError 409", async () => {
+    const { repo } = await setupDemo();
+    await repo.register({ name: "Bia", email: "bia@x.com", password: "Senha123!" });
+    await expect(repo.updateProfile({ email: "bia@x.com", currentPassword: "bora1234" })).rejects.toMatchObject({ statusCode: 409 });
+  });
+
+  it("nome com menos de 2 letras → ApiError 422", async () => {
+    const { repo } = await setupDemo();
+    await expect(repo.updateProfile({ name: "A" })).rejects.toMatchObject({ statusCode: 422 });
+  });
+});
+
+describe("ExampleAuthRepository zona de risco (AT9)", () => {
+  const setupDemo = async () => {
+    const backend = new ExampleBackend();
+    const repo = new ExampleAuthRepository(backend);
+    await repo.register({ name: "Bia", email: "bia@x.com", password: "Senha123!" });
+    await repo.login({ email: "bia@x.com", password: "Senha123!" });
+    return { backend, repo };
+  };
+
+  it("changePassword: a nova passa a valer; a atual errada → 403; a nova fraca → 422", async () => {
+    const { repo } = await setupDemo();
+    await expect(repo.changePassword({ currentPassword: "errada", newPassword: "Nova@4567" })).rejects.toMatchObject({ statusCode: 403 });
+    await expect(repo.changePassword({ currentPassword: "Senha123!", newPassword: "fraca" })).rejects.toMatchObject({ statusCode: 422 });
+    await repo.changePassword({ currentPassword: "Senha123!", newPassword: "Nova@4567" });
+    await expect(repo.login({ email: "bia@x.com", password: "Nova@4567" })).resolves.toBeDefined();
+  });
+
+  it("deleteAccount: apaga a conta e encerra a sessão; senha errada → 403", async () => {
+    const { backend, repo } = await setupDemo();
+    await expect(repo.deleteAccount({ currentPassword: "errada" })).rejects.toMatchObject({ statusCode: 403 });
+    await repo.deleteAccount({ currentPassword: "Senha123!" });
+    expect(backend.users.some((u) => u.email === "bia@x.com")).toBe(false);
+    expect(backend.sessionUserId).toBeNull();
+  });
+
+  it("deleteAccount da conta demo → 403", async () => {
+    const backend = new ExampleBackend();
+    const repo = new ExampleAuthRepository(backend);
+    await repo.demo();
+    await expect(repo.deleteAccount({ currentPassword: "bora1234" })).rejects.toMatchObject({ statusCode: 403 });
+  });
+});

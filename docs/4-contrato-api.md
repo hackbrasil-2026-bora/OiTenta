@@ -39,6 +39,9 @@
 | `POST /auth/login` | `{ email, password }` | 200 `{ token, user }` | 401 | `LoginUser` | W03 | M33 |
 | `POST /auth/demo` | — | 200 `{ token, user }` | 404 (seed não rodado) | `LoginDemoUser` | W03 "Entrar direto como Arthur (demo)" | M33, botão só com `SHOW_DEMO=true` (MP5) |
 | `GET /auth/me` | — | 200 `{ user{id,name,email,timezone} }` | 401 | `GetAuthenticatedUser` | todas as telas logadas | todas as telas logadas; Perfil M26 (nome e e-mail, MP6) |
+| `PATCH /auth/me` (AT3, 28/11/2026) | `{ name?, email?, currentPassword? }`; `currentPassword` obrigatória quando o e-mail muda; o dono vem do token | 200 `{ user{id,name,email,timezone} }` (mesmo `id`) | 400 (campo não previsto), 401, 403 (troca de e-mail sem a senha atual ou com a senha errada; não é 401 para o cliente não deslogar), 409 (e-mail de outra conta), 422 (nome inválido, e-mail inválido) | `UpdateProfile` | W26 Configurações (editar nome e e-mail) | Perfil M26 (editar nome e e-mail) |
+| `PATCH /auth/me/password` (AT9, 28/11/2026) | `{ currentPassword, newPassword }` | 204 | 400, 401, 403 (senha atual errada), 422 (senha nova fraca) | `ChangePassword` | W26 Zona de risco | Perfil M26 Zona de risco |
+| `DELETE /auth/me` (AT9, 28/11/2026) | `{ currentPassword }` | 204: apaga de verdade a conta e todos os dados dela (sessões, blocos, objetivos e etapas, disponibilidade, compromissos), numa transação | 400, 401, 403 (senha atual errada, ou conta demo) | `DeleteAccount` (+ `AccountEraser`) | W26 Zona de risco | Perfil M26 Zona de risco |
 
 ---
 
@@ -365,6 +368,9 @@ Controller `scheduling` para as leituras; as mutações passam por orquestradore
 | `POST /auth/login` | `LoginUser` | W03 | M33 |
 | `POST /auth/demo` | `LoginDemoUser` | W03 | M33 (`SHOW_DEMO`) |
 | `GET /auth/me` | `GetAuthenticatedUser` | todas logadas | todas logadas |
+| `PATCH /auth/me` | `UpdateProfile` | W26 | M26 |
+| `PATCH /auth/me/password` | `ChangePassword` | W26 | M26 |
+| `DELETE /auth/me` | `DeleteAccount` | W26 | M26 |
 | `PUT /scheduling/availability` | `SetWeeklyAvailability` → `GeneratePlan` | W07–W10 | T02–T03 (+ placeholders dos passos sem design); M27 Redefinir rotina (MP11) |
 | `GET /scheduling/availability` | `GetWeeklyAvailability` | decisão W11 | decisão pós-login; Perfil M26 ("Máximo por dia") e M27 |
 | `POST /goals` | `CreateGoal` → `GeneratePlan` | W30 vazia (P20) | M15 vazia, M16 (P20) |

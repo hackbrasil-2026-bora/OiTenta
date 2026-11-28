@@ -27,6 +27,15 @@ class SessionStore extends ChangeNotifier {
 
   void clear() => _session = null;
 
+  /// Troca os dados do usuário (Editar perfil, AT3), mantendo o token.
+  /// Não avisa os ouvintes: quem escuta é o router, só para a expiração; as
+  /// telas releem o usuário daqui quando precisam.
+  void updateUser(AuthUser user) {
+    final token = _session?.token;
+    if (token == null) return;
+    _session = AuthSession(token: token, user: user);
+  }
+
   /// Limpa a sessão porque o backend recusou o token (401).
   void expire() {
     _session = null;

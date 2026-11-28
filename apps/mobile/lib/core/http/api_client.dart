@@ -57,8 +57,12 @@ class ApiClient {
   Future<dynamic> patch(String path, {Object? body}) =>
       _send('PATCH', path, body: body, auth: true);
 
-  Future<dynamic> delete(String path, {Map<String, String>? query}) =>
-      _send('DELETE', path, query: query, auth: true);
+  /// [body] para as rotas que confirmam com a senha (`DELETE /auth/me`).
+  Future<dynamic> delete(
+    String path, {
+    Map<String, String>? query,
+    Object? body,
+  }) => _send('DELETE', path, query: query, body: body, auth: true);
 
   Future<dynamic> _send(
     String method,

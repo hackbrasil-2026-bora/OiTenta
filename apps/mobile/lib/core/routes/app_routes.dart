@@ -4,6 +4,8 @@ class AppRoutes {
 
   static const login = '/entrar';
   static const register = '/cadastro';
+  static const terms = '/termos';
+  static const privacy = '/privacidade';
   static const onboarding = '/onboarding';
   static const today = '/hoje';
   static const goals = '/objetivos';
@@ -34,6 +36,9 @@ class AppRoutes {
   static const profile = '/perfil';
   static const profileRoutine = '/perfil/rotina';
   static const profileSuggestion = '/perfil/sugestao';
+  static const profileEdit = '/perfil/editar';
+  static const profilePassword = '/perfil/senha';
+  static const profileDelete = '/perfil/apagar';
   static const ramp = '/rampa';
   static const warmup = '/rampa/aquecer';
   static const challenge = '/rampa/desafio';

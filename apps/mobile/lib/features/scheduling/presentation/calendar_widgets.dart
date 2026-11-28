@@ -217,8 +217,19 @@ const monthPagerKey = ValueKey('month-pager');
 const monthPagerPast = 36;
 const monthPagerFuture = 60;
 
-/// Altura de um mês: cabeçalho dos dias + 6 linhas (a maior grade possível).
-const monthPagerHeight = 22.0 + 6 * 46.0;
+/// Cabeçalho dos dias: texto de 16 + 4 de espaço abaixo ([MonthGrid]).
+const _monthHeaderHeight = 16.0 + 4;
+
+/// Célula do dia: 2 + círculo de 30 + 3 + bolinhas de 6 + 4 ([_MonthCell]).
+const _monthCellHeight = 2.0 + 30 + 3 + 6 + 4;
+
+/// Espaço entre as semanas ([MonthGrid]).
+const _monthRowGap = 2.0;
+
+/// Altura de um mês: cabeçalho dos dias + 6 semanas (a maior grade possível)
+/// com os 5 espaços entre elas.
+const monthPagerHeight =
+    _monthHeaderHeight + 6 * _monthCellHeight + 5 * _monthRowGap;
 
 /// Meses empilhados: arrastar para cima mostra os próximos, para baixo os
 /// anteriores (um mês por vez). A grade só desenha; quem carrega os dados é
@@ -316,7 +327,7 @@ class MonthGrid extends StatelessWidget {
           ],
         ),
         for (var r = 0; r < weeks.length; r++) ...[
-          if (r > 0) const SizedBox(height: 2),
+          if (r > 0) const SizedBox(height: _monthRowGap),
           Row(
             children: [
               for (var i = 0; i < weeks[r].length; i++) ...[

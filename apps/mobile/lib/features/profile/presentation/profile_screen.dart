@@ -9,6 +9,11 @@ import 'profile_controller.dart';
 
 /// Perfil (M26, template `PERFIL` do protótipo): avatar com a inicial, nome e
 /// e-mail (MP6), "Preferências" e "Configurações". Sem "Sair da conta" (MP12).
+///
+/// Sem design (28/11/2026): tocar no nome ou em "Editar perfil" abre a edição
+/// (AT3); "E-mail diário" é só visual (AT4); tocar em "Máximo por dia" abre o
+/// seletor do limite (AT5); o lembrete abre o seletor de horário, só visual
+/// (AT8); "Zona de risco" troca a senha, sai e apaga a conta (AT9).
 class ProfileScreen extends StatelessWidget {
   const ProfileScreen({
     super.key,
@@ -19,6 +24,15 @@ class ProfileScreen extends StatelessWidget {
     required this.onRoutine,
     required this.onLanguage,
     required this.onSuggestion,
+    required this.onEditProfile,
+    required this.onToggleDailyEmail,
+    required this.onDailyLimit,
+    required this.onReminder,
+    required this.onChangePassword,
+    required this.onLogout,
+    required this.onDeleteAccount,
+    required this.onTerms,
+    required this.onPrivacy,
   });
 
   final ProfileController state;
@@ -28,6 +42,15 @@ class ProfileScreen extends StatelessWidget {
   final VoidCallback onRoutine;
   final VoidCallback onLanguage;
   final VoidCallback onSuggestion;
+  final VoidCallback onEditProfile;
+  final VoidCallback onToggleDailyEmail;
+  final VoidCallback onDailyLimit;
+  final VoidCallback onReminder;
+  final VoidCallback onChangePassword;
+  final VoidCallback onLogout;
+  final VoidCallback onDeleteAccount;
+  final VoidCallback onTerms;
+  final VoidCallback onPrivacy;
 
   @override
   Widget build(BuildContext context) {
@@ -35,37 +58,46 @@ class ProfileScreen extends StatelessWidget {
     return BoraPage(
       topBar: BoraTopBar(leading: BackNavButton(onPressed: onBack)),
       children: [
-        Row(
-          children: [
-            Container(
-              width: 72,
-              height: 72,
-              decoration: BoxDecoration(
-                color: c.priSoft,
-                shape: BoxShape.circle,
-              ),
-              alignment: Alignment.center,
-              child: Text(
-                state.initial,
-                style: BoraText.fredoka(
-                  32,
-                  32,
-                  weight: FontWeight.w700,
-                  color: c.pri,
+        Semantics(
+          button: true,
+          label: 'Editar perfil',
+          child: GestureDetector(
+            behavior: HitTestBehavior.opaque,
+            onTap: onEditProfile,
+            child: Row(
+              children: [
+                Container(
+                  width: 72,
+                  height: 72,
+                  decoration: BoxDecoration(
+                    color: c.priSoft,
+                    shape: BoxShape.circle,
+                  ),
+                  alignment: Alignment.center,
+                  child: Text(
+                    state.initial,
+                    style: BoraText.fredoka(
+                      32,
+                      32,
+                      weight: FontWeight.w700,
+                      color: c.pri,
+                    ),
+                  ),
                 ),
-              ),
+                const SizedBox(width: 16),
+                Expanded(
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      Text(state.name, style: BoraText.h1(c.tx)),
+                      Text(state.subtitle, style: BoraText.small(c.tx2)),
+                    ],
+                  ),
+                ),
+                Icon(PhosphorIconsRegular.pencilSimple, size: 22, color: c.tx2),
+              ],
             ),
-            const SizedBox(width: 16),
-            Expanded(
-              child: Column(
-                crossAxisAlignment: CrossAxisAlignment.start,
-                children: [
-                  Text(state.name, style: BoraText.h1(c.tx)),
-                  Text(state.subtitle, style: BoraText.small(c.tx2)),
-                ],
-              ),
-            ),
-          ],
+          ),
         ),
         if (state.error != null) ...[
           const SizedBox(height: 12),
@@ -95,11 +127,22 @@ class ProfileScreen extends StatelessWidget {
               icon: PhosphorIconsRegular.clock,
               title: 'Máximo por dia',
               trailing: _Value(state.dailyLimitText),
+              onTap: onDailyLimit,
             ),
             _Row(
               icon: PhosphorIconsRegular.bellSimple,
               title: 'Lembrete da rampa',
+              subtitle: 'Um aviso por dia pra começar a rampa',
               trailing: _Value(state.reminderText),
+              onTap: onReminder,
+            ),
+            _Row(
+              icon: PhosphorIconsRegular.envelopeSimple,
+              title: 'E-mail diário',
+              subtitle: 'O plano do dia na sua caixa de entrada',
+              trailing: BoraSwitch(on: state.dailyEmail),
+              toggled: state.dailyEmail,
+              onTap: onToggleDailyEmail,
             ),
           ],
         ),
@@ -108,6 +151,13 @@ class ProfileScreen extends StatelessWidget {
         const SizedBox(height: 12),
         _Group(
           rows: [
+            _Row(
+              icon: PhosphorIconsRegular.userCircle,
+              title: 'Editar perfil',
+              subtitle: 'Nome e e-mail',
+              trailing: const _Chevron(),
+              onTap: onEditProfile,
+            ),
             _Row(
               icon: PhosphorIconsRegular.arrowsClockwise,
               title: 'Redefinir minha rotina',
@@ -126,6 +176,45 @@ class ProfileScreen extends StatelessWidget {
               title: 'Enviar sugestão',
               trailing: const _Chevron(),
               onTap: onSuggestion,
+            ),
+            _Row(
+              icon: PhosphorIconsRegular.fileText,
+              title: 'Termos de uso',
+              trailing: const _Chevron(),
+              onTap: onTerms,
+            ),
+            _Row(
+              icon: PhosphorIconsRegular.shieldCheck,
+              title: 'Política de privacidade',
+              trailing: const _Chevron(),
+              onTap: onPrivacy,
+            ),
+          ],
+        ),
+        const SizedBox(height: 24),
+        const SectionHeader(label: 'Zona de risco'),
+        const SizedBox(height: 12),
+        _Group(
+          rows: [
+            _Row(
+              icon: PhosphorIconsRegular.password,
+              title: 'Trocar senha',
+              trailing: const _Chevron(),
+              onTap: onChangePassword,
+            ),
+            _Row(
+              icon: PhosphorIconsRegular.signOut,
+              title: 'Sair da conta',
+              trailing: const _Chevron(),
+              onTap: onLogout,
+            ),
+            _Row(
+              icon: PhosphorIconsRegular.trash,
+              title: 'Apagar conta',
+              subtitle: 'Apaga a conta e todos os dados',
+              danger: true,
+              trailing: const _Chevron(),
+              onTap: onDeleteAccount,
             ),
           ],
         ),
@@ -173,6 +262,7 @@ class _Row extends StatelessWidget {
     this.subtitle,
     this.onTap,
     this.toggled,
+    this.danger = false,
   });
 
   final IconData icon;
@@ -182,6 +272,9 @@ class _Row extends StatelessWidget {
   final VoidCallback? onTap;
   final bool? toggled;
 
+  /// "Apagar conta": ícone e título no `--danger`.
+  final bool danger;
+
   @override
   Widget build(BuildContext context) {
     final c = context.bora;
@@ -190,7 +283,7 @@ class _Row extends StatelessWidget {
       padding: const EdgeInsets.symmetric(horizontal: 16),
       child: Row(
         children: [
-          Icon(icon, size: 22, color: c.tx2),
+          Icon(icon, size: 22, color: danger ? c.danger : c.tx2),
           const SizedBox(width: 12),
           Expanded(
             child: Column(
@@ -203,7 +296,7 @@ class _Row extends StatelessWidget {
                     15,
                     20,
                     weight: FontWeight.w800,
-                    color: c.tx,
+                    color: danger ? c.danger : c.tx,
                   ),
                 ),
                 if (subtitle != null)

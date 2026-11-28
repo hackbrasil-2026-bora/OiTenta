@@ -5,7 +5,7 @@
 import type { CreateGoalInput, Goal, GoalStep } from "@/modules/goals/data/goals.types";
 import type { BlockStatus, WeeklyAvailability } from "@/modules/scheduling/data/scheduling.types";
 import type { FocusSession } from "@/modules/activation/data/activation.types";
-import { badRequest, conflict, notFound, unauthorized, unprocessable } from "./api-error";
+import { ApiError, badRequest, conflict, notFound, unauthorized, unprocessable } from "./api-error";
 import { ExampleClock } from "./clock";
 import type { PlanSummary } from "./plan-summary.types";
 import { localDate } from "../format/time.format";
@@ -142,6 +142,40 @@ export class ExampleBackend {
     const u = { id: this.nextId("user"), name: name.trim(), email: normalized, password, timezone: timezone ?? "America/Sao_Paulo" };
     this.users.push(u);
     return u;
+  }
+
+  /** PATCH /auth/me (AT3), com as mesmas regras do backend: 403, 409 e 422. */
+  updateProfile({ name, email, currentPassword }: { name?: string; email?: string; currentPassword?: string }) {
+    const u = this.currentUser();
+    const nextName = name === undefined ? u.name : name.trim();
+    const nextEmail = email === undefined ? u.email : email.trim().toLowerCase();
+    if (nextEmail !== u.email) {
+      if (currentPassword !== u.password) throw new ApiError(403, "ForbiddenError", "Senha atual incorreta.");
+      if (this.users.some((x) => x.email === nextEmail)) throw conflict("E-mail já cadastrado.");
+    }
+    const details = [...(nextName.length < 2 ? ["display.name"] : []), ...(/^[^@\s]+@[^@\s]+$/.test(nextEmail) ? [] : ["email"])];
+    if (details.length) throw unprocessable(details);
+    u.name = nextName;
+    u.email = nextEmail;
+    return u;
+  }
+
+  /** PATCH /auth/me/password (AT9): 403 com a senha atual errada, 422 com a nova fraca. */
+  changePassword(currentPassword: string, newPassword: string) {
+    const u = this.currentUser();
+    if (currentPassword !== u.password) throw new ApiError(403, "ForbiddenError", "Senha atual incorreta.");
+    const strong = newPassword.length >= 8 && /[A-Z]/.test(newPassword) && /[a-z]/.test(newPassword) && /\d/.test(newPassword) && /[^A-Za-z0-9]/.test(newPassword);
+    if (!strong) throw unprocessable(["user.password"]);
+    u.password = newPassword;
+  }
+
+  /** DELETE /auth/me (AT9): apaga a conta e todos os dados dela; a demo não pode ser apagada (403). */
+  deleteAccount(currentPassword: string) {
+    const u = this.currentUser();
+    if (currentPassword !== u.password) throw new ApiError(403, "ForbiddenError", "Senha atual incorreta.");
+    if (u.id === DEMO_USER.id) throw new ApiError(403, "ForbiddenError", "A conta demo não pode ser apagada.");
+    this.users = this.users.filter((x) => x.id !== u.id);
+    this.sessionUserId = null;
   }
 
   // ---------- plano ----------
