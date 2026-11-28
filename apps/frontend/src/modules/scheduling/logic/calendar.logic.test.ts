@@ -1,5 +1,5 @@
 import { describe, expect, it } from "vitest";
-import { GRID_HEIGHT, GRID_HOURS, blockGeometry, dayLoadLabel, freeRects, weekRangeLabel, blockDetail } from "./calendar.logic";
+import { GRID_HEIGHT, GRID_HOURS, blockGeometry, initialScrollTop, dayLoadLabel, freeRects, weekRangeLabel, blockDetail } from "./calendar.logic";
 
 const TZ = "America/Sao_Paulo";
 
@@ -32,6 +32,13 @@ describe("calendário semana — Execução (W15)", () => {
   it("bloco que passa da meia-noite para no fim do dia", () => {
     // 23:00–01:00: só cabe 1h (40px) até 24h
     expect(blockGeometry("2026-11-25T02:00:00.000Z", "2026-11-25T04:00:00.000Z", TZ)).toEqual({ top: 921, height: 37 });
+  });
+
+  it("grade abre rolada até 1h antes da hora atual, com o rótulo da hora inteiro", () => {
+    expect(initialScrollTop(19 * 60 + 40)).toBe(708);
+    expect(initialScrollTop(8 * 60)).toBe(268);
+    expect(initialScrollTop(60)).toBe(0);
+    expect(initialScrollTop(0)).toBe(0);
   });
 
   it("faixas livres a partir das janelas do dia", () => {
