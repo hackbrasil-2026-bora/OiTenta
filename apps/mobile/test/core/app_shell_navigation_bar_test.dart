@@ -112,4 +112,35 @@ void main() {
     await tester.tapAt(Offset(goals.center.dx, goals.top - 20));
     expect(tapped, AppTab.goals);
   });
+
+  testWidgets('quando os botões somem, a tab bar desce na hora, sem animação', (
+    tester,
+  ) async {
+    final visible = ValueNotifier(true);
+    await tester.pumpWidget(_shell(tester, visible, systemInset: 48));
+    await tester.pumpAndSettle();
+
+    visible.value = false;
+    await tester.pumpWidget(_shell(tester, visible));
+    await tester.pump(); // um quadro só
+
+    expect(tester.getRect(find.byType(BoraTabBar)).bottom, 800);
+    expect(find.byKey(systemNavigationBarBackdropKey), findsNothing);
+  });
+
+  testWidgets(
+    'se o Android esconder os botões antes do app, a tab bar desce junto',
+    (tester) async {
+      final visible = ValueNotifier(true);
+      await tester.pumpWidget(_shell(tester, visible, systemInset: 48));
+      await tester.pumpAndSettle();
+
+      // O aviso do app ainda diz "visível", mas o espaço dos botões zerou.
+      await tester.pumpWidget(_shell(tester, visible));
+      await tester.pump();
+
+      expect(tester.getRect(find.byType(BoraTabBar)).bottom, 800);
+      expect(find.byKey(systemNavigationBarBackdropKey), findsNothing);
+    },
+  );
 }

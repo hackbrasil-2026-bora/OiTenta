@@ -55,18 +55,39 @@ const _defaultSystemNavigationBarHeight = 48.0;
 /// os botões do Android aparecem, ela desliza para cima inteira, sem esticar
 /// e sem mudar o tamanho do resto da tela, e uma faixa verde translúcida
 /// cobre os botões.
-class _SlidingTabBar extends StatelessWidget {
+class _SlidingTabBar extends StatefulWidget {
   const _SlidingTabBar({required this.visible, required this.tabBar});
 
   final bool visible;
   final Widget tabBar;
 
   @override
+  State<_SlidingTabBar> createState() => _SlidingTabBarState();
+}
+
+class _SlidingTabBarState extends State<_SlidingTabBar> {
+  /// O Android já informou a altura dos botões alguma vez. A partir daí, o
+  /// espaço voltar a zero também conta como "botões escondidos": o sistema
+  /// pode escondê-los antes do relógio do app.
+  bool _insetReported = false;
+
+  @override
   Widget build(BuildContext context) {
     final reported = MediaQuery.viewPaddingOf(context).bottom;
+    if (reported > 0) _insetReported = true;
+    final shown = widget.visible && (reported > 0 || !_insetReported);
+    final tabBar = MediaQuery.removePadding(
+      context: context,
+      removeBottom: true,
+      child: widget.tabBar,
+    );
+    // Escondida: no lugar na hora, sem animação (desce junto com os botões).
+    if (!shown) return tabBar;
+
     final inset = reported > 0 ? reported : _defaultSystemNavigationBarHeight;
+    // Aparecendo: sobe animada, a partir do pé da tela.
     return TweenAnimationBuilder<double>(
-      tween: Tween(end: visible ? inset : 0),
+      tween: Tween(begin: 0, end: inset),
       duration: const Duration(milliseconds: 200),
       curve: Curves.easeOut,
       builder: (context, dy, child) => Transform.translate(
@@ -75,25 +96,20 @@ class _SlidingTabBar extends StatelessWidget {
           clipBehavior: Clip.none,
           children: [
             child!,
-            if (dy > 0)
-              Positioned(
-                left: 0,
-                right: 0,
-                bottom: -inset,
-                height: inset,
-                child: const ColoredBox(
-                  key: systemNavigationBarBackdropKey,
-                  color: _systemNavigationBarBackdrop,
-                ),
+            Positioned(
+              left: 0,
+              right: 0,
+              bottom: -inset,
+              height: inset,
+              child: const ColoredBox(
+                key: systemNavigationBarBackdropKey,
+                color: _systemNavigationBarBackdrop,
               ),
+            ),
           ],
         ),
       ),
-      child: MediaQuery.removePadding(
-        context: context,
-        removeBottom: true,
-        child: tabBar,
-      ),
+      child: tabBar,
     );
   }
 }
