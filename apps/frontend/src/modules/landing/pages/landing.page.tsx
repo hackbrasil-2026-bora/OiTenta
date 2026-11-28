@@ -1,11 +1,13 @@
 "use client";
 
-import { useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import Broto, { type BrotoMood } from "../components/broto.component";
 import PhoneRampa from "../components/phone-rampa.component";
 
-// Landing web, portada de design/web/source/Bora Landing Web.dc.html (largura fixa de 1440 px).
+// Landing web, portada de design/web/source/Bora Landing Web.dc.html (desenhada em 1440 px).
 // Textos, ordem, medidas e comportamentos seguem o protótipo; cores só por tokens.
+// Responsiva: a partir de xl (1280) é o layout do protótipo; abaixo, as colunas empilham
+// (o protótipo não define essas larguras; ver afazeres.md, "Web em telas estreitas").
 
 const STEPS = [
   { name: "Aquecer", dur: "3 min", icon: "person-simple-walk", desc: "Levanta, bebe água, abre o material. Só isso.", alt: "Arruma a mesa e deixa só o que vai usar." },
@@ -45,8 +47,12 @@ const STAGES = [
 const PRIMARY_BTN =
   "flex h-[52px] items-center gap-2.5 rounded-full bg-pri px-7 text-[16px]/none font-extrabold text-pri-tx shadow-[0_3px_0_var(--lip)] transition-[transform,box-shadow] duration-[80ms] hover:text-pri-tx active:translate-y-[3px] active:shadow-none active:brightness-[.94] cursor-pointer";
 const NAV_LINK =
-  "flex h-11 items-center rounded-full px-4 text-[16px]/none font-bold text-tx2 hover:bg-s2 hover:text-tx";
-const H2 = "m-0 font-fredoka text-[40px]/[48px] font-semibold";
+  "flex h-11 items-center rounded-full px-4 text-[16px]/none font-bold whitespace-nowrap text-tx2 hover:bg-s2 hover:text-tx";
+const H2 = "m-0 font-fredoka text-[32px]/[40px] md:text-[40px]/[48px] font-semibold";
+const H_BIG = "font-fredoka text-[40px]/[48px] md:text-[56px]/[64px] xl:text-[64px]/[72px] font-bold tracking-[-0.01em] text-balance";
+/** Margens laterais e espaço entre seções: 120/128 px do protótipo no xl, menores abaixo. */
+const PAD = "px-5 md:px-10 xl:px-[120px]";
+const GAP_B = "pb-20 xl:pb-32";
 const LEAD = "text-[18px]/[28px] text-tx2 text-pretty";
 const CARD = "rounded-[16px] border border-border bg-surface shadow-card";
 const FEATURE_ICON =
@@ -70,34 +76,45 @@ export default function LandingPage() {
   const [faq, setFaq] = useState(0);
   const [energy, setEnergy] = useState(1);
   const [done, setDone] = useState([true, false]);
+  const rampa = useRef<HTMLDivElement>(null);
+  const rampaPronta = useRef(false);
+
+  // Abaixo de lg os degraus rolam para o lado: centraliza o degrau atual (no lg não há rolagem).
+  useEffect(() => {
+    const box = rampa.current;
+    const step = box?.children[cur] as HTMLElement | undefined;
+    if (!box || !step || box.scrollWidth <= box.clientWidth) return;
+    box.scrollTo({ left: step.offsetLeft - (box.clientWidth - step.offsetWidth) / 2, behavior: rampaPronta.current ? "smooth" : "auto" });
+    rampaPronta.current = true;
+  }, [cur]);
 
   return (
-    <div lang="pt-BR" className="w-full min-w-[1440px] overflow-hidden bg-bg font-nunito text-tx">
-      {/* Conteúdo na largura do protótipo (1440), centralizado; os fundos ocupam a tela inteira. */}
-      <div className="mx-auto w-[1440px]">
+    <div lang="pt-BR" className="w-full overflow-hidden bg-bg font-nunito text-tx">
+      {/* Conteúdo até a largura do protótipo (1440), centralizado; os fundos ocupam a tela inteira. */}
+      <div className="mx-auto w-full max-w-[1440px]">
         {/* Cabeçalho */}
-        <header className="flex h-[88px] items-center justify-between px-[120px]">
-          <a href="#" className="flex items-center gap-2.5 text-tx">
+        <header className={`flex h-[72px] items-center justify-between md:h-[88px] ${PAD}`}>
+          <a href="#" className="flex flex-none items-center gap-1.5 text-tx md:gap-2.5">
             <Broto size={44} />
-            <span className="font-fredoka text-[30px]/none font-bold tracking-[-0.01em]">bora</span>
+            <span className="font-fredoka text-[26px]/none font-bold tracking-[-0.01em] md:text-[30px]">bora</span>
           </a>
           <nav className="flex items-center gap-1">
-            <a href="#como" className={NAV_LINK}>Como funciona</a>
-            <a href="#estudantes" className={NAV_LINK}>Para estudantes</a>
-            <span className="mx-3 h-6 w-px bg-border" />
-            <a href="/entrar" className="flex h-11 cursor-pointer items-center rounded-full px-4 text-[16px]/none font-extrabold text-blue hover:bg-blue-soft hover:text-blue">
+            <a href="#como" className={`hidden lg:flex ${NAV_LINK}`}>Como funciona</a>
+            <a href="#estudantes" className={`hidden lg:flex ${NAV_LINK}`}>Para estudantes</a>
+            <span className="mx-3 hidden h-6 w-px bg-border lg:block" />
+            <a href="/entrar" className="flex h-11 cursor-pointer items-center rounded-full px-3 text-[15px]/none md:px-4 md:text-[16px] font-extrabold text-blue hover:bg-blue-soft hover:text-blue">
               Entrar
             </a>
-            <a href="/cadastro" className="ml-2 box-border flex h-[52px] cursor-pointer items-center rounded-full border-2 border-border bg-surface px-6 text-[16px]/none font-extrabold text-blue shadow-[0_3px_0_var(--border)] transition-[transform,box-shadow] duration-[80ms] hover:text-blue active:translate-y-[3px] active:bg-s2 active:shadow-none">
+            <a href="/cadastro" className="ml-1 box-border flex h-11 cursor-pointer items-center rounded-full border-2 border-border bg-surface px-3.5 text-[15px]/none whitespace-nowrap md:ml-2 md:h-[52px] md:px-6 md:text-[16px] font-extrabold text-blue shadow-[0_3px_0_var(--border)] transition-[transform,box-shadow] duration-[80ms] hover:text-blue active:translate-y-[3px] active:bg-s2 active:shadow-none">
               Começar grátis
             </a>
           </nav>
         </header>
 
         {/* Hero */}
-        <section className="grid grid-cols-[minmax(0,1fr)_520px] items-center gap-16 px-[120px] pt-8 pb-32">
+        <section className={`grid grid-cols-1 items-center gap-10 pt-6 md:pt-8 xl:grid-cols-[minmax(0,1fr)_520px] xl:gap-16 ${PAD} ${GAP_B}`}>
           <div>
-            <h1 className="m-0 font-fredoka text-[64px]/[72px] font-bold tracking-[-0.01em] text-balance text-tx">
+            <h1 className={`m-0 text-tx ${H_BIG}`}>
               Pare de adiar.
               <br />
               Comece pelo degrau mais fácil.
@@ -105,7 +122,7 @@ export default function LandingPage() {
             <p className={`mt-6 mb-0 max-w-[540px] ${LEAD}`}>
               A IA quebra seus trabalhos em etapas, encaixa no seu calendário e te leva do zero ao foco em 25 minutos.
             </p>
-            <div className="mt-10 flex items-center gap-3">
+            <div className="mt-8 flex flex-wrap items-center gap-3 md:mt-10">
               <a href="/cadastro" className={PRIMARY_BTN}>
                 Começar grátis
                 <i className="ph-bold ph-arrow-right text-[18px]" />
@@ -115,35 +132,38 @@ export default function LandingPage() {
               </a>
             </div>
           </div>
-          <div className="relative h-[720px]">
-            <div className="absolute top-[120px] left-[30px] h-[480px] w-[480px] rounded-full bg-s2" />
-            <div className="absolute top-5 left-[130px] h-[677px] w-[323px]">
-              <div className="h-[868px] w-[414px] origin-top-left scale-[.78]">
-                <PhoneRampa />
+          {/* Ilustração de 520×720 do protótipo, reduzida no celular */}
+          <div className="relative mx-auto h-[461px] w-[333px] md:h-[720px] md:w-[520px]">
+            <div className="absolute top-0 left-0 h-[720px] w-[520px] origin-top-left scale-[.64] md:scale-100">
+              <div className="absolute top-[120px] left-[30px] h-[480px] w-[480px] rounded-full bg-s2" />
+              <div className="absolute top-5 left-[130px] h-[677px] w-[323px]">
+                <div className="h-[868px] w-[414px] origin-top-left scale-[.78]">
+                  <PhoneRampa />
+                </div>
               </div>
-            </div>
-            <div className="absolute top-[148px] left-[340px] flex items-center gap-3 rounded-full bg-tx py-2.5 pr-5 pl-2.5 text-bg shadow-float">
-              <span className="flex h-9 w-9 items-center justify-center rounded-full bg-toast-icon-bg">
-                <i className="ph-fill ph-drop text-[20px] text-toast-icon" />
-              </span>
-              <span className="flex flex-col">
-                <b className="font-fredoka text-[18px]/[22px] font-bold">+5 gotas</b>
-                <span className="text-[12px]/[16px] font-semibold opacity-80">Degrau concluído</span>
-              </span>
-            </div>
-            <div className="absolute top-[500px] -left-3">
-              <Broto size={180} mood="animado" wave />
+              <div className="absolute top-[148px] left-[340px] flex items-center gap-3 rounded-full bg-tx py-2.5 pr-5 pl-2.5 text-bg shadow-float">
+                <span className="flex h-9 w-9 items-center justify-center rounded-full bg-toast-icon-bg">
+                  <i className="ph-fill ph-drop text-[20px] text-toast-icon" />
+                </span>
+                <span className="flex flex-col">
+                  <b className="font-fredoka text-[18px]/[22px] font-bold">+5 gotas</b>
+                  <span className="text-[12px]/[16px] font-semibold opacity-80">Degrau concluído</span>
+                </span>
+              </div>
+              <div className="absolute top-[500px] -left-3">
+                <Broto size={180} mood="animado" wave />
+              </div>
             </div>
           </div>
         </section>
 
         {/* Como funciona */}
-        <section id="como" className="px-[120px] pb-32">
+        <section id="como" className={`${PAD} ${GAP_B}`}>
           <div className="max-w-[640px]">
             <h2 className={H2}>Como funciona</h2>
             <p className={`mt-4 mb-0 ${LEAD}`}>Três passos entre o enunciado e o primeiro minuto de foco.</p>
           </div>
-          <div className="mt-12 grid grid-cols-3 gap-8">
+          <div className="mt-10 grid grid-cols-1 gap-12 md:mt-12 lg:grid-cols-3 lg:gap-8">
             <div className="flex flex-col gap-6">
               <div className={`box-border flex h-[300px] flex-col justify-center gap-3 p-6 ${CARD}`}>
                 <div className="box-border min-h-24 rounded-[12px] border-2 border-blue px-3.5 py-3 text-[18px]/[26px] text-tx">
@@ -228,15 +248,15 @@ export default function LandingPage() {
         </section>
 
         {/* Suba a rampa */}
-        <section className="px-[120px] pb-32">
-          <div className="flex items-end justify-between gap-16">
+        <section className={`${PAD} ${GAP_B}`}>
+          <div className="flex flex-col items-start justify-between gap-6 xl:flex-row xl:items-end xl:gap-16">
             <div className="max-w-[640px]">
               <h2 className={H2}>Suba a rampa</h2>
               <p className={`mt-4 mb-0 ${LEAD}`}>
                 Cinco degraus curtos levam você do zero ao foco. Cada degrau cumprido rende +5 gotas, que regam o Broto. Clique num degrau pra ver.
               </p>
             </div>
-            <div className="flex items-center gap-2">
+            <div className="flex flex-wrap items-center gap-2">
               <span className="mr-2 text-[16px]/[24px] font-bold">{`Degrau ${cur + 1} de 5 · ${STEPS[cur].name}`}</span>
               <button
                 type="button"
@@ -259,7 +279,8 @@ export default function LandingPage() {
               </button>
             </div>
           </div>
-          <div className="mt-6 flex items-end gap-3">
+          {/* Abaixo de lg os degraus rolam para o lado */}
+          <div ref={rampa} className="relative -mx-5 mt-6 flex items-end gap-3 overflow-x-auto px-5 md:-mx-10 md:px-10 lg:mx-0 lg:overflow-visible lg:px-0">
             {STEPS.map((s, i) => {
               const isDone = i < cur;
               const isCur = i === cur;
@@ -270,7 +291,7 @@ export default function LandingPage() {
                   : "bg-surface text-tx border border-border";
               const iconCls = isDone ? "ph-bold ph-check" : isCur ? `ph-fill ph-${s.icon}` : `ph ph-${s.icon}`;
               return (
-                <div key={s.name} className="flex min-w-0 flex-1 flex-col">
+                <div key={s.name} className="flex w-[168px] flex-none flex-col lg:w-auto lg:min-w-0 lg:flex-1">
                   <div className="flex h-28 items-end justify-center">
                     {isCur && <Broto size={100} mood={STEP_MOODS[i]} />}
                   </div>
@@ -301,15 +322,15 @@ export default function LandingPage() {
         </section>
 
         {/* Para estudantes */}
-        <section id="estudantes" className="px-[120px] pb-32">
+        <section id="estudantes" className={`${PAD} ${GAP_B}`}>
           <div className="max-w-[720px]">
             <h2 className={H2}>Feito para quem trava pra começar</h2>
             <p className={`mt-4 mb-0 ${LEAD}`}>
               Pra quem sabe o que precisa fazer, mas não consegue dar o primeiro passo. Sem culpa e sem sermão.
             </p>
           </div>
-          <div className="mt-12 grid grid-cols-3 gap-6">
-            <div className={`col-span-2 flex flex-col gap-6 p-8 ${CARD}`}>
+          <div className="mt-10 grid grid-cols-1 gap-6 md:mt-12 lg:grid-cols-3">
+            <div className={`flex flex-col gap-6 p-6 md:p-8 lg:col-span-2 ${CARD}`}>
               <div className="flex items-start gap-4">
                 <span className={FEATURE_ICON}><i className="ph ph-battery-medium text-[24px]" /></span>
                 <div>
@@ -317,7 +338,7 @@ export default function LandingPage() {
                   <p className="mt-1 mb-0 text-[16px]/[24px] text-tx2">Antes de começar, você conta como está. A rampa se ajusta.</p>
                 </div>
               </div>
-              <div className="grid grid-cols-3 gap-3">
+              <div className="grid grid-cols-1 gap-3 md:grid-cols-3">
                 {ENERGY.map((e, i) => (
                   <button
                     key={e.name}
@@ -337,7 +358,7 @@ export default function LandingPage() {
               </div>
             </div>
 
-            <div className={`flex flex-col gap-6 p-8 ${CARD}`}>
+            <div className={`flex flex-col gap-6 p-6 md:p-8 ${CARD}`}>
               <div className="flex items-start gap-4">
                 <span className={FEATURE_ICON}><i className="ph ph-arrows-clockwise text-[24px]" /></span>
                 <div>
@@ -360,7 +381,7 @@ export default function LandingPage() {
               </div>
             </div>
 
-            <div className={`flex flex-col gap-6 p-8 ${CARD}`}>
+            <div className={`flex flex-col gap-6 p-6 md:p-8 ${CARD}`}>
               <div className="flex items-start gap-4">
                 <span className={FEATURE_ICON}><i className="ph ph-broom text-[24px]" /></span>
                 <div>
@@ -398,7 +419,7 @@ export default function LandingPage() {
               </div>
             </div>
 
-            <div className={`col-span-2 flex flex-col gap-6 p-8 ${CARD}`}>
+            <div className={`flex flex-col gap-6 p-6 md:p-8 lg:col-span-2 ${CARD}`}>
               <div className="flex items-start gap-4">
                 <span className={FEATURE_ICON}><i className="ph ph-plant text-[24px]" /></span>
                 <div>
@@ -408,7 +429,7 @@ export default function LandingPage() {
                   </p>
                 </div>
               </div>
-              <div className="grid grid-cols-5 items-end gap-3 text-center">
+              <div className="grid grid-cols-3 items-end gap-x-3 gap-y-6 text-center md:grid-cols-5">
                 {STAGES.map((s) => (
                   <div key={s.stage} className="flex flex-col items-center gap-2">
                     <Broto size={88} stage={s.stage} />
@@ -422,10 +443,10 @@ export default function LandingPage() {
         </section>
 
         {/* E-mail diário */}
-        <section className="grid grid-cols-[minmax(0,1fr)_560px] items-center gap-24 px-[120px] pb-32">
+        <section className={`grid grid-cols-1 items-center gap-12 xl:grid-cols-[minmax(0,1fr)_560px] xl:gap-24 ${PAD} ${GAP_B}`}>
           <div>
             <span className="text-[12px]/[16px] font-extrabold tracking-[.06em] text-tx2 uppercase">E-mail diário</span>
-            <h2 className="mt-3 mb-0 font-fredoka text-[40px]/[48px] font-semibold text-balance">Seu dia já chega planejado</h2>
+            <h2 className="mt-3 mb-0 font-fredoka text-[32px]/[40px] font-semibold text-balance md:text-[40px]/[48px]">Seu dia já chega planejado</h2>
             <p className={`mt-4 mb-0 ${LEAD}`}>
               Toda manhã, um e-mail curto com o que fazer e quando. Um toque e você já está no primeiro degrau.
             </p>
@@ -441,7 +462,7 @@ export default function LandingPage() {
             </div>
           </div>
           <div className={`overflow-hidden ${CARD}`}>
-            <div className="flex items-center gap-3 border-b border-border px-6 py-4">
+            <div className="flex items-center gap-3 border-b border-border px-5 py-4 md:px-6">
               <span className="flex h-10 w-10 items-center justify-center rounded-full bg-s2"><Broto size={32} /></span>
               <span className="flex flex-1 flex-col">
                 <b className="text-[15px]/[20px] font-extrabold">Bora</b>
@@ -449,11 +470,11 @@ export default function LandingPage() {
               </span>
               <span className="text-[13px]/[18px] font-semibold text-tx2">07:00</span>
             </div>
-            <div className="flex flex-col gap-5 p-8">
+            <div className="flex flex-col gap-5 p-5 md:p-8">
               <div className="flex items-center gap-3.5">
                 <Broto size={56} mood="animado" />
                 <div>
-                  <div className="font-fredoka text-[28px]/[36px] font-semibold">Seu plano de hoje, Arthur</div>
+                  <div className="font-fredoka text-[22px]/[28px] font-semibold md:text-[28px]/[36px]">Seu plano de hoje, Arthur</div>
                   <div className="text-[14px]/[20px] font-semibold text-tx2">Sexta, 6 de novembro</div>
                 </div>
               </div>
@@ -495,7 +516,7 @@ export default function LandingPage() {
         </section>
 
         {/* Perguntas frequentes */}
-        <section className="grid grid-cols-[400px_minmax(0,1fr)] items-start gap-24 px-[120px] pb-32">
+        <section className={`grid grid-cols-1 items-start gap-8 lg:grid-cols-[400px_minmax(0,1fr)] lg:gap-24 ${PAD} ${GAP_B}`}>
           <div>
             <h2 className={H2}>Perguntas frequentes</h2>
             <p className={`mt-4 mb-0 ${LEAD.replace(" text-pretty", "")}`}>
@@ -510,14 +531,14 @@ export default function LandingPage() {
                   <button
                     type="button"
                     onClick={() => setFaq((cur) => (cur === i ? -1 : i))}
-                    className="flex min-h-20 w-full cursor-pointer items-center justify-between gap-6 border-0 bg-transparent py-5 text-left text-tx"
+                    className="flex min-h-20 w-full cursor-pointer items-center justify-between gap-4 md:gap-6 border-0 bg-transparent py-5 text-left text-tx"
                   >
                     <span className="font-fredoka text-[20px]/[26px] font-semibold">{f.q}</span>
                     <span className="flex h-10 w-10 flex-none items-center justify-center rounded-full bg-s2 text-tx">
                       <i className={`${open ? "ph-bold ph-minus" : "ph-bold ph-plus"} text-[16px]`} />
                     </span>
                   </button>
-                  {open && <p className={`-mt-1 mb-0 pr-16 pb-6 ${LEAD}`}>{f.a}</p>}
+                  {open && <p className={`-mt-1 mb-0 pb-6 md:pr-16 ${LEAD}`}>{f.a}</p>}
                 </div>
               );
             })}
@@ -528,10 +549,10 @@ export default function LandingPage() {
 
       {/* CTA final (modo escuro): o fundo vai de ponta a ponta em telas largas */}
       <section className="theme-dark bg-bg text-tx">
-        <div className="mx-auto w-[1440px] px-[120px] pt-24">
-          <div className="grid grid-cols-[minmax(0,1fr)_360px] items-center gap-16">
+        <div className={`mx-auto w-full max-w-[1440px] pt-16 xl:pt-24 ${PAD}`}>
+          <div className="grid grid-cols-1 items-center gap-10 lg:grid-cols-[minmax(0,1fr)_360px] lg:gap-16">
             <div>
-              <h2 className="m-0 font-fredoka text-[64px]/[72px] font-bold tracking-[-0.01em] text-balance">
+              <h2 className={`m-0 ${H_BIG}`}>
                 Um degrau hoje. Uma árvore no fim do semestre.
               </h2>
               <p className={`mt-6 mb-0 max-w-[540px] ${LEAD}`}>
@@ -542,11 +563,11 @@ export default function LandingPage() {
                 <i className="ph-bold ph-arrow-right text-[18px]" />
               </a>
             </div>
-            <div className="flex justify-center pt-10">
+            <div className="flex justify-center lg:pt-10">
               <Broto size={300} stage="arvore" mood="animado" />
             </div>
           </div>
-          <footer className="mt-24 flex items-center justify-between border-t border-border pt-8 pb-10">
+          <footer className="mt-16 flex items-center justify-between border-t border-border pt-8 pb-10 xl:mt-24">
             <span className="flex items-center gap-2">
               <Broto size={32} />
               <b className="font-fredoka text-[22px]/none font-bold">bora</b>
