@@ -583,6 +583,15 @@ Pedidos do usuário ao testar o app num Galaxy S23 (Android 17) e o web, depois 
   - **Alternativas:** 1. **pôr os dois no web igual ao app** (visuais; 1 h, sem design web); 2. **fazer de verdade nos dois**: sugestão com `POST /feedback` (meio dia) e idioma com i18n (1–2 dias por plataforma); 3. **manter** como o design manda.
   - **Recomendação:** 2 para a sugestão (o mesmo endpoint serve aos dois) e 3 para o idioma até haver tradução.
 
+- [ ] [DECIDIR] "Lembrete da rampa" no Perfil não é editável e não explica o que é — (origem: teste no Android, 28/11/2026)
+  - **Contexto:** a linha mostra "09:30" fixo. A ideia do design (M26) é um aviso no celular, todo dia nesse horário, chamando para começar a rampa. Pela MP8 é só visual: notificações estão fora do MVP.
+  - **Alternativas:** 1. **editável e só visual**: tocar abre um seletor de horário e um subtítulo explica ("Um aviso por dia pra começar a rampa"); 1–2 h; 2. **de verdade**: notificação local (pacote novo, permissão do Android e do iOS); 1 dia; 3. **esconder** até existir.
+  - **Recomendação:** 1 agora (mantém o MVP completo nas telas, como o e-mail diário, AT4) e 2 depois.
+- [ ] [DECIDIR] "Zona de risco": trocar senha, sair da conta e apagar conta (app e web) — (origem: teste no Android, 28/11/2026) — afeta Backend, Frontend (W26) e Mobile (M26)
+  - **Contexto:** não há como trocar a senha logado, sair da conta no app (o web tem "Sair"; no app, fechar desloga, MP12) nem apagar a conta. Nenhum dos três tem design.
+  - **Alternativas:** 1. **os três de verdade**: `PATCH /auth/me/password` (senha atual + nova, regra de senha forte), "Sair" no app (limpa a sessão e volta ao login) e `DELETE /auth/me` (apaga a conta com confirmação digitando a senha; o `User.deletedAt` já existe, então pode ser exclusão lógica); 1 dia e meio; 2. **só sair e trocar senha** de verdade, apagar conta só visual; 1 dia; 3. **os três só visuais**; 2 h.
+  - **Recomendação:** 1. Apagar a conta de verdade é exigido pela LGPD e pelas lojas (Google Play e App Store pedem exclusão de conta dentro do app).
+
 ## Backend (inclui domínio modules/*, banco e contrato)
 - [ ] [EXECUTAR] `SplitCommitmentFrom` atômico — (origem: revisor, rodada de compromissos e tarefas únicas, 20/11/2026)
   - O caso de uso encerra (ou apaga) a série antiga e cria a nova em duas chamadas separadas; se a segunda falhar, as ocorrências futuras se perdem. Fazer: um método do repositório (ex.: `split(previous|null, next)`) que grava os dois numa `$transaction` do Prisma, com teste de falha. Pronto quando uma falha no `create` deixa a série antiga intacta.
