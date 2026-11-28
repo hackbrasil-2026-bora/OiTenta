@@ -1,36 +1,16 @@
 import { dayLabel, daysBetween, formatDdMm, formatDuration, formatHm, localDate, localMinute, minutesBetween, monthName, addDays, dayOfMonth, weekdayIndex, weekdayLong, weekdayShort } from "@/modules/core/format/time.format";
 import type { AvailabilityWindow } from "../data/scheduling.types";
 
-// Geometria e rótulos do calendário semanal (AppCalendario.dc.html): 08h–23h (estendida por gridRange), 40 px por hora.
+// Geometria e rótulos do calendário (Semana e Dia): o dia inteiro, de 00h a 24h, 40 px por hora.
+// O protótipo (AppCalendario.dc.html) mostrava 08h–23h; o usuário pediu o dia inteiro (28/11/2026).
 export const HOUR_HEIGHT = 40;
-export const FIRST_MINUTE = 8 * 60;
+export const GRID_HOURS = 24;
+export const GRID_HEIGHT = HOUR_HEIGHT * GRID_HOURS;
+const DAY_MINUTES = GRID_HOURS * 60;
 /** Fundo das faixas livres da grade e da legenda. */
 export const FREE_BG = "var(--free)";
 
-const LAST_MINUTE = 23 * 60;
-const toTop = (minute: number, first = FIRST_MINUTE) => ((minute - first) / 60) * HOUR_HEIGHT;
-
-/**
- * Faixa de horas da grade: 08h–23h do protótipo, estendida para caber as janelas livres e os blocos
- * que começam antes ou terminam depois (até 24h). Sem isso, um bloco às 06h fica com posição negativa
- * e sobe para cima do cabeçalho.
- */
-export function gridRange(windows: AvailabilityWindow[], blocks: { start: string; end: string }[], tz: string) {
-  let first = FIRST_MINUTE;
-  let last = LAST_MINUTE;
-  for (const w of windows) {
-    first = Math.min(first, w.startMinute);
-    last = Math.max(last, w.endMinute);
-  }
-  for (const b of blocks) {
-    const start = localMinute(b.start, tz);
-    first = Math.min(first, start);
-    last = Math.max(last, start + minutesBetween(b.start, b.end));
-  }
-  const firstMinute = Math.floor(first / 60) * 60;
-  const lastMinute = Math.min(24 * 60, Math.ceil(last / 60) * 60);
-  return { firstMinute, hours: (lastMinute - firstMinute) / 60 };
-}
+const toTop = (minute: number) => (minute / 60) * HOUR_HEIGHT;
 
 export function weekRangeLabel(monday: string): string {
   const sunday = addDays(monday, 6);
@@ -40,15 +20,17 @@ export function weekRangeLabel(monday: string): string {
 
 export const dayLoadLabel = (used: number, limit: number) => (used ? `${formatDuration(used)} de ${formatDuration(limit)}` : "livre");
 
-export function blockGeometry(start: string, end: string, tz: string, firstMinute = FIRST_MINUTE) {
-  const minutes = minutesBetween(start, end);
-  return { top: toTop(localMinute(start, tz), firstMinute) + 1, height: Math.max(20, (minutes / 60) * HOUR_HEIGHT - 3) };
+export function blockGeometry(start: string, end: string, tz: string) {
+  const startMinute = localMinute(start, tz);
+  // Bloco que passa da meia-noite para no fim do dia.
+  const minutes = Math.min(minutesBetween(start, end), DAY_MINUTES - startMinute);
+  return { top: toTop(startMinute) + 1, height: Math.max(20, (minutes / 60) * HOUR_HEIGHT - 3) };
 }
 
-export const freeRects = (windows: AvailabilityWindow[], weekday: number, firstMinute = FIRST_MINUTE) =>
+export const freeRects = (windows: AvailabilityWindow[], weekday: number) =>
   windows
     .filter((w) => w.weekday === weekday)
-    .map((w) => ({ top: toTop(Math.max(firstMinute, w.startMinute), firstMinute), height: ((w.endMinute - Math.max(firstMinute, w.startMinute)) / 60) * HOUR_HEIGHT }));
+    .map((w) => ({ top: toTop(w.startMinute), height: ((w.endMinute - w.startMinute) / 60) * HOUR_HEIGHT }));
 
 export function blockDetail(b: { start: string; end: string }, today: string, tz: string) {
   const date = localDate(b.start, tz);

@@ -721,3 +721,6 @@ Dependências técnicas indispensáveis para as aprovadas funcionarem (ex.: `@vi
 
 ### AT11 — Landing responsiva; título e ícone da aba
 - **Decisão (28/11/2026):** só a landing fica responsiva (opção 3 do [DECIDIR] "Web em telas estreitas"); o app logado mantém a largura mínima de 1200 px. A partir de 1280 px (xl) a landing é o layout do protótipo; abaixo, as colunas empilham, a navegação do topo some (fica Entrar e Começar grátis), a ilustração do celular encolhe e os degraus da rampa rolam para o lado, centralizando o degrau atual. A aba do navegador mostra "bora" e o Broto (o ícone do app iOS). **Larguras sem design.** **Status:** provisória até o design.
+
+### AT12 — Calendário web com o dia inteiro (00h–24h)
+- **Decisão (28/11/2026):** na Semana e no Dia do calendário web, a grade vai sempre da meia-noite às 23h59 (00h–24h, 40 px por hora), no lugar das 08h–23h do protótipo. Um bloco que passa da meia-noite aparece até o fim do dia. **Diferença em relação ao design.** **Status:** definitiva.
