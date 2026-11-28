@@ -33,4 +33,14 @@ void main() {
     final u = await repo.me();
     expect(u.name, 'Arthur');
   });
+
+  test('updateProfile devolve o usuário com o nome e o e-mail novos', () async {
+    final u = await SampleAuthRepository().updateProfile(
+      name: 'Arthur Lima',
+      email: 'novo@bora.app',
+      currentPassword: 'Senha@123',
+    );
+    expect(u.name, 'Arthur Lima');
+    expect(u.email, 'novo@bora.app');
+  });
 }

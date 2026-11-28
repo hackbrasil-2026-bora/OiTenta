@@ -32,6 +32,9 @@ void main() {
             onRoutine: () => tap('routine'),
             onLanguage: () => tap('language'),
             onSuggestion: () => tap('suggestion'),
+            onEditProfile: () => tap('edit'),
+            onToggleDailyEmail: () => tap('email'),
+            onDailyLimit: () => tap('limit'),
           ),
         ),
       ),
@@ -66,10 +69,12 @@ void main() {
     expect(find.text('4h'), findsOneWidget);
     expect(find.text('Lembrete da rampa'), findsOneWidget);
     expect(find.text('09:30'), findsOneWidget);
-    // Modo escuro desligado; bloquear apps ligado (como no design).
+    expect(find.text('E-mail diário'), findsOneWidget);
+    // Modo escuro desligado; bloquear apps ligado (como no design); e-mail
+    // diário ligado (AT4).
     expect(
       tester.widgetList<BoraSwitch>(find.byType(BoraSwitch)).map((s) => s.on),
-      [false, true],
+      [false, true, true],
     );
   });
 
@@ -111,13 +116,14 @@ void main() {
     await pump(tester);
     state.toggleDark();
     state.toggleBlockApps();
+    state.toggleDailyEmail();
     state.selectLanguage('es');
     await tester.pumpAndSettle();
     expect(find.text('Tema atual: Escuro'), findsOneWidget);
     expect(find.text('Español'), findsOneWidget);
     expect(
       tester.widgetList<BoraSwitch>(find.byType(BoraSwitch)).map((s) => s.on),
-      [true, false],
+      [true, false, false],
     );
   });
 
@@ -131,5 +137,30 @@ void main() {
     state.error = 'Não deu pra carregar o máximo por dia.';
     await pump(tester);
     expect(find.text('Não deu pra carregar o máximo por dia.'), findsOneWidget);
+  });
+
+  group('AT3–AT5 (28/11/2026)', () {
+    testWidgets('tocar no nome ou em "Editar perfil" abre a edição', (
+      tester,
+    ) async {
+      await pump(tester);
+      await tester.tap(find.text('Arthur'));
+      await tester.ensureVisible(find.text('Editar perfil'));
+      await tester.tap(find.text('Editar perfil'));
+      expect(taps['edit'], 2);
+    });
+
+    testWidgets('"E-mail diário" alterna pelo interruptor', (tester) async {
+      await pump(tester);
+      await tester.ensureVisible(find.text('E-mail diário'));
+      await tester.tap(find.text('E-mail diário'));
+      expect(taps['email'], 1);
+    });
+
+    testWidgets('tocar em "Máximo por dia" abre o seletor', (tester) async {
+      await pump(tester);
+      await tester.tap(find.text('Máximo por dia'));
+      expect(taps['limit'], 1);
+    });
   });
 }

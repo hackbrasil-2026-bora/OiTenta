@@ -4,26 +4,20 @@ import 'package:phosphor_flutter/phosphor_flutter.dart';
 import '../../../core/theme/bora_colors.dart';
 import '../../../core/theme/bora_text.dart';
 import 'profile_controller.dart';
+import 'profile_sheet_frame.dart';
 
 /// Abre o sheet "Idioma" (M28, `sheetIdioma` do protótipo) e devolve o
 /// código escolhido, ou `null` se o usuário fechar sem escolher.
 Future<String?> showLanguageSheet(
   BuildContext context, {
   required String current,
-}) {
-  final c = context.bora;
-  return showModalBottomSheet<String>(
-    context: context,
-    useRootNavigator: true,
-    isScrollControlled: true,
-    backgroundColor: c.surface.withValues(alpha: 0),
-    barrierColor: c.scrim,
-    builder: (sheetContext) => LanguageSheet(
-      current: current,
-      onSelect: (code) => Navigator.of(sheetContext).pop(code),
-    ),
-  );
-}
+}) => showProfileSheet<String>(
+  context,
+  (sheetContext) => LanguageSheet(
+    current: current,
+    onSelect: (code) => Navigator.of(sheetContext).pop(code),
+  ),
+);
 
 /// Sheet "Idioma": as 3 opções, com check na atual (MP8: só muda o texto da
 /// linha do Perfil; o app continua em português).
@@ -38,56 +32,19 @@ class LanguageSheet extends StatelessWidget {
   final ValueChanged<String> onSelect;
 
   @override
-  Widget build(BuildContext context) {
-    final c = context.bora;
-    final bottom = MediaQuery.paddingOf(context).bottom;
-    return Container(
-      decoration: BoxDecoration(
-        color: c.surface,
-        borderRadius: const BorderRadius.vertical(top: Radius.circular(24)),
-        border: Border(
-          top: BorderSide(color: c.border),
-          left: BorderSide(color: c.border),
-          right: BorderSide(color: c.border),
+  Widget build(BuildContext context) => ProfileSheetFrame(
+    title: 'Idioma',
+    children: [
+      for (final (i, l) in ProfileController.languages.indexed) ...[
+        if (i > 0) const SizedBox(height: 8),
+        LanguageOption(
+          name: l.name,
+          selected: l.code == current,
+          onTap: () => onSelect(l.code),
         ),
-        boxShadow: [
-          BoxShadow(
-            color: c.sheetShadow,
-            offset: const Offset(0, -8),
-            blurRadius: 32,
-          ),
-        ],
-      ),
-      padding: EdgeInsets.fromLTRB(20, 10, 20, bottom > 0 ? bottom : 34),
-      child: Column(
-        mainAxisSize: MainAxisSize.min,
-        crossAxisAlignment: CrossAxisAlignment.stretch,
-        children: [
-          Center(
-            child: Container(
-              width: 40,
-              height: 5,
-              decoration: BoxDecoration(
-                color: c.border,
-                borderRadius: BorderRadius.circular(999),
-              ),
-            ),
-          ),
-          const SizedBox(height: 12),
-          Text('Idioma', style: BoraText.h3(c.tx)),
-          const SizedBox(height: 12),
-          for (final (i, l) in ProfileController.languages.indexed) ...[
-            if (i > 0) const SizedBox(height: 8),
-            LanguageOption(
-              name: l.name,
-              selected: l.code == current,
-              onTap: () => onSelect(l.code),
-            ),
-          ],
-        ],
-      ),
-    );
-  }
+      ],
+    ],
+  );
 }
 
 /// Opção do sheet: 52 de altura mínima, borda 2px, raio 16; selecionada em

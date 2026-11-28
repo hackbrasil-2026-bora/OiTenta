@@ -5,11 +5,13 @@ import 'package:oitenta/core/clock/clock.dart';
 import 'package:oitenta/core/di/app_dependencies.dart';
 import 'package:oitenta/core/routes/app_routes.dart';
 import 'package:oitenta/core/sample/bora_sample_data.dart';
+import 'package:oitenta/core/widgets/bora_widgets.dart';
 import 'package:oitenta/features/activation/data/sample_activation_repository.dart';
 import 'package:oitenta/features/auth/data/sample_auth_repository.dart';
 import 'package:oitenta/features/gamification/data/sample_gamification_repository.dart';
 import 'package:oitenta/features/gamification/presentation/garden_pages.dart';
 import 'package:oitenta/features/goals/data/sample_goals_repository.dart';
+import 'package:oitenta/features/profile/presentation/daily_limit_sheet.dart';
 import 'package:oitenta/features/profile/presentation/language_sheet.dart';
 import 'package:oitenta/features/profile/presentation/profile_pages.dart';
 import 'package:oitenta/features/profile/presentation/routine_suggestion_pages.dart';
@@ -147,5 +149,63 @@ void main() {
     expect(find.byType(ProfilePage), findsOneWidget);
     expect(scheduling.availabilityCalls, beforeBack + 1);
     expect(find.text('3h'), findsOneWidget);
+  });
+
+  testWidgets('Editar perfil: troca o nome, volta e o Perfil mostra (AT3)', (
+    tester,
+  ) async {
+    await pumpApp(tester, location: AppRoutes.profile);
+
+    await tester.tap(find.text('Arthur'));
+    await tester.pumpAndSettle();
+    expect(find.byType(EditProfilePage), findsOneWidget);
+
+    await tester.enterText(
+      find.widgetWithText(TextField, 'Arthur'),
+      'Arthur Lima',
+    );
+    await tester.pump();
+    await tester.tap(find.text('Salvar'));
+    await tester.pumpAndSettle();
+
+    expect(find.byType(ProfilePage), findsOneWidget);
+    expect(find.text('Arthur Lima'), findsOneWidget);
+    expect(find.text('Perfil atualizado'), findsOneWidget);
+    await tester.pump(const Duration(seconds: 5)); // o toast some
+  });
+
+  testWidgets('Máximo por dia: o seletor salva e atualiza a linha (AT5)', (
+    tester,
+  ) async {
+    final scheduling = _CountingScheduling();
+    await pumpApp(tester, location: AppRoutes.profile, deps: _deps(scheduling));
+
+    await tester.tap(find.text('Máximo por dia'));
+    await tester.pumpAndSettle();
+    expect(find.byType(DailyLimitSheet), findsOneWidget);
+
+    tester
+        .widget<BoraSlider>(
+          find.descendant(
+            of: find.byType(DailyLimitSheet),
+            matching: find.byType(BoraSlider),
+          ),
+        )
+        .onChanged(6);
+    await tester.pump();
+    await tester.tap(
+      find.descendant(
+        of: find.byType(DailyLimitSheet),
+        matching: find.text('Salvar'),
+      ),
+    );
+    await tester.pumpAndSettle();
+
+    expect(find.byType(DailyLimitSheet), findsNothing);
+    expect(find.text('Máximo por dia: 6h'), findsOneWidget);
+    expect(find.text('6h'), findsOneWidget);
+    final saved = await scheduling.getAvailability();
+    expect(saved!.dailyLimitMinutes, 360);
+    await tester.pump(const Duration(seconds: 5)); // o toast some
   });
 }

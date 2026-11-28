@@ -34,6 +34,7 @@ class AppRoutes {
   static const profile = '/perfil';
   static const profileRoutine = '/perfil/rotina';
   static const profileSuggestion = '/perfil/sugestao';
+  static const profileEdit = '/perfil/editar';
   static const ramp = '/rampa';
   static const warmup = '/rampa/aquecer';
   static const challenge = '/rampa/desafio';

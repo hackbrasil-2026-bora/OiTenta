@@ -9,6 +9,10 @@ import 'profile_controller.dart';
 
 /// Perfil (M26, template `PERFIL` do protótipo): avatar com a inicial, nome e
 /// e-mail (MP6), "Preferências" e "Configurações". Sem "Sair da conta" (MP12).
+///
+/// Sem design (28/11/2026): tocar no nome ou em "Editar perfil" abre a edição
+/// (AT3); "E-mail diário" é só visual (AT4); tocar em "Máximo por dia" abre o
+/// seletor do limite (AT5).
 class ProfileScreen extends StatelessWidget {
   const ProfileScreen({
     super.key,
@@ -19,6 +23,9 @@ class ProfileScreen extends StatelessWidget {
     required this.onRoutine,
     required this.onLanguage,
     required this.onSuggestion,
+    required this.onEditProfile,
+    required this.onToggleDailyEmail,
+    required this.onDailyLimit,
   });
 
   final ProfileController state;
@@ -28,6 +35,9 @@ class ProfileScreen extends StatelessWidget {
   final VoidCallback onRoutine;
   final VoidCallback onLanguage;
   final VoidCallback onSuggestion;
+  final VoidCallback onEditProfile;
+  final VoidCallback onToggleDailyEmail;
+  final VoidCallback onDailyLimit;
 
   @override
   Widget build(BuildContext context) {
@@ -35,37 +45,46 @@ class ProfileScreen extends StatelessWidget {
     return BoraPage(
       topBar: BoraTopBar(leading: BackNavButton(onPressed: onBack)),
       children: [
-        Row(
-          children: [
-            Container(
-              width: 72,
-              height: 72,
-              decoration: BoxDecoration(
-                color: c.priSoft,
-                shape: BoxShape.circle,
-              ),
-              alignment: Alignment.center,
-              child: Text(
-                state.initial,
-                style: BoraText.fredoka(
-                  32,
-                  32,
-                  weight: FontWeight.w700,
-                  color: c.pri,
+        Semantics(
+          button: true,
+          label: 'Editar perfil',
+          child: GestureDetector(
+            behavior: HitTestBehavior.opaque,
+            onTap: onEditProfile,
+            child: Row(
+              children: [
+                Container(
+                  width: 72,
+                  height: 72,
+                  decoration: BoxDecoration(
+                    color: c.priSoft,
+                    shape: BoxShape.circle,
+                  ),
+                  alignment: Alignment.center,
+                  child: Text(
+                    state.initial,
+                    style: BoraText.fredoka(
+                      32,
+                      32,
+                      weight: FontWeight.w700,
+                      color: c.pri,
+                    ),
+                  ),
                 ),
-              ),
+                const SizedBox(width: 16),
+                Expanded(
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      Text(state.name, style: BoraText.h1(c.tx)),
+                      Text(state.subtitle, style: BoraText.small(c.tx2)),
+                    ],
+                  ),
+                ),
+                Icon(PhosphorIconsRegular.pencilSimple, size: 22, color: c.tx2),
+              ],
             ),
-            const SizedBox(width: 16),
-            Expanded(
-              child: Column(
-                crossAxisAlignment: CrossAxisAlignment.start,
-                children: [
-                  Text(state.name, style: BoraText.h1(c.tx)),
-                  Text(state.subtitle, style: BoraText.small(c.tx2)),
-                ],
-              ),
-            ),
-          ],
+          ),
         ),
         if (state.error != null) ...[
           const SizedBox(height: 12),
@@ -95,11 +114,20 @@ class ProfileScreen extends StatelessWidget {
               icon: PhosphorIconsRegular.clock,
               title: 'Máximo por dia',
               trailing: _Value(state.dailyLimitText),
+              onTap: onDailyLimit,
             ),
             _Row(
               icon: PhosphorIconsRegular.bellSimple,
               title: 'Lembrete da rampa',
               trailing: _Value(state.reminderText),
+            ),
+            _Row(
+              icon: PhosphorIconsRegular.envelopeSimple,
+              title: 'E-mail diário',
+              subtitle: 'O plano do dia na sua caixa de entrada',
+              trailing: BoraSwitch(on: state.dailyEmail),
+              toggled: state.dailyEmail,
+              onTap: onToggleDailyEmail,
             ),
           ],
         ),
@@ -108,6 +136,13 @@ class ProfileScreen extends StatelessWidget {
         const SizedBox(height: 12),
         _Group(
           rows: [
+            _Row(
+              icon: PhosphorIconsRegular.userCircle,
+              title: 'Editar perfil',
+              subtitle: 'Nome e e-mail',
+              trailing: const _Chevron(),
+              onTap: onEditProfile,
+            ),
             _Row(
               icon: PhosphorIconsRegular.arrowsClockwise,
               title: 'Redefinir minha rotina',

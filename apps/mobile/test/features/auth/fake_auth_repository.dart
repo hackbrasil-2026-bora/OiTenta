@@ -72,6 +72,26 @@ class FakeAuthRepository implements AuthRepository {
     );
   }
 
+  /// Erro a lançar no `updateProfile` (nulo = sucesso).
+  Object? updateError;
+  final List<Map<String, Object?>> updateArgs = [];
+
+  @override
+  Future<AuthUser> updateProfile({
+    String? name,
+    String? email,
+    String? currentPassword,
+  }) async {
+    calls.add('update');
+    updateArgs.add({
+      'name': name,
+      'email': email,
+      'currentPassword': currentPassword,
+    });
+    if (updateError != null) throw updateError!;
+    return _user(name ?? loginName, email ?? 'ana@bora.app');
+  }
+
   @override
   Future<AuthUser> me() async {
     calls.add('me');

@@ -146,6 +146,10 @@ GoRouter createRouter(
             builder: (_, _) => SuggestionPage(deps: deps),
           ),
           GoRoute(
+            path: AppRoutes.profileEdit,
+            builder: (_, _) => EditProfilePage(deps: deps),
+          ),
+          GoRoute(
             path: AppRoutes.ramp,
             pageBuilder: (_, s) => page(s, LadderPage(deps: deps)),
           ),

@@ -36,4 +36,15 @@ class SampleAuthRepository implements AuthRepository {
 
   @override
   Future<AuthUser> me() async => AuthUser.fromJson(BoraSample.demoUser);
+
+  @override
+  Future<AuthUser> updateProfile({
+    String? name,
+    String? email,
+    String? currentPassword,
+  }) async => AuthUser.fromJson({
+    ...BoraSample.demoUser,
+    'name': ?name,
+    'email': ?email,
+  });
 }

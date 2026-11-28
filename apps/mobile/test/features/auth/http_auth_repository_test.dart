@@ -118,4 +118,52 @@ void main() {
     await expectLater(repo.me(), throwsA(isA<UnauthorizedFailure>()));
     expect(api.unauthorizedCalls, 1);
   });
+
+  group('updateProfile (AT3)', () {
+    test('PATCH /auth/me só com os campos informados', () async {
+      api.respond({
+        'user': {..._user, 'name': 'Arthur Lima'},
+      });
+      final u = await repo.updateProfile(name: 'Arthur Lima');
+      expect(api.last.method, 'PATCH');
+      expect(api.last.url.path, '/auth/me');
+      expect(api.lastBody, {'name': 'Arthur Lima'});
+      expect(api.last.headers['Authorization'], 'Bearer tok-123');
+      expect(u.name, 'Arthur Lima');
+    });
+
+    test('troca de e-mail manda a senha atual', () async {
+      api.respond({
+        'user': {..._user, 'email': 'novo@bora.app'},
+      });
+      await repo.updateProfile(
+        email: 'novo@bora.app',
+        currentPassword: 'Senha@123',
+      );
+      expect(api.lastBody, {
+        'email': 'novo@bora.app',
+        'currentPassword': 'Senha@123',
+      });
+    });
+
+    test(
+      '403 (senha errada) → ApiFailure 403, sem derrubar a sessão',
+      () async {
+        api.fail(403, 'Senha atual incorreta.');
+        await expectLater(
+          repo.updateProfile(email: 'x@bora.app', currentPassword: 'errada'),
+          throwsA(isA<ApiFailure>().having((e) => e.statusCode, 'status', 403)),
+        );
+        expect(api.unauthorizedCalls, 0);
+      },
+    );
+
+    test('409 (e-mail de outra conta) → ConflictFailure', () async {
+      api.fail(409, 'E-mail já cadastrado.');
+      await expectLater(
+        repo.updateProfile(email: 'x@bora.app', currentPassword: 'Senha@123'),
+        throwsA(isA<ConflictFailure>()),
+      );
+    });
+  });
 }
