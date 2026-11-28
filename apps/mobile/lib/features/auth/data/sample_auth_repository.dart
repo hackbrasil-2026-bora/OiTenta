@@ -47,4 +47,13 @@ class SampleAuthRepository implements AuthRepository {
     'name': ?name,
     'email': ?email,
   });
+
+  @override
+  Future<void> changePassword({
+    required String currentPassword,
+    required String newPassword,
+  }) async {}
+
+  @override
+  Future<void> deleteAccount({required String currentPassword}) async {}
 }

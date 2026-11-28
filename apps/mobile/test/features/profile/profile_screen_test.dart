@@ -35,6 +35,10 @@ void main() {
             onEditProfile: () => tap('edit'),
             onToggleDailyEmail: () => tap('email'),
             onDailyLimit: () => tap('limit'),
+            onReminder: () => tap('reminder'),
+            onChangePassword: () => tap('password'),
+            onLogout: () => tap('logout'),
+            onDeleteAccount: () => tap('delete'),
           ),
         ),
       ),
@@ -87,11 +91,6 @@ void main() {
     expect(find.text('Idioma'), findsOneWidget);
     expect(find.text('Português (Brasil)'), findsOneWidget);
     expect(find.text('Enviar sugestão'), findsOneWidget);
-  });
-
-  testWidgets('não existe "Sair da conta" (MP12)', (tester) async {
-    await pump(tester);
-    expect(find.text('Sair da conta'), findsNothing);
   });
 
   testWidgets('cada linha avisa o seu toque', (tester) async {
@@ -161,6 +160,31 @@ void main() {
       await pump(tester);
       await tester.tap(find.text('Máximo por dia'));
       expect(taps['limit'], 1);
+    });
+  });
+
+  group('AT8 e AT9 (28/11/2026)', () {
+    testWidgets('o lembrete explica o que é e abre o seletor', (tester) async {
+      await pump(tester);
+      expect(find.text('Um aviso por dia pra começar a rampa'), findsOneWidget);
+      await tester.tap(find.text('Lembrete da rampa'));
+      expect(taps['reminder'], 1);
+    });
+
+    testWidgets('Zona de risco com trocar senha, sair e apagar conta', (
+      tester,
+    ) async {
+      await pump(tester);
+      expect(find.text('ZONA DE RISCO'), findsOneWidget);
+      for (final (label, key) in [
+        ('Trocar senha', 'password'),
+        ('Sair da conta', 'logout'),
+        ('Apagar conta', 'delete'),
+      ]) {
+        await tester.ensureVisible(find.text(label));
+        await tester.tap(find.text(label));
+        expect(taps[key], 1, reason: label);
+      }
     });
   });
 }

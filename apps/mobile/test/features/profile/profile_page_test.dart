@@ -11,6 +11,7 @@ import 'package:oitenta/features/auth/data/sample_auth_repository.dart';
 import 'package:oitenta/features/gamification/data/sample_gamification_repository.dart';
 import 'package:oitenta/features/gamification/presentation/garden_pages.dart';
 import 'package:oitenta/features/goals/data/sample_goals_repository.dart';
+import 'package:oitenta/features/auth/presentation/auth_pages.dart';
 import 'package:oitenta/features/profile/presentation/daily_limit_sheet.dart';
 import 'package:oitenta/features/profile/presentation/language_sheet.dart';
 import 'package:oitenta/features/profile/presentation/profile_pages.dart';
@@ -207,5 +208,59 @@ void main() {
     final saved = await scheduling.getAvailability();
     expect(saved!.dailyLimitMinutes, 360);
     await tester.pump(const Duration(seconds: 5)); // o toast some
+  });
+
+  group('Zona de risco (AT9)', () {
+    testWidgets('Sair da conta: confirma, limpa a sessão e vai ao login', (
+      tester,
+    ) async {
+      final deps = await pumpApp(tester, location: AppRoutes.profile);
+      await tester.ensureVisible(find.text('Sair da conta'));
+      await tester.tap(find.text('Sair da conta'));
+      await tester.pumpAndSettle();
+      await tester.tap(find.text('Sair'));
+      await tester.pumpAndSettle();
+
+      expect(find.byType(LoginPage), findsOneWidget);
+      expect(deps.session.session, isNull);
+    });
+
+    testWidgets('Apagar conta: com a senha, apaga e vai ao login', (
+      tester,
+    ) async {
+      final deps = await pumpApp(tester, location: AppRoutes.profile);
+      await tester.ensureVisible(find.text('Apagar conta'));
+      await tester.tap(find.text('Apagar conta'));
+      await tester.pumpAndSettle();
+
+      await tester.enterText(find.byType(TextField), 'Senha@123');
+      await tester.pump();
+      await tester.tap(find.text('Apagar minha conta'));
+      await tester.pumpAndSettle();
+
+      expect(find.byType(LoginPage), findsOneWidget);
+      expect(find.text('Conta apagada'), findsOneWidget);
+      expect(deps.session.session, isNull);
+      await tester.pump(const Duration(seconds: 5)); // o toast some
+    });
+
+    testWidgets('Trocar senha: salva e volta ao Perfil', (tester) async {
+      await pumpApp(tester, location: AppRoutes.profile);
+      await tester.ensureVisible(find.text('Trocar senha'));
+      await tester.tap(find.text('Trocar senha'));
+      await tester.pumpAndSettle();
+
+      final fields = find.byType(TextField);
+      await tester.enterText(fields.at(0), 'Senha@123');
+      await tester.enterText(fields.at(1), 'Nova@4567');
+      await tester.enterText(fields.at(2), 'Nova@4567');
+      await tester.pump();
+      await tester.tap(find.text('Salvar senha'));
+      await tester.pumpAndSettle();
+
+      expect(find.byType(ProfilePage), findsOneWidget);
+      expect(find.text('Senha trocada'), findsOneWidget);
+      await tester.pump(const Duration(seconds: 5));
+    });
   });
 }

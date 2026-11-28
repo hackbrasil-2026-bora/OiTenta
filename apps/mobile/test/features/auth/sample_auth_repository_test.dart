@@ -43,4 +43,13 @@ void main() {
     expect(u.name, 'Arthur Lima');
     expect(u.email, 'novo@bora.app');
   });
+
+  test('changePassword e deleteAccount respondem sem erro (exemplo)', () async {
+    final repo = SampleAuthRepository();
+    await repo.changePassword(
+      currentPassword: 'Senha@123',
+      newPassword: 'Nova@4567',
+    );
+    await repo.deleteAccount(currentPassword: 'Senha@123');
+  });
 }

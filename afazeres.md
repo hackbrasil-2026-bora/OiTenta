@@ -447,7 +447,7 @@ Siglas: W = tela do protótipo web (`design/web/SCREENS.md`); M = tela do mobile
   - **Contexto:** o zip de 19/11 trouxe a aba Compromissos, o formulário de compromisso e Tarefas únicas. Pela MP10, a tab bar ficou com o Jardim e essas telas ficaram fora da rodada.
   - **Alternativas:** 1. **rodada própria** com `Commitment` persistido (migration, CRUD, contrato) e as telas, trocando a 4ª aba conforme o design; 2. **manter fora do MVP** (P8).
   - **Recomendação:** 1, porque agora existe design e o motor do calendário já usa compromissos no domínio.
-- [ ] [DECIDIR] Sair da conta no mobile — (origem: plano-mobile-acesso-perfil-jardim, 19/11/2026)
+- [x] [DECIDIR] Sair da conta no mobile — (origem: plano-mobile-acesso-perfil-jardim, 19/11/2026) — fechado pela AT9 (28/11/2026): "Sair da conta" na Zona de risco do Perfil; a persistência do token continua pendente (D2)
   - **Contexto:** o design do Perfil não tem "Sair"; pela MP12 não foi criado (fechar o app desloga, porque o token fica em memória).
   - **Problema:** se o token passar a persistir (item "Token do mobile só em memória"), não haverá como trocar de conta.
   - **Alternativas:** 1. **criar "Sair da conta" no fim do Perfil junto com a persistência do token**; 2. **pedir o design**.

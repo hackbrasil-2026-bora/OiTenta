@@ -155,7 +155,27 @@ class ProfileController extends ChangeNotifier {
     notifyListeners();
   }
 
-  String get reminderText => '09:30';
+  int _reminderHour = 9;
+  int _reminderMinute = 30;
+
+  int get reminderHour => _reminderHour;
+
+  int get reminderMinute => _reminderMinute;
+
+  /// "Lembrete da rampa" (AT8): só visual, em memória; a notificação vem
+  /// depois.
+  String get reminderText =>
+      '${_reminderHour.toString().padLeft(2, '0')}:'
+      '${_reminderMinute.toString().padLeft(2, '0')}';
+
+  void setReminder(int hour, int minute) {
+    _reminderHour = hour;
+    _reminderMinute = minute;
+    notifyListeners();
+  }
+
+  /// Sair da conta (AT9): limpa a sessão; quem navega para o login é a tela.
+  void logout() => _session.clear();
 
   String get language => _language;
 

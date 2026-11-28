@@ -25,4 +25,15 @@ abstract class AuthRepository {
     String? email,
     String? currentPassword,
   });
+
+  /// `PATCH /auth/me/password` (AT9). Senha atual errada é `ApiFailure` 403;
+  /// senha nova fraca é `ValidationFailure`.
+  Future<void> changePassword({
+    required String currentPassword,
+    required String newPassword,
+  });
+
+  /// `DELETE /auth/me` (AT9): apaga a conta e todos os dados dela. Senha
+  /// errada, ou a conta demo, é `ApiFailure` 403.
+  Future<void> deleteAccount({required String currentPassword});
 }

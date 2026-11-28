@@ -92,6 +92,25 @@ class FakeAuthRepository implements AuthRepository {
     return _user(name ?? loginName, email ?? 'ana@bora.app');
   }
 
+  /// Erros de changePassword e deleteAccount (nulo = sucesso).
+  Object? changePasswordError;
+  Object? deleteError;
+
+  @override
+  Future<void> changePassword({
+    required String currentPassword,
+    required String newPassword,
+  }) async {
+    calls.add('changePassword');
+    if (changePasswordError != null) throw changePasswordError!;
+  }
+
+  @override
+  Future<void> deleteAccount({required String currentPassword}) async {
+    calls.add('deleteAccount');
+    if (deleteError != null) throw deleteError!;
+  }
+
   @override
   Future<AuthUser> me() async {
     calls.add('me');

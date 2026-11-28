@@ -386,4 +386,22 @@ void main() {
       expect(c.name, 'Beatriz Lima');
     },
   );
+
+  group('AT8 e AT9', () {
+    test('lembrete começa às 09:30 e muda de horário (só visual)', () {
+      final c = make();
+      expect(c.reminderText, '09:30');
+      c.setReminder(7, 5);
+      expect(c.reminderText, '07:05');
+      expect(c.reminderHour, 7);
+      expect(c.reminderMinute, 5);
+    });
+
+    test('logout limpa a sessão', () {
+      final session = _session();
+      final c = make(session: session);
+      c.logout();
+      expect(session.session, isNull);
+    });
+  });
 }

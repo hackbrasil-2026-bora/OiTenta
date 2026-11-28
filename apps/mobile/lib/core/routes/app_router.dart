@@ -150,6 +150,14 @@ GoRouter createRouter(
             builder: (_, _) => EditProfilePage(deps: deps),
           ),
           GoRoute(
+            path: AppRoutes.profilePassword,
+            builder: (_, _) => ChangePasswordPage(deps: deps),
+          ),
+          GoRoute(
+            path: AppRoutes.profileDelete,
+            builder: (_, _) => DeleteAccountPage(deps: deps),
+          ),
+          GoRoute(
             path: AppRoutes.ramp,
             pageBuilder: (_, s) => page(s, LadderPage(deps: deps)),
           ),

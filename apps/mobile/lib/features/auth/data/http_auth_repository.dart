@@ -72,4 +72,17 @@ class HttpAuthRepository implements AuthRepository {
             as Map<String, dynamic>;
     return AuthUser.fromJson(json['user'] as Map<String, dynamic>);
   }
+
+  @override
+  Future<void> changePassword({
+    required String currentPassword,
+    required String newPassword,
+  }) => _api.patch(
+    '/auth/me/password',
+    body: {'currentPassword': currentPassword, 'newPassword': newPassword},
+  );
+
+  @override
+  Future<void> deleteAccount({required String currentPassword}) =>
+      _api.delete('/auth/me', body: {'currentPassword': currentPassword});
 }

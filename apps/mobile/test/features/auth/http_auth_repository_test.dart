@@ -166,4 +166,41 @@ void main() {
       );
     });
   });
+
+  group('Zona de risco (AT9)', () {
+    test(
+      'changePassword: PATCH /auth/me/password com a atual e a nova',
+      () async {
+        api.handler = (_) => FakeApi.json(null, 204);
+        await repo.changePassword(
+          currentPassword: 'Senha@123',
+          newPassword: 'Nova@4567',
+        );
+        expect(api.last.method, 'PATCH');
+        expect(api.last.url.path, '/auth/me/password');
+        expect(api.lastBody, {
+          'currentPassword': 'Senha@123',
+          'newPassword': 'Nova@4567',
+        });
+      },
+    );
+
+    test('deleteAccount: DELETE /auth/me com a senha no corpo', () async {
+      api.handler = (_) => FakeApi.json(null, 204);
+      await repo.deleteAccount(currentPassword: 'Senha@123');
+      expect(api.last.method, 'DELETE');
+      expect(api.last.url.path, '/auth/me');
+      expect(api.lastBody, {'currentPassword': 'Senha@123'});
+      expect(api.last.headers['Authorization'], 'Bearer tok-123');
+    });
+
+    test('senha errada → ApiFailure 403, sem derrubar a sessão', () async {
+      api.fail(403, 'Senha atual incorreta.');
+      await expectLater(
+        repo.deleteAccount(currentPassword: 'errada'),
+        throwsA(isA<ApiFailure>().having((e) => e.statusCode, 's', 403)),
+      );
+      expect(api.unauthorizedCalls, 0);
+    });
+  });
 }
