@@ -4,7 +4,7 @@
 
 Você escreve o que tem para entregar, do jeito que falaria com um amigo. O Bora quebra em etapas, encaixa nos seus horários livres e, quando chega a hora e você trava, oferece uma rampa: degraus pequenos, do mais fácil ao foco de verdade.
 
-> Projeto do **Hack Brasil 2026**. O repositório se chama OiTenta (nome provisório); o app se chama **Bora**.
+> Projeto do **Hack Brasil 2026**, trilha **Saúde & bem-estar**. O repositório se chama OiTenta (nome provisório); o app se chama **Bora**.
 
 | | |
 |---|---|
@@ -39,7 +39,18 @@ Saber o que precisa ser feito não basta para conseguir começar. As tarefas se 
 
 Os apps de produtividade comuns assumem que o difícil é **lembrar**. Para muita gente o difícil é **começar**: transformar "tenho um trabalho para o dia 24" em "agora, às 20h, eu leio o enunciado por 30 minutos". E quando o plano dá errado (um dia ruim, uma tarefa que demorou mais), a maioria das agendas simplesmente fica vermelha e gera culpa.
 
+A culpa deixa o próximo começo ainda mais difícil. Esse ciclo de **travar, se culpar e travar de novo** alimenta ansiedade e esgotamento. É um problema de bem-estar antes de ser um problema de produtividade.
+
 Pensamos primeiro em estudantes que conciliam aula, estágio e entregas, mas o problema vale para qualquer pessoa que procrastina por sobrecarga e não por falta de vontade.
+
+### Por que é saúde & bem-estar
+
+- **O plano protege o descanso.** A pessoa escolhe quanto foco aguenta por dia, e o motor nunca passa disso, em vez de lotar cada horário livre.
+- **Sem culpa.** Registrar "parcial" ou "não rolou" só refaz o plano. Não tem tela vermelha nem cobrança, e um dia ruim não vira regra.
+- **Autocuidado antes do foco.** Os aquecimentos da rampa são pausas curtas e com tempo definido: alongamento de 3 minutos, um copo d'água e 5 respirações lentas, uma volta pela casa, arrumar a mesa.
+- **Menos decisões.** O app escolhe o próximo passo; a pessoa não precisa reorganizar tudo de cabeça.
+
+O Bora não é ferramenta clínica nem substitui cuidado profissional: é um apoio para tornar a rotina mais leve.
 
 ## A solução
 
@@ -58,7 +69,7 @@ O progresso vira um **jardim**: as gotas que você ganha regam o Broto, o mascot
 3. **Novo objetivo, em texto livre.** Ex.: _"Trabalho de Algoritmos — implementar e comparar 3 algoritmos de ordenação, entrega 24/12"_. A IA devolve um rascunho com título, prazo, categoria e etapas, cada uma com estimativa de tempo e micro-passos. Você revisa, edita e confirma. Também dá para preencher tudo à mão.
 4. **Encaixar no calendário.** O motor distribui as etapas em blocos de pelo menos 30 minutos, alinhados a cada 15, por ordem de prazo, sem passar do seu limite diário.
 5. **Hoje.** A tela inicial mostra só o que importa agora: o próximo bloco e o botão **Vamos começar?**
-6. **Rampa.** Check-in de energia (baixa, média, alta, elétrico) → o app sugere o degrau certo → aquecimento, desafio, micro-passo, foco com cronômetro.
+6. **Rampa.** Check-in de energia (baixa, média, alta, elétrico) → o app sugere o degrau certo → aquecimento (alongamento, água e respirações, uma volta), desafio curto, micro-passo, foco de 10 a 45 min com cronômetro.
 7. **Registrar.** Concluí, parcial ou não rolou. O progresso da etapa e do objetivo é atualizado (média ponderada pelo tempo estimado) e o plano é **recalculado** a partir dali.
 
 ## O papel da IA (e onde ela não entra)
@@ -217,7 +228,7 @@ O desenvolvimento foi feito com TDD (teste vermelho antes da implementação), u
 ## Próximos passos
 
 - **Gamificação de verdade:** gotas e sequência calculadas a partir das sessões registradas.
-- **Bloqueio de distrações:** a pessoa escolhe apps para bloquear e usa as gotas para liberar acesso temporário.
+- **Bloqueio voluntário de distrações:** a pessoa escolhe os apps que a tiram do foco e usa as gotas para liberar acesso temporário, retomando o controle do tempo de tela.
 - **Tarefas leves como aquecimento:** as pequenas tarefas do dia viram opções dos degraus da rampa.
 - **Rotina em texto livre:** "faço aula de manhã e estágio à tarde" vira compromissos recorrentes.
 - **Replanejar com IA:** juntar o que falta de um objetivo atrasado e propor novas etapas.

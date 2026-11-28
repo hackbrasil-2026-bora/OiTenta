@@ -17,7 +17,8 @@ Siglas: W = tela do protótipo web (`design/web/SCREENS.md`); M = tela do mobile
 
 ## Frontend (web)
 
-- [ ] [DECIDIR] Trilha da submissão do Hack Brasil — (origem: `docs/9-pitch-e-descricao.md`, 28/11/2026) — vale para o projeto inteiro
+- [x] [DECIDIR] Trilha da submissão do Hack Brasil — (origem: `docs/9-pitch-e-descricao.md`, 28/11/2026) — vale para o projeto inteiro
+  - **Decidido em 28/11/2026: Saúde & bem-estar** (alternativa 2, contra a recomendação). README, prompt do pitch e descrição ajustados ao ângulo de bem-estar; registrado em `docs/2-decisoes-mvp.md` (AT10).
   - **Contexto:** cada projeto concorre em uma trilha só, e o problema e o público precisam estar dentro dela; o júri pode realocar o projeto ou deixá-lo inelegível (regulamento, itens 5.3–5.5). Submissão até 30/11/2026, 23h59.
   - **Alternativas:** (1) **Acesso à educação**: público é o estudante que concilia aula, estágio e entregas; todos os exemplos do app já são acadêmicos. (2) **Saúde & bem-estar**: história sobre sobrecarga, ansiedade e procrastinação; público mais amplo, mas o app não tem nenhuma medida de saúde.
   - **Recomendação:** (1), porque o público e os exemplos já são de estudantes e o impacto é mais fácil de mostrar. O vídeo e a descrição precisam usar a língua da trilha escolhida.
