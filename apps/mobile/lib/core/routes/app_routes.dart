@@ -4,6 +4,8 @@ class AppRoutes {
 
   static const login = '/entrar';
   static const register = '/cadastro';
+  static const terms = '/termos';
+  static const privacy = '/privacidade';
   static const onboarding = '/onboarding';
   static const today = '/hoje';
   static const goals = '/objetivos';

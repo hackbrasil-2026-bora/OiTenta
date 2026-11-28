@@ -12,6 +12,7 @@ import 'package:oitenta/features/gamification/data/sample_gamification_repositor
 import 'package:oitenta/features/gamification/presentation/garden_pages.dart';
 import 'package:oitenta/features/goals/data/sample_goals_repository.dart';
 import 'package:oitenta/features/auth/presentation/auth_pages.dart';
+import 'package:oitenta/features/legal/legal_screen.dart';
 import 'package:oitenta/features/profile/presentation/daily_limit_sheet.dart';
 import 'package:oitenta/features/profile/presentation/language_sheet.dart';
 import 'package:oitenta/features/profile/presentation/profile_pages.dart';
@@ -262,5 +263,25 @@ void main() {
       expect(find.text('Senha trocada'), findsOneWidget);
       await tester.pump(const Duration(seconds: 5));
     });
+  });
+
+  testWidgets('Termos de uso abre do Perfil e volta', (tester) async {
+    await pumpApp(tester, location: AppRoutes.profile);
+    await tester.ensureVisible(find.text('Termos de uso'));
+    await tester.tap(find.text('Termos de uso'));
+    await tester.pumpAndSettle();
+    expect(find.byType(LegalPage), findsOneWidget);
+
+    await tester.tap(find.bySemanticsLabel('Voltar').first);
+    await tester.pumpAndSettle();
+    expect(find.byType(ProfilePage), findsOneWidget);
+  });
+
+  testWidgets('a Política de privacidade abre antes do login (/privacidade)', (
+    tester,
+  ) async {
+    await pumpApp(tester, location: AppRoutes.privacy);
+    expect(find.byType(LegalPage), findsOneWidget);
+    expect(find.text('Política de privacidade'), findsOneWidget);
   });
 }

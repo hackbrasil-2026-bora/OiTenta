@@ -42,6 +42,8 @@ Future<RegisterController> _pump(
           onSubmit: () => _taps.add('submit'),
           onBack: () => _taps.add('back'),
           onLogin: () => _taps.add('login'),
+          onTerms: () => _taps.add('terms'),
+          onPrivacy: () => _taps.add('privacy'),
         ),
       ),
     ),
@@ -215,5 +217,18 @@ void main() {
       ),
       findsOneWidget,
     );
+  });
+
+  testWidgets('os links abrem os Termos e a Política sem marcar a caixa', (
+    tester,
+  ) async {
+    final c = await _pump(tester);
+    await tester.ensureVisible(find.textContaining('Li e aceito'));
+    await tester.tapOnText(find.textRange.ofSubstring('Termos de uso'));
+    await tester.tapOnText(
+      find.textRange.ofSubstring('Política de privacidade'),
+    );
+    expect(_taps, containsAll(['terms', 'privacy']));
+    expect(c.termsAccepted, isFalse, reason: 'o link não marca a caixa');
   });
 }

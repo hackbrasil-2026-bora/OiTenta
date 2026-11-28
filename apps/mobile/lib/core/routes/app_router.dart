@@ -7,6 +7,8 @@ import '../../features/gamification/presentation/garden_pages.dart';
 import '../../features/goals/domain/goal_suggestion.dart';
 import '../../features/goals/presentation/goals_pages.dart';
 import '../../features/goals/presentation/single_tasks_pages.dart';
+import '../../features/legal/legal_screen.dart';
+import '../../features/legal/legal_texts.dart';
 import '../../features/profile/presentation/profile_pages.dart';
 import '../../features/profile/presentation/routine_suggestion_pages.dart';
 import '../../features/scheduling/presentation/commitment_form_pages.dart';
@@ -56,6 +58,17 @@ GoRouter createRouter(
       GoRoute(
         path: AppRoutes.register,
         builder: (_, _) => RegisterPage(deps: deps),
+      ),
+      // Públicas: abrem do cadastro (antes do login) e do Perfil.
+      GoRoute(
+        path: AppRoutes.terms,
+        builder: (context, _) =>
+            LegalPage(doc: termsOfUse, onBack: () => _back(context)),
+      ),
+      GoRoute(
+        path: AppRoutes.privacy,
+        builder: (context, _) =>
+            LegalPage(doc: privacyPolicy, onBack: () => _back(context)),
       ),
       GoRoute(
         path: AppRoutes.forgotPassword,
@@ -190,3 +203,7 @@ GoRouter createRouter(
     ],
   );
 }
+
+/// Volta para a tela anterior; sem histórico, vai ao login.
+void _back(BuildContext context) =>
+    context.canPop() ? context.pop() : context.go(AppRoutes.login);

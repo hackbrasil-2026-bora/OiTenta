@@ -592,6 +592,10 @@ Pedidos do usuário ao testar o app num Galaxy S23 (Android 17) e o web, depois 
   - **Alternativas:** 1. **os três de verdade**: `PATCH /auth/me/password` (senha atual + nova, regra de senha forte), "Sair" no app (limpa a sessão e volta ao login) e `DELETE /auth/me` (apaga a conta com confirmação digitando a senha; o `User.deletedAt` já existe, então pode ser exclusão lógica); 1 dia e meio; 2. **só sair e trocar senha** de verdade, apagar conta só visual; 1 dia; 3. **os três só visuais**; 2 h.
   - **Recomendação:** 1. Apagar a conta de verdade é exigido pela LGPD e pelas lojas (Google Play e App Store pedem exclusão de conta dentro do app).
 
+- [ ] [EXECUTAR] Revisar os Termos de uso e a Política de privacidade antes do lançamento — (origem: pedido do dono do produto, 28/11/2026) — afeta Frontend e Mobile
+  - **Contexto:** os textos estão em `apps/frontend/src/modules/legal/data/legal-texts.ts` (o app gera o seu com `bash apps/mobile/tool/legal/generate_legal_texts.sh`) e aparecem com o aviso "Versão preliminar". Responsável: "equipe do Bora (Hack Brasil 2026)"; contato: contato@bora.app; sem idade mínima, com consentimento dos pais abaixo de 12 anos (LGPD, art. 14).
+  - **Falta:** confirmar que contato@bora.app existe e é lido; pôr o fornecedor da IA e onde ficam o servidor e o banco quando forem escolhidos (§4 e §5 da política); revisão jurídica, de preferência. Pronto quando o aviso de versão preliminar puder sair.
+
 ## Backend (inclui domínio modules/*, banco e contrato)
 - [ ] [EXECUTAR] `SplitCommitmentFrom` atômico — (origem: revisor, rodada de compromissos e tarefas únicas, 20/11/2026)
   - O caso de uso encerra (ou apaga) a série antiga e cria a nova em duas chamadas separadas; se a segunda falhar, as ocorrências futuras se perdem. Fazer: um método do repositório (ex.: `split(previous|null, next)`) que grava os dois numa `$transaction` do Prisma, com teste de falha. Pronto quando uma falha no `create` deixa a série antiga intacta.

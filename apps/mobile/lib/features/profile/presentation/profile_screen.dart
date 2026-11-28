@@ -31,6 +31,8 @@ class ProfileScreen extends StatelessWidget {
     required this.onChangePassword,
     required this.onLogout,
     required this.onDeleteAccount,
+    required this.onTerms,
+    required this.onPrivacy,
   });
 
   final ProfileController state;
@@ -47,6 +49,8 @@ class ProfileScreen extends StatelessWidget {
   final VoidCallback onChangePassword;
   final VoidCallback onLogout;
   final VoidCallback onDeleteAccount;
+  final VoidCallback onTerms;
+  final VoidCallback onPrivacy;
 
   @override
   Widget build(BuildContext context) {
@@ -172,6 +176,18 @@ class ProfileScreen extends StatelessWidget {
               title: 'Enviar sugestão',
               trailing: const _Chevron(),
               onTap: onSuggestion,
+            ),
+            _Row(
+              icon: PhosphorIconsRegular.fileText,
+              title: 'Termos de uso',
+              trailing: const _Chevron(),
+              onTap: onTerms,
+            ),
+            _Row(
+              icon: PhosphorIconsRegular.shieldCheck,
+              title: 'Política de privacidade',
+              trailing: const _Chevron(),
+              onTap: onPrivacy,
             ),
           ],
         ),

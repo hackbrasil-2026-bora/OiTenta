@@ -39,6 +39,8 @@ void main() {
             onChangePassword: () => tap('password'),
             onLogout: () => tap('logout'),
             onDeleteAccount: () => tap('delete'),
+            onTerms: () => tap('terms'),
+            onPrivacy: () => tap('privacy'),
           ),
         ),
       ),
@@ -186,5 +188,19 @@ void main() {
         expect(taps[key], 1, reason: label);
       }
     });
+  });
+
+  testWidgets('Termos de uso e Política de privacidade no Perfil', (
+    tester,
+  ) async {
+    await pump(tester);
+    for (final (label, key) in [
+      ('Termos de uso', 'terms'),
+      ('Política de privacidade', 'privacy'),
+    ]) {
+      await tester.ensureVisible(find.text(label));
+      await tester.tap(find.text(label));
+      expect(taps[key], 1, reason: label);
+    }
   });
 }

@@ -1,6 +1,6 @@
 // Termos de uso e Política de privacidade (decisão do dono do produto, 28/11/2026).
 // VERSÃO PRELIMINAR: precisa de revisão do time (e, de preferência, jurídica) antes do lançamento.
-// O mesmo texto está no app em apps/mobile/lib/features/legal/legal_texts.dart: mude os dois juntos.
+// O app usa o mesmo texto: depois de mudar aqui, rode bash apps/mobile/tool/legal/generate_legal_texts.sh.
 
 export interface LegalSection {
   heading: string;

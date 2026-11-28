@@ -100,6 +100,8 @@ class ProfilePage extends StatelessWidget {
       onChangePassword: () => context.push(AppRoutes.profilePassword),
       onLogout: () => _logout(context, c),
       onDeleteAccount: () => context.push(AppRoutes.profileDelete),
+      onTerms: () => context.push(AppRoutes.terms),
+      onPrivacy: () => context.push(AppRoutes.privacy),
     ),
   );
 }
