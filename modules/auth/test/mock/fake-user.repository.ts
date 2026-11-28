@@ -18,6 +18,11 @@ export class FakeUserRepository implements UserRepository {
     return data;
   }
 
+  async update(data: User): Promise<User> {
+    this.storage.set(data.id, data);
+    return data;
+  }
+
   async findById(id: string): Promise<User | null> {
     return this.storage.get(id) ?? null;
   }

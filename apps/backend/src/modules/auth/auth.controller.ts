@@ -4,6 +4,7 @@ import {
   Get,
   HttpCode,
   HttpStatus,
+  Patch,
   Post,
   UseGuards,
 } from '@nestjs/common';
@@ -12,6 +13,7 @@ import {
   ApiBearerAuth,
   ApiConflictResponse,
   ApiCreatedResponse,
+  ApiForbiddenResponse,
   ApiNotFoundResponse,
   ApiOkResponse,
   ApiTags,
@@ -22,6 +24,7 @@ import {
   LoginDemoUser,
   LoginUser,
   RegisterUser,
+  UpdateProfile,
 } from '@oitenta/auth';
 import { JwtAuthGuard } from '../../shared/auth/jwt-auth.guard';
 import { CurrentUser } from '../../shared/decorators/current-user.decorator';
@@ -29,6 +32,7 @@ import {
   LoginResponse,
   LoginUserBody,
   RegisterUserBody,
+  UpdateProfileBody,
   UserResponse,
 } from './auth.dto';
 import { BcryptCryptoProvider } from './bcrypt-crypto.provider';
@@ -77,6 +81,25 @@ export class AuthController {
   async me(@CurrentUser('id') userId: string) {
     const useCase = new GetAuthenticatedUser(this.userRepository);
     return await useCase.execute({ userId });
+  }
+
+  @Patch('me')
+  @UseGuards(JwtAuthGuard)
+  @ApiBearerAuth()
+  @ApiOkResponse({ type: UserResponse })
+  @ApiUnauthorizedResponse({
+    description: 'Token ausente, inválido ou expirado.',
+  })
+  @ApiForbiddenResponse({
+    description: 'Troca de e-mail sem a senha atual ou com a senha errada.',
+  })
+  @ApiConflictResponse({ description: 'E-mail já cadastrado.' })
+  async updateMe(
+    @CurrentUser('id') userId: string,
+    @Body() body: UpdateProfileBody,
+  ) {
+    const useCase = new UpdateProfile(this.cryptoProvider, this.userRepository);
+    return await useCase.execute({ ...body, userId });
   }
 
   @Post('demo')

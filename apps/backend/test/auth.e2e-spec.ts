@@ -139,4 +139,118 @@ describe('auth (integração)', () => {
 
     expect(res.status).toBe(401);
   });
+
+  describe('PATCH /auth/me (AT3: editar nome e e-mail)', () => {
+    interface ProfileBody {
+      user: { id: string; name: string; email: string };
+    }
+
+    /** Cadastra, entra e devolve o token e o id da conta nova. */
+    async function newAccount() {
+      const email = unique();
+      const reg = await request(app.getHttpServer())
+        .post('/auth/register')
+        .send({ name: 'Ana Souza', email, password: 'Senha@123' });
+      const login = await request(app.getHttpServer())
+        .post('/auth/login')
+        .send({ email, password: 'Senha@123' });
+      return {
+        email,
+        id: (reg.body as ProfileBody).user.id,
+        token: (login.body as LoginBody).token,
+      };
+    }
+
+    const patch = (token: string, body: object) =>
+      request(app.getHttpServer())
+        .patch('/auth/me')
+        .set('Authorization', `Bearer ${token}`)
+        .send(body);
+
+    it('troca o nome → 200, mesmo id, e o /auth/me já mostra', async () => {
+      const ana = await newAccount();
+
+      const res = await patch(ana.token, { name: 'Ana Clara' });
+
+      expect(res.status).toBe(200);
+      expect((res.body as ProfileBody).user).toMatchObject({
+        id: ana.id,
+        name: 'Ana Clara',
+        email: ana.email,
+      });
+      const me = await request(app.getHttpServer())
+        .get('/auth/me')
+        .set('Authorization', `Bearer ${ana.token}`);
+      expect((me.body as ProfileBody).user.name).toBe('Ana Clara');
+    });
+
+    it('troca o e-mail com a senha atual → 200 e o login passa a ser o novo', async () => {
+      const ana = await newAccount();
+      const novo = unique();
+
+      const res = await patch(ana.token, {
+        email: novo,
+        currentPassword: 'Senha@123',
+      });
+
+      expect(res.status).toBe(200);
+      const login = await request(app.getHttpServer())
+        .post('/auth/login')
+        .send({ email: novo, password: 'Senha@123' });
+      expect(login.status).toBe(200);
+      // O token antigo continua valendo: o dono vem do id, não do e-mail.
+      const me = await request(app.getHttpServer())
+        .get('/auth/me')
+        .set('Authorization', `Bearer ${ana.token}`);
+      expect((me.body as ProfileBody).user.email).toBe(novo);
+    });
+
+    it('trocar o e-mail com a senha errada → 403 (não 401)', async () => {
+      const ana = await newAccount();
+
+      const res = await patch(ana.token, {
+        email: unique(),
+        currentPassword: 'Errada@123',
+      });
+
+      expect(res.status).toBe(403);
+    });
+
+    it('e-mail de outra conta → 409', async () => {
+      const ana = await newAccount();
+      const bia = await newAccount();
+
+      const res = await patch(ana.token, {
+        email: bia.email,
+        currentPassword: 'Senha@123',
+      });
+
+      expect(res.status).toBe(409);
+    });
+
+    it('nome de um caractere → 422', async () => {
+      const ana = await newAccount();
+
+      const res = await patch(ana.token, { name: 'A' });
+
+      expect(res.status).toBe(422);
+    });
+
+    it('campo não previsto (id) → 400: não dá para editar outra conta', async () => {
+      const ana = await newAccount();
+      const bia = await newAccount();
+
+      const res = await patch(ana.token, { id: bia.id, name: 'Invasora' });
+
+      expect(res.status).toBe(400);
+    });
+
+    it('sem token → 401', async () => {
+      const res = await request(app.getHttpServer())
+        .patch('/auth/me')
+        .send({ name: 'Ana Clara' });
+
+      expect(res.status).toBe(401);
+    });
+  });
 });

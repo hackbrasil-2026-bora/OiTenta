@@ -110,6 +110,49 @@
         "tags": [
           "auth"
         ]
+      },
+      "patch": {
+        "operationId": "AuthController_updateMe",
+        "parameters": [],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/UpdateProfileBody"
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/UserResponse"
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "Token ausente, inválido ou expirado."
+          },
+          "403": {
+            "description": "Troca de e-mail sem a senha atual ou com a senha errada."
+          },
+          "409": {
+            "description": "E-mail já cadastrado."
+          }
+        },
+        "security": [
+          {
+            "bearer": []
+          }
+        ],
+        "tags": [
+          "auth"
+        ]
       }
     },
     "/auth/demo": {
@@ -1253,6 +1296,24 @@
           "token",
           "user"
         ]
+      },
+      "UpdateProfileBody": {
+        "type": "object",
+        "properties": {
+          "name": {
+            "type": "string",
+            "example": "Ana Clara"
+          },
+          "email": {
+            "type": "string",
+            "example": "ana.clara@bora.app"
+          },
+          "currentPassword": {
+            "type": "string",
+            "example": "Senha@123",
+            "description": "Obrigatória quando o e-mail muda; errada → 403."
+          }
+        }
       },
       "AvailabilityWindowBody": {
         "type": "object",
