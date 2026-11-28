@@ -59,7 +59,7 @@ export default function GoalTrailPage({ goalId }: { goalId: string }) {
   const mini = Array.from({ length: 35 }, (_, i) => addDays(monday, i - 14));
 
   return (
-    <div className="box-border max-w-[1200px] px-12 pt-10 pb-16">
+    <div className="mx-auto box-border w-full max-w-[1600px] px-12 pt-10 pb-16">
       <button type="button" onClick={() => router.push("/objetivos")} className={`-ml-3 ${TERTIARY}`}>
         <i className="ph-bold ph-arrow-left text-[16px]" />Objetivos
       </button>

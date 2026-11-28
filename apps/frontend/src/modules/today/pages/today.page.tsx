@@ -99,7 +99,7 @@ export default function TodayPage() {
   const timeline = blocks ? buildTimeline(blocks, now, tz) : [];
 
   return (
-    <div className="box-border grid max-w-[1200px] grid-cols-[minmax(0,1fr)_360px] items-start gap-10 px-12 pt-10 pb-16">
+    <div className="mx-auto box-border grid w-full max-w-[1600px] grid-cols-[minmax(0,1fr)_360px] items-start gap-10 px-12 pt-10 pb-16">
       <div className="flex min-w-0 flex-col gap-8">
         <div>
           {/* A data só aparece depois dos dados: no servidor o relógio real devolve SERVER_NOW (clock.ts). */}

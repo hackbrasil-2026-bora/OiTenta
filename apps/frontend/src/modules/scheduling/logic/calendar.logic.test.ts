@@ -1,5 +1,5 @@
 import { describe, expect, it } from "vitest";
-import { blockGeometry, dayLoadLabel, freeRects, weekRangeLabel, blockDetail } from "./calendar.logic";
+import { blockGeometry, dayLoadLabel, freeRects, gridRange, weekRangeLabel, blockDetail } from "./calendar.logic";
 
 const TZ = "America/Sao_Paulo";
 
@@ -25,6 +25,28 @@ describe("calendário semana — Execução (W15)", () => {
       { top: 40, height: 120 },
       { top: 240, height: 160 },
     ]);
+  });
+
+  it("faixa de horas: 08h–23h por padrão", () => {
+    expect(gridRange([], [], TZ)).toEqual({ firstMinute: 480, hours: 15 });
+  });
+
+  it("faixa de horas: começa antes das 08h quando há janela livre ou bloco mais cedo", () => {
+    expect(gridRange([{ weekday: 0, startMinute: 360, endMinute: 1380 }], [], TZ)).toEqual({ firstMinute: 360, hours: 17 });
+    // bloco 07:30–09:30 (horário de Brasília) sem janela cedo
+    expect(gridRange([], [{ start: "2026-11-24T10:30:00.000Z", end: "2026-11-24T12:30:00.000Z" }], TZ)).toEqual({ firstMinute: 420, hours: 16 });
+  });
+
+  it("faixa de horas: termina depois das 23h quando a janela ou o bloco passa, até 24h", () => {
+    expect(gridRange([{ weekday: 2, startMinute: 600, endMinute: 1410 }], [], TZ)).toEqual({ firstMinute: 480, hours: 16 });
+    // bloco 23:30–00:30 vai até o fim do dia
+    expect(gridRange([], [{ start: "2026-11-25T02:30:00.000Z", end: "2026-11-25T03:30:00.000Z" }], TZ)).toEqual({ firstMinute: 480, hours: 16 });
+  });
+
+  it("posição do bloco e faixas livres a partir do início da grade", () => {
+    // 06:00–06:30 numa grade que começa às 06h
+    expect(blockGeometry("2026-11-24T09:00:00.000Z", "2026-11-24T09:30:00.000Z", TZ, 360)).toEqual({ top: 1, height: 20 });
+    expect(freeRects([{ weekday: 1, startMinute: 360, endMinute: 1380 }], 1, 360)).toEqual([{ top: 0, height: 680 }]);
   });
 
   it("detalhe do bloco (W16)", () => {

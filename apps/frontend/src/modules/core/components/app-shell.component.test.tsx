@@ -32,6 +32,11 @@ describe("sidebar do web app", () => {
     expect(push).toHaveBeenCalledWith(href);
   });
 
+  it("não mostra \"Tarefas leves\" (tela sem conteúdo no MVP)", async () => {
+    await renderShell();
+    expect(screen.queryByRole("button", { name: "Tarefas leves" })).toBeNull();
+  });
+
   it("marca o item da rota atual", async () => {
     nav.pathname = "/configuracoes";
     await renderShell();

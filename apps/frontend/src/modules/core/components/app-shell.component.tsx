@@ -7,13 +7,12 @@ import Broto from "@/modules/landing/components/broto.component";
 import { authRepository } from "@/modules/auth/data";
 import { GAMIFICATION } from "@/modules/gamification/data/example-gamification.data";
 
-// Sidebar do web app (Bora App.dc.html), com os itens do protótipo. "Tarefas leves" (fora do MVP)
-// ainda fica sem ação.
-const NAV: { label: string; icon: string; href: string | null; match: string }[] = [
+// Sidebar do web app (Bora App.dc.html), com os itens do protótipo. "Tarefas leves" (fora do MVP) fica
+// oculto enquanto a tela não tiver conteúdo.
+const NAV: { label: string; icon: string; href: string; match: string }[] = [
   { label: "Hoje", icon: "sun", href: "/hoje", match: "/hoje" },
   { label: "Calendário", icon: "calendar-blank", href: "/calendario", match: "/calendario" },
   { label: "Objetivos", icon: "flag-banner", href: "/objetivos", match: "/objetivos" },
-  { label: "Tarefas leves", icon: "broom", href: null, match: "/tarefas" },
   { label: "Jardim", icon: "plant", href: "/jardim", match: "/jardim" },
   { label: "Configurações", icon: "gear-six", href: "/configuracoes", match: "/configuracoes" },
 ];
@@ -31,7 +30,7 @@ function SidebarNav() {
             key={n.label}
             type="button"
             aria-current={on ? "page" : undefined}
-            onClick={() => n.href && router.push(n.href)}
+            onClick={() => router.push(n.href)}
             className={`flex h-11 cursor-pointer items-center gap-3 rounded-full px-3.5 text-left text-[15px]/none transition-[background] duration-[120ms] ${
               on ? "bg-pri-soft font-extrabold text-tx" : "font-semibold text-tx2"
             }`}
@@ -61,7 +60,7 @@ export default function AppShell({ children }: { children: ReactNode }) {
           <Broto size={36} />
           <span className="font-fredoka text-[26px]/none font-bold tracking-[-0.01em]">bora</span>
         </Link>
-        <Suspense fallback={<nav className="mt-7 h-[284px]" />}>
+        <Suspense fallback={<nav className="mt-7 h-[236px]" />}>
           <SidebarNav />
         </Suspense>
         <button

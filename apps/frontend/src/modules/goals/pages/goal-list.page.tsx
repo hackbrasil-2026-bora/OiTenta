@@ -42,7 +42,7 @@ export default function GoalListPage() {
   }, [now]);
 
   return (
-    <div className="box-border max-w-[1200px] px-12 pt-10 pb-16">
+    <div className="mx-auto box-border w-full max-w-[1600px] px-12 pt-10 pb-16">
       <div className="flex items-end justify-between gap-6">
         <div>
           <span className={KICKER}>{data ? activeCountLabel(data.goals) : ""}</span>

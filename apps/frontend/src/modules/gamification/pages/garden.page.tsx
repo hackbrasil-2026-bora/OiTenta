@@ -34,7 +34,7 @@ export default function GardenPage() {
   const xpPct = Math.round((g.xp / g.xpNeeded) * 100);
 
   return (
-    <div className="box-border flex max-w-[1200px] flex-col gap-8 px-12 pt-10 pb-16">
+    <div className="mx-auto box-border flex w-full max-w-[1600px] flex-col gap-8 px-12 pt-10 pb-16">
       <div>
         <span className={KICKER}>Você rega, ele cresce</span>
         <h1 className="mt-1.5 mb-0 font-fredoka text-[40px]/[48px] font-semibold">Jardim</h1>

@@ -130,7 +130,7 @@ export default function SettingsPage() {
   const firstName = account?.name ?? "";
 
   return (
-    <div className="box-border flex max-w-[960px] flex-col gap-6 px-12 pt-10 pb-16">
+    <div className="mx-auto box-border flex w-full max-w-[1600px] flex-col gap-6 px-12 [&>*]:max-w-[864px] pt-10 pb-16">
       <div>
         <span className={KICKER}>{account ? `${account.name} · ${account.email}` : ""}</span>
         <h1 className="mt-1.5 mb-0 font-fredoka text-[40px]/[48px] font-semibold">Configurações</h1>
