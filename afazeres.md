@@ -558,7 +558,7 @@ Siglas: W = tela do protótipo web (`design/web/SCREENS.md`); M = tela do mobile
 
 Pedidos do usuário ao testar o app num Galaxy S23 (Android 17) e o web, depois da rodada de compromissos e IA.
 
-- [x] [EXECUTAR] Ícone do app com o Broto e nome "OiTenta" na lista de apps — (origem: teste no Android, 28/11/2026) — branch `fix/mobile-android-icone-calendario-barra`
+- [x] [EXECUTAR] Ícone do app com o Broto e nome "Bora" na lista de apps — (origem: teste no Android, 28/11/2026; nome "Bora" decidido pelo usuário em 28/11/2026) — branch `fix/mobile-android-icone-calendario-barra`
   - O app aparecia como "oitenta", com o ícone padrão do Flutter, e o usuário não o achava. Agora o ícone é o Broto (humor `ok`) sobre o `priSoft` (#D1FAE5): adaptativo no Android 8+ e todos os tamanhos do iOS. Os PNGs saem de `apps/mobile/tool/app_icon/generate_app_icon_test.dart` (rodar de novo se o Broto mudar). Se o nome do app mudar, trocar `android:label` e `CFBundleDisplayName`.
 - [x] [EXECUTAR] "BOTTOM OVERFLOWED BY 2.0 PIXELS" no mês do calendário (Semana) — (origem: teste no Android, 28/11/2026) — branch `fix/mobile-android-icone-calendario-barra`
   - Causa: `monthPagerHeight` reservava 298 px e um mês de 6 semanas ocupa 300 (célula de 45, não 46, mais os 5 espaços de 2). A altura agora sai das mesmas medidas da grade; teste `month_pager_layout_test.dart`.

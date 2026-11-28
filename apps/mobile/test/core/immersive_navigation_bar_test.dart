@@ -1,3 +1,4 @@
+import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:oitenta/core/system/immersive_navigation_bar.dart';
@@ -97,6 +98,36 @@ void main() {
     await tester.pump(const Duration(seconds: 5));
 
     expect(calls, isEmpty);
+    bar.dispose();
+  });
+
+  testWidgets('avisa as telas quando os botões aparecem e quando somem', (
+    tester,
+  ) async {
+    _recordSystemUiCalls(tester);
+    final bar = ImmersiveNavigationBar(isAndroid: true);
+    await bar.start();
+    expect(bar.visible.value, isFalse);
+
+    await _systemBarsVisible(tester, true);
+    expect(bar.visible.value, isTrue);
+
+    await tester.pump(const Duration(seconds: 3));
+    expect(bar.visible.value, isFalse, reason: 'escondeu de novo');
+    bar.dispose();
+  });
+
+  testWidgets('deixa o fundo dos botões transparente, com ícones claros', (
+    tester,
+  ) async {
+    _recordSystemUiCalls(tester);
+    final bar = ImmersiveNavigationBar(isAndroid: true);
+    await bar.start();
+
+    final style = SystemChrome.latestStyle!;
+    expect(style.systemNavigationBarColor, Colors.transparent);
+    expect(style.systemNavigationBarContrastEnforced, isFalse);
+    expect(style.systemNavigationBarIconBrightness, Brightness.light);
     bar.dispose();
   });
 }
