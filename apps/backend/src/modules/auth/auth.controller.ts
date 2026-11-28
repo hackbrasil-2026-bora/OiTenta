@@ -1,6 +1,7 @@
 import {
   Body,
   Controller,
+  Delete,
   Get,
   HttpCode,
   HttpStatus,
@@ -14,12 +15,15 @@ import {
   ApiConflictResponse,
   ApiCreatedResponse,
   ApiForbiddenResponse,
+  ApiNoContentResponse,
   ApiNotFoundResponse,
   ApiOkResponse,
   ApiTags,
   ApiUnauthorizedResponse,
 } from '@nestjs/swagger';
 import {
+  ChangePassword,
+  DeleteAccount,
   GetAuthenticatedUser,
   LoginDemoUser,
   LoginUser,
@@ -29,12 +33,15 @@ import {
 import { JwtAuthGuard } from '../../shared/auth/jwt-auth.guard';
 import { CurrentUser } from '../../shared/decorators/current-user.decorator';
 import {
+  ChangePasswordBody,
+  DeleteAccountBody,
   LoginResponse,
   LoginUserBody,
   RegisterUserBody,
   UpdateProfileBody,
   UserResponse,
 } from './auth.dto';
+import { PrismaAccountEraser } from './account-eraser.prisma';
 import { BcryptCryptoProvider } from './bcrypt-crypto.provider';
 import { JwtTokenProvider } from './jwt-token.provider';
 import { PrismaUserRepository } from './user.prisma';
@@ -47,6 +54,7 @@ export class AuthController {
     private readonly cryptoProvider: BcryptCryptoProvider,
     private readonly tokenProvider: JwtTokenProvider,
     private readonly config: ConfigService,
+    private readonly accountEraser: PrismaAccountEraser,
   ) {}
 
   @Post('register')
@@ -100,6 +108,55 @@ export class AuthController {
   ) {
     const useCase = new UpdateProfile(this.cryptoProvider, this.userRepository);
     return await useCase.execute({ ...body, userId });
+  }
+
+  @Patch('me/password')
+  @HttpCode(HttpStatus.NO_CONTENT)
+  @UseGuards(JwtAuthGuard)
+  @ApiBearerAuth()
+  @ApiNoContentResponse({ description: 'Senha trocada.' })
+  @ApiUnauthorizedResponse({
+    description: 'Token ausente, inválido ou expirado.',
+  })
+  @ApiForbiddenResponse({ description: 'Senha atual incorreta.' })
+  async changePassword(
+    @CurrentUser('id') userId: string,
+    @Body() body: ChangePasswordBody,
+  ) {
+    const useCase = new ChangePassword(
+      this.cryptoProvider,
+      this.userRepository,
+    );
+    await useCase.execute({ ...body, userId });
+  }
+
+  @Delete('me')
+  @HttpCode(HttpStatus.NO_CONTENT)
+  @UseGuards(JwtAuthGuard)
+  @ApiBearerAuth()
+  @ApiNoContentResponse({
+    description: 'Conta e todos os dados dela apagados.',
+  })
+  @ApiUnauthorizedResponse({
+    description: 'Token ausente, inválido ou expirado.',
+  })
+  @ApiForbiddenResponse({
+    description: 'Senha atual incorreta, ou a conta é a demo.',
+  })
+  async deleteMe(
+    @CurrentUser('id') userId: string,
+    @Body() body: DeleteAccountBody,
+  ) {
+    const useCase = new DeleteAccount(
+      this.cryptoProvider,
+      this.userRepository,
+      this.accountEraser,
+    );
+    await useCase.execute({
+      ...body,
+      userId,
+      demoEmail: this.config.get<string>('DEMO_EMAIL') ?? '',
+    });
   }
 
   @Post('demo')

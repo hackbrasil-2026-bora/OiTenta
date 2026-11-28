@@ -70,6 +70,28 @@ export class UpdateProfileBody implements Omit<UpdateProfileIn, 'userId'> {
   currentPassword?: string;
 }
 
+/** Corpo do PATCH /auth/me/password (AT9). */
+export class ChangePasswordBody {
+  @ApiProperty({ example: 'Senha@123' })
+  @IsString()
+  currentPassword!: string;
+
+  @ApiProperty({
+    example: 'Nova@4567',
+    description:
+      'Mínimo 8 caracteres, com maiúscula, minúscula, número e símbolo.',
+  })
+  @IsString()
+  newPassword!: string;
+}
+
+/** Corpo do DELETE /auth/me (AT9): confirma com a senha atual. */
+export class DeleteAccountBody {
+  @ApiProperty({ example: 'Senha@123' })
+  @IsString()
+  currentPassword!: string;
+}
+
 export class PublicUserResponse implements PublicUser {
   @ApiProperty({ format: 'uuid' })
   id!: string;
