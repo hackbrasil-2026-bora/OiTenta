@@ -705,3 +705,13 @@ Dependências técnicas indispensáveis para as aprovadas funcionarem (ex.: `@vi
 
 ### AT7 — Idioma no web, só visual
 - **Decisão:** o web ganha o seletor de Idioma nas Configurações, igual ao app (MP8), sem tradução. A tradução (i18n) fica para depois. **Status:** provisória.
+
+### AT8 — "Lembrete da rampa" editável, só visual
+- **Decisão (28/11/2026):** tocar na linha abre um seletor de horário e a linha explica o que é ("Um aviso por dia pra começar a rampa"). Não notifica ainda (notificações fora do MVP); a notificação local fica para depois. **Elemento sem design.** **Status:** provisória.
+
+### AT9 — Zona de risco: trocar senha, sair e apagar conta, de verdade
+- **Decisão (28/11/2026):** no Perfil (app) e nas Configurações (web), uma seção "Zona de risco" com:
+  - **Trocar senha:** `PATCH /auth/me/password` `{ currentPassword, newPassword }` → 204; senha atual errada → 403; senha nova fraca → 422.
+  - **Sair da conta:** limpa a sessão e volta ao login (no app, o token já fica só em memória; ver o item "Sair da conta no mobile").
+  - **Apagar conta:** `DELETE /auth/me` `{ currentPassword }` → 204. Apaga de verdade a conta e todos os dados dela (sessões, blocos, objetivos e etapas, disponibilidade, compromissos), numa transação (LGPD; Google Play e App Store exigem a exclusão dentro do app). Confirmação com a senha. A conta demo não pode ser apagada (403), para o "Entrar como demo" continuar funcionando.
+- **Elemento sem design.** **Status:** provisória até o design.
