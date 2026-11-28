@@ -1,12 +1,11 @@
 import { KICKER, objColor } from "@/modules/core/components/ui";
 import { dayOfMonth, formatHm, localMinute, weekdayIndex, weekdayShort } from "@/modules/core/format/time.format";
 import type { DayPlan, PlanBlock, WeeklyAvailability } from "../data";
-import { FIRST_MINUTE, FREE_BG, GRID_HOURS_COUNT, HOUR_HEIGHT, blockGeometry, dayAriaLabel, dayLoadLabel, freeRects } from "../logic/calendar.logic";
+import { FREE_BG, HOUR_HEIGHT, blockGeometry, dayAriaLabel, dayLoadLabel, freeRects, gridRange } from "../logic/calendar.logic";
 
 // Grade de horas do calendário em Execução (W15 semana, W20 dia): blocos das etapas alocados no tempo.
 // Sem faixas de ocupado: não há compromissos no MVP (P8). Sem arrastar (só leitura nesta fase).
 const BLOCK_BORDER = "1px solid color-mix(in srgb, var(--tx) 8%, transparent)";
-const BODY_H = HOUR_HEIGHT * GRID_HOURS_COUNT;
 
 export interface CalendarColumn {
   date: string;
@@ -33,7 +32,14 @@ interface CalendarTimeGridProps {
 export default function CalendarTimeGrid({ columns, today, now, tz, availability, hidden, selectedId, partsOf, onSelect, onOpenDay }: CalendarTimeGridProps) {
   const n = columns.length;
   const nowCol = columns.findIndex((c) => c.date === today);
-  const nowTop = ((localMinute(now, tz) - FIRST_MINUTE) / 60) * HOUR_HEIGHT;
+  const { firstMinute, hours } = gridRange(
+    availability?.windows ?? [],
+    columns.flatMap((c) => c.plan?.blocks ?? []),
+    tz,
+  );
+  const bodyH = HOUR_HEIGHT * hours;
+  const firstHour = firstMinute / 60;
+  const nowTop = Math.max(0, Math.min(bodyH, ((localMinute(now, tz) - firstMinute) / 60) * HOUR_HEIGHT));
 
   return (
     <>
@@ -53,26 +59,26 @@ export default function CalendarTimeGrid({ columns, today, now, tz, availability
         })}
       </div>
       <div className="flex">
-        <div className="relative w-14 flex-none" style={{ height: BODY_H }}>
-          {Array.from({ length: GRID_HOURS_COUNT }, (_, i) => (
+        <div className="relative w-14 flex-none" style={{ height: bodyH }}>
+          {Array.from({ length: hours }, (_, i) => (
             <span key={i} className="absolute right-2 -translate-y-1/2 text-[12px]/none font-semibold text-tx2" style={{ top: i * HOUR_HEIGHT + (i === 0 ? 8 : 0) }}>
-              {String(8 + i).padStart(2, "0")}h
+              {String(firstHour + i).padStart(2, "0")}h
             </span>
           ))}
         </div>
-        <div className="relative min-w-0 flex-1" style={{ height: BODY_H }}>
+        <div className="relative min-w-0 flex-1" style={{ height: bodyH }}>
           <div className="absolute inset-0 grid" style={{ gridTemplateColumns: `repeat(${n}, minmax(0,1fr))` }}>
             {columns.map(({ date }) => (
               <div key={date} className="relative border-l border-border">
                 {availability &&
-                  freeRects(availability.windows, weekdayIndex(date)).map((r) => (
+                  freeRects(availability.windows, weekdayIndex(date), firstMinute).map((r) => (
                     <div key={r.top} className="absolute right-0 left-0" style={{ top: r.top, height: r.height, background: FREE_BG }} />
                   ))}
                 {date === today && <div className="absolute top-0 right-0 left-0 bg-bg opacity-55" style={{ height: Math.max(0, nowTop) }} />}
               </div>
             ))}
           </div>
-          {Array.from({ length: GRID_HOURS_COUNT - 1 }, (_, i) => (
+          {Array.from({ length: hours - 1 }, (_, i) => (
             <div key={i} className="pointer-events-none absolute right-0 left-0 h-px bg-border opacity-60" style={{ top: (i + 1) * HOUR_HEIGHT }} />
           ))}
           {nowCol >= 0 && (
@@ -84,7 +90,7 @@ export default function CalendarTimeGrid({ columns, today, now, tz, availability
             (plan?.blocks ?? [])
               .filter((b) => !hidden[b.goalId])
               .map((b) => {
-                const { top, height } = blockGeometry(b.start, b.end, tz);
+                const { top, height } = blockGeometry(b.start, b.end, tz, firstMinute);
                 const small = height < 40;
                 const done = b.status === "done";
                 const time = `${formatHm(b.start, tz)}–${formatHm(b.end, tz)}`;
