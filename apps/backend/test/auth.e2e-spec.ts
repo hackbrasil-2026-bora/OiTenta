@@ -370,9 +370,7 @@ describe('auth (integração)', () => {
       expect(await prisma.scheduledBlock.count({ where })).toBe(0);
       expect(await prisma.weeklyAvailability.count({ where })).toBe(0);
       // O token antigo deixa de valer, e o e-mail pode ser usado de novo.
-      const me = await request(app.getHttpServer())
-        .get('/auth/me')
-        .set(auth);
+      const me = await request(app.getHttpServer()).get('/auth/me').set(auth);
       expect(me.status).toBe(401);
       const again = await request(app.getHttpServer())
         .post('/auth/register')
@@ -397,7 +395,9 @@ describe('auth (integração)', () => {
       // com a senha errada também é 403.
       const res = await deleteMe(token, { currentPassword: 'qualquer' });
       expect(res.status).toBe(403);
-      expect((await request(app.getHttpServer()).post('/auth/demo')).status).toBe(200);
+      expect(
+        (await request(app.getHttpServer()).post('/auth/demo')).status,
+      ).toBe(200);
     });
 
     it('DELETE /auth/me sem a senha → 400; sem token → 401', async () => {
