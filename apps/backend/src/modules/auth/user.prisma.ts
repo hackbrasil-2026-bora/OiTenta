@@ -14,6 +14,14 @@ export class PrismaUserRepository implements UserRepository {
     return this.toDomain(created);
   }
 
+  async update(data: User): Promise<User> {
+    const updated = await this.prisma.user.update({
+      where: { id: data.id },
+      data: this.toPersistence(data),
+    });
+    return this.toDomain(updated);
+  }
+
   async findById(id: string): Promise<User | null> {
     const found = await this.prisma.user.findFirst({
       where: { id, deletedAt: null },
@@ -34,6 +42,7 @@ export class PrismaUserRepository implements UserRepository {
       name: user.name,
       email: user.email,
       password: user.password,
+      timezone: user.timezone,
       createdAt: user.createdAt,
       updatedAt: user.updatedAt,
       deletedAt: user.deletedAt ?? null,
@@ -46,6 +55,7 @@ export class PrismaUserRepository implements UserRepository {
       name: raw.name,
       email: raw.email,
       password: raw.password,
+      timezone: raw.timezone,
       createdAt: raw.createdAt,
       updatedAt: raw.updatedAt,
       deletedAt: raw.deletedAt,

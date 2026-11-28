@@ -1,3 +1,4 @@
+import { PrismaAccountEraser } from './account-eraser.prisma';
 import { Module } from '@nestjs/common';
 import { DbModule } from '../../db/db.module';
 import { AuthController } from './auth.controller';
@@ -8,7 +9,12 @@ import { PrismaUserRepository } from './user.prisma';
 @Module({
   imports: [DbModule],
   controllers: [AuthController],
-  providers: [PrismaUserRepository, BcryptCryptoProvider, JwtTokenProvider],
+  providers: [
+    PrismaUserRepository,
+    BcryptCryptoProvider,
+    JwtTokenProvider,
+    PrismaAccountEraser,
+  ],
   exports: [PrismaUserRepository, BcryptCryptoProvider, JwtTokenProvider],
 })
 export class AuthModule {}

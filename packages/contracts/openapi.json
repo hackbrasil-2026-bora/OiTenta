@@ -110,6 +110,117 @@
         "tags": [
           "auth"
         ]
+      },
+      "patch": {
+        "operationId": "AuthController_updateMe",
+        "parameters": [],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/UpdateProfileBody"
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/UserResponse"
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "Token ausente, inválido ou expirado."
+          },
+          "403": {
+            "description": "Troca de e-mail sem a senha atual ou com a senha errada."
+          },
+          "409": {
+            "description": "E-mail já cadastrado."
+          }
+        },
+        "security": [
+          {
+            "bearer": []
+          }
+        ],
+        "tags": [
+          "auth"
+        ]
+      },
+      "delete": {
+        "operationId": "AuthController_deleteMe",
+        "parameters": [],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/DeleteAccountBody"
+              }
+            }
+          }
+        },
+        "responses": {
+          "204": {
+            "description": "Conta e todos os dados dela apagados."
+          },
+          "401": {
+            "description": "Token ausente, inválido ou expirado."
+          },
+          "403": {
+            "description": "Senha atual incorreta, ou a conta é a demo."
+          }
+        },
+        "security": [
+          {
+            "bearer": []
+          }
+        ],
+        "tags": [
+          "auth"
+        ]
+      }
+    },
+    "/auth/me/password": {
+      "patch": {
+        "operationId": "AuthController_changePassword",
+        "parameters": [],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/ChangePasswordBody"
+              }
+            }
+          }
+        },
+        "responses": {
+          "204": {
+            "description": "Senha trocada."
+          },
+          "401": {
+            "description": "Token ausente, inválido ou expirado."
+          },
+          "403": {
+            "description": "Senha atual incorreta."
+          }
+        },
+        "security": [
+          {
+            "bearer": []
+          }
+        ],
+        "tags": [
+          "auth"
+        ]
       }
     },
     "/auth/demo": {
@@ -136,45 +247,297 @@
         ]
       }
     },
-    "/goals": {
+    "/scheduling/availability": {
       "get": {
-        "operationId": "GoalsController_getGoals",
+        "operationId": "SchedulingController_getAvailability",
         "parameters": [],
         "responses": {
           "200": {
-            "description": ""
+            "description": "",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/WeeklyAvailabilityResponse"
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "Token ausente, inválido ou expirado."
+          },
+          "404": {
+            "description": "O usuário ainda não fez o onboarding."
           }
         },
+        "security": [
+          {
+            "bearer": []
+          }
+        ],
         "tags": [
-          "Goals"
+          "scheduling"
+        ]
+      },
+      "put": {
+        "operationId": "AvailabilityController_put",
+        "parameters": [],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/SetWeeklyAvailabilityBody"
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/SetAvailabilityResponse"
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "Corpo malformado ou campo não previsto."
+          },
+          "401": {
+            "description": "Token ausente, inválido ou expirado."
+          },
+          "422": {
+            "description": "Zero janelas, janela inválida ou limite fora de 60–480 / não múltiplo de 30."
+          }
+        },
+        "security": [
+          {
+            "bearer": []
+          }
+        ],
+        "tags": [
+          "scheduling"
         ]
       }
     },
-    "/scheduling": {
+    "/scheduling/commitments/occurrences": {
       "get": {
-        "operationId": "SchedulingController_getScheduling",
-        "parameters": [],
+        "operationId": "SchedulingController_listOccurrences",
+        "parameters": [
+          {
+            "name": "from",
+            "required": true,
+            "in": "query",
+            "description": "Data local YYYY-MM-DD.",
+            "schema": {
+              "example": "2026-11-23",
+              "type": "string"
+            }
+          },
+          {
+            "name": "to",
+            "required": true,
+            "in": "query",
+            "description": "Data local YYYY-MM-DD; no máximo 62 dias depois de from.",
+            "schema": {
+              "example": "2026-11-29",
+              "type": "string"
+            }
+          }
+        ],
         "responses": {
           "200": {
-            "description": ""
+            "description": "",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/CommitmentOccurrencesResponse"
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "from ou to fora do formato YYYY-MM-DD."
+          },
+          "401": {
+            "description": "Token ausente, inválido ou expirado."
+          },
+          "422": {
+            "description": "Data inexistente, to antes de from ou mais de 62 dias (occurrences.range)."
           }
         },
+        "security": [
+          {
+            "bearer": []
+          }
+        ],
         "tags": [
-          "Scheduling"
+          "scheduling"
         ]
       }
     },
-    "/activation": {
+    "/scheduling/commitments/{id}": {
       "get": {
-        "operationId": "ActivationController_getActivation",
-        "parameters": [],
+        "operationId": "SchedulingController_getCommitment",
+        "parameters": [
+          {
+            "name": "id",
+            "required": true,
+            "in": "path",
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
         "responses": {
           "200": {
-            "description": ""
+            "description": "",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/CommitmentResponse"
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "id não é um UUID."
+          },
+          "401": {
+            "description": "Token ausente, inválido ou expirado."
+          },
+          "404": {
+            "description": "Compromisso inexistente ou de outro usuário."
           }
         },
+        "security": [
+          {
+            "bearer": []
+          }
+        ],
         "tags": [
-          "Activation"
+          "scheduling"
+        ]
+      },
+      "patch": {
+        "operationId": "CommitmentMutationsController_update",
+        "parameters": [
+          {
+            "name": "id",
+            "required": true,
+            "in": "path",
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/UpdateCommitmentBody"
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "Em \"following\", o compromisso devolvido é a série nova.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/CommitmentWithPlanResponse"
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "Corpo malformado, campo não previsto, scope inválido ou \"following\" sem fromDate."
+          },
+          "401": {
+            "description": "Token ausente, inválido ou expirado."
+          },
+          "404": {
+            "description": "Compromisso inexistente ou de outro usuário."
+          },
+          "422": {
+            "description": "Regra do compromisso violada."
+          }
+        },
+        "security": [
+          {
+            "bearer": []
+          }
+        ],
+        "tags": [
+          "scheduling"
+        ]
+      },
+      "delete": {
+        "operationId": "CommitmentMutationsController_remove",
+        "parameters": [
+          {
+            "name": "id",
+            "required": true,
+            "in": "path",
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "name": "scope",
+            "required": true,
+            "in": "query",
+            "schema": {
+              "type": "string",
+              "enum": [
+                "all",
+                "following"
+              ]
+            }
+          },
+          {
+            "name": "fromDate",
+            "required": false,
+            "in": "query",
+            "description": "Obrigatório em \"following\": a partir desse dia não há mais ocorrência.",
+            "schema": {
+              "example": "2026-11-25",
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/CommitmentPlanResponse"
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "scope inválido ou \"following\" sem fromDate YYYY-MM-DD."
+          },
+          "401": {
+            "description": "Token ausente, inválido ou expirado."
+          },
+          "404": {
+            "description": "Compromisso inexistente ou de outro usuário."
+          }
+        },
+        "security": [
+          {
+            "bearer": []
+          }
+        ],
+        "tags": [
+          "scheduling"
         ]
       }
     },
@@ -203,6 +566,687 @@
         },
         "tags": [
           "Notifications"
+        ]
+      }
+    },
+    "/scheduling/commitments": {
+      "post": {
+        "operationId": "CommitmentMutationsController_create",
+        "parameters": [],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/CreateCommitmentBody"
+              }
+            }
+          }
+        },
+        "responses": {
+          "201": {
+            "description": "",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/CommitmentWithPlanResponse"
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "Corpo malformado ou campo não previsto (como userId)."
+          },
+          "401": {
+            "description": "Token ausente, inválido ou expirado."
+          },
+          "404": {
+            "description": "O usuário ainda não tem disponibilidade (P12)."
+          },
+          "422": {
+            "description": "Título fora de 2–80, horário fora dos múltiplos de 5, fim antes do início, dia da semana ou data inválidos."
+          }
+        },
+        "security": [
+          {
+            "bearer": []
+          }
+        ],
+        "tags": [
+          "scheduling"
+        ]
+      }
+    },
+    "/scheduling/commitments/{id}/occurrences/{date}": {
+      "put": {
+        "operationId": "CommitmentMutationsController_setOccurrence",
+        "parameters": [
+          {
+            "name": "id",
+            "required": true,
+            "in": "path",
+            "schema": {
+              "format": "uuid",
+              "type": "string"
+            }
+          },
+          {
+            "name": "date",
+            "required": true,
+            "in": "path",
+            "description": "Dia da série (data local).",
+            "schema": {
+              "example": "2026-11-25",
+              "type": "string"
+            }
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/SetOccurrenceBody"
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/CommitmentWithPlanResponse"
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "Corpo malformado, campo não previsto ou data fora do formato."
+          },
+          "401": {
+            "description": "Token ausente, inválido ou expirado."
+          },
+          "404": {
+            "description": "Compromisso inexistente ou de outro usuário."
+          },
+          "422": {
+            "description": "A data não é ocorrência da série, ou \"moved\" sem novo dia e horário válidos."
+          }
+        },
+        "security": [
+          {
+            "bearer": []
+          }
+        ],
+        "tags": [
+          "scheduling"
+        ]
+      },
+      "delete": {
+        "operationId": "CommitmentMutationsController_clearOccurrence",
+        "parameters": [
+          {
+            "name": "id",
+            "required": true,
+            "in": "path",
+            "schema": {
+              "format": "uuid",
+              "type": "string"
+            }
+          },
+          {
+            "name": "date",
+            "required": true,
+            "in": "path",
+            "description": "Dia da série (data local).",
+            "schema": {
+              "example": "2026-11-25",
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/CommitmentWithPlanResponse"
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "id ou data fora do formato."
+          },
+          "401": {
+            "description": "Token ausente, inválido ou expirado."
+          },
+          "404": {
+            "description": "Compromisso inexistente, de outro usuário ou sem exceção na data."
+          }
+        },
+        "security": [
+          {
+            "bearer": []
+          }
+        ],
+        "tags": [
+          "scheduling"
+        ]
+      }
+    },
+    "/goals/assistant/draft": {
+      "post": {
+        "operationId": "GoalAssistantController_draft",
+        "parameters": [],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/GoalDraftBody"
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "Rascunho gerado. Não grava nada; quem grava é o POST /goals.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/DraftGoalResponse"
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "text ausente ou não string; campo não previsto."
+          },
+          "401": {
+            "description": "Token ausente, inválido ou expirado."
+          },
+          "422": {
+            "description": "text vazio ou com mais de 2000 caracteres."
+          },
+          "503": {
+            "description": "IA indisponível, lenta ou com saída inválida e AI_FALLBACK=none."
+          }
+        },
+        "security": [
+          {
+            "bearer": []
+          }
+        ],
+        "tags": [
+          "goals"
+        ]
+      }
+    },
+    "/goals": {
+      "post": {
+        "operationId": "GoalsViewController_create",
+        "parameters": [],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/CreateGoalBody"
+              }
+            }
+          }
+        },
+        "responses": {
+          "201": {
+            "description": "",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/CreateGoalResponse"
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "Corpo malformado ou campo não previsto."
+          },
+          "401": {
+            "description": "Token ausente, inválido ou expirado."
+          },
+          "404": {
+            "description": "Sem disponibilidade cadastrada (P12)."
+          },
+          "422": {
+            "description": "Título vazio, zero etapas, estimativa inválida ou plannedDate com kind \"goal\"."
+          }
+        },
+        "security": [
+          {
+            "bearer": []
+          }
+        ],
+        "tags": [
+          "goals"
+        ]
+      },
+      "get": {
+        "operationId": "GoalsViewController_list",
+        "parameters": [
+          {
+            "name": "kind",
+            "required": false,
+            "in": "query",
+            "description": "Filtro por tipo (MC8): \"goal\" para Objetivos, \"single\" para Tarefas únicas; ausente devolve os dois.",
+            "schema": {
+              "type": "string",
+              "enum": [
+                "goal",
+                "single"
+              ]
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/GoalListResponse"
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "kind diferente de goal ou single."
+          },
+          "401": {
+            "description": "Token ausente, inválido ou expirado."
+          }
+        },
+        "security": [
+          {
+            "bearer": []
+          }
+        ],
+        "tags": [
+          "goals"
+        ]
+      }
+    },
+    "/goals/{goalId}": {
+      "get": {
+        "operationId": "GoalsViewController_detail",
+        "parameters": [
+          {
+            "name": "goalId",
+            "required": true,
+            "in": "path",
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/GoalDetailResponse"
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "goalId não é um UUID."
+          },
+          "401": {
+            "description": "Token ausente, inválido ou expirado."
+          },
+          "404": {
+            "description": "Objetivo inexistente ou de outro usuário."
+          }
+        },
+        "security": [
+          {
+            "bearer": []
+          }
+        ],
+        "tags": [
+          "goals"
+        ]
+      },
+      "delete": {
+        "operationId": "GoalsViewController_remove",
+        "parameters": [
+          {
+            "name": "goalId",
+            "required": true,
+            "in": "path",
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/GoalDeleteResponse"
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "goalId não é um UUID."
+          },
+          "401": {
+            "description": "Token ausente, inválido ou expirado."
+          },
+          "404": {
+            "description": "Objetivo inexistente ou de outro usuário."
+          }
+        },
+        "security": [
+          {
+            "bearer": []
+          }
+        ],
+        "tags": [
+          "goals"
+        ]
+      }
+    },
+    "/goals/{goalId}/done": {
+      "patch": {
+        "operationId": "GoalsViewController_setDone",
+        "parameters": [
+          {
+            "name": "goalId",
+            "required": true,
+            "in": "path",
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/SingleTaskDoneBody"
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/SingleTaskDoneResponse"
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "goalId não é um UUID, done não é booleano ou campo a mais."
+          },
+          "401": {
+            "description": "Token ausente, inválido ou expirado."
+          },
+          "404": {
+            "description": "Tarefa inexistente ou de outro usuário."
+          },
+          "422": {
+            "description": "O objetivo não é uma tarefa única (goal.kind.single)."
+          }
+        },
+        "security": [
+          {
+            "bearer": []
+          }
+        ],
+        "tags": [
+          "goals"
+        ]
+      }
+    },
+    "/scheduling/plan/day": {
+      "get": {
+        "operationId": "PlanViewsController_getDay",
+        "parameters": [
+          {
+            "name": "date",
+            "required": true,
+            "in": "query",
+            "description": "Data local YYYY-MM-DD.",
+            "schema": {
+              "example": "2026-11-10",
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/DayPlanResponse"
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "date fora do formato YYYY-MM-DD."
+          },
+          "401": {
+            "description": "Token ausente, inválido ou expirado."
+          },
+          "404": {
+            "description": "Sem disponibilidade cadastrada (P12)."
+          },
+          "422": {
+            "description": "Data inexistente."
+          }
+        },
+        "security": [
+          {
+            "bearer": []
+          }
+        ],
+        "tags": [
+          "scheduling"
+        ]
+      }
+    },
+    "/scheduling/plan/week": {
+      "get": {
+        "operationId": "PlanViewsController_getWeek",
+        "parameters": [
+          {
+            "name": "start",
+            "required": true,
+            "in": "query",
+            "description": "Segunda-feira local YYYY-MM-DD.",
+            "schema": {
+              "example": "2026-11-09",
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/WeekPlanResponse"
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "start fora do formato YYYY-MM-DD."
+          },
+          "401": {
+            "description": "Token ausente, inválido ou expirado."
+          },
+          "404": {
+            "description": "Sem disponibilidade cadastrada (P12)."
+          },
+          "422": {
+            "description": "start não é segunda-feira ou é uma data inexistente."
+          }
+        },
+        "security": [
+          {
+            "bearer": []
+          }
+        ],
+        "tags": [
+          "scheduling"
+        ]
+      }
+    },
+    "/activation/ramp": {
+      "get": {
+        "operationId": "RampController_getRamp",
+        "parameters": [
+          {
+            "name": "goalId",
+            "required": true,
+            "in": "query",
+            "schema": {
+              "format": "uuid",
+              "type": "string"
+            }
+          },
+          {
+            "name": "stepId",
+            "required": true,
+            "in": "query",
+            "schema": {
+              "format": "uuid",
+              "type": "string"
+            }
+          },
+          {
+            "name": "energy",
+            "required": true,
+            "in": "query",
+            "schema": {
+              "type": "string",
+              "enum": [
+                "low",
+                "medium",
+                "high",
+                "electric"
+              ]
+            }
+          },
+          {
+            "name": "availableTime",
+            "required": false,
+            "in": "query",
+            "description": "Só gravado na sessão nesta fase (P15); o web não envia.",
+            "schema": {
+              "type": "string",
+              "enum": [
+                "15m",
+                "30m",
+                "1h",
+                "2h+"
+              ]
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/RampResponse"
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "goalId/stepId não são UUID ou energy/availableTime inválidos."
+          },
+          "401": {
+            "description": "Token ausente, inválido ou expirado."
+          },
+          "404": {
+            "description": "Objetivo ou etapa inexistente ou de outro usuário."
+          }
+        },
+        "security": [
+          {
+            "bearer": []
+          }
+        ],
+        "tags": [
+          "activation"
+        ]
+      }
+    },
+    "/activation/sessions": {
+      "post": {
+        "operationId": "SessionsController_record",
+        "parameters": [],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/RecordSessionBody"
+              }
+            }
+          }
+        },
+        "responses": {
+          "201": {
+            "description": "",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/RecordSessionResponse"
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "Corpo malformado ou campo não previsto."
+          },
+          "401": {
+            "description": "Token ausente, inválido ou expirado."
+          },
+          "404": {
+            "description": "Objetivo, etapa ou bloco inexistente ou de outro usuário (nada é gravado)."
+          },
+          "422": {
+            "description": "partial sem %, entre outras regras da sessão."
+          }
+        },
+        "security": [
+          {
+            "bearer": []
+          }
+        ],
+        "tags": [
+          "activation"
         ]
       }
     }
@@ -239,6 +1283,11 @@
             "type": "string",
             "example": "Senha@123",
             "description": "Mínimo 8 caracteres, com maiúscula, minúscula, número e símbolo."
+          },
+          "timezone": {
+            "type": "string",
+            "example": "America/Sao_Paulo",
+            "description": "Fuso IANA do usuário. Padrão: America/Sao_Paulo."
           }
         },
         "required": [
@@ -259,12 +1308,17 @@
           },
           "email": {
             "type": "string"
+          },
+          "timezone": {
+            "type": "string",
+            "example": "America/Sao_Paulo"
           }
         },
         "required": [
           "id",
           "name",
-          "email"
+          "email",
+          "timezone"
         ]
       },
       "UserResponse": {
@@ -309,6 +1363,1699 @@
         "required": [
           "token",
           "user"
+        ]
+      },
+      "UpdateProfileBody": {
+        "type": "object",
+        "properties": {
+          "name": {
+            "type": "string",
+            "example": "Ana Clara"
+          },
+          "email": {
+            "type": "string",
+            "example": "ana.clara@bora.app"
+          },
+          "currentPassword": {
+            "type": "string",
+            "example": "Senha@123",
+            "description": "Obrigatória quando o e-mail muda; errada → 403."
+          }
+        }
+      },
+      "ChangePasswordBody": {
+        "type": "object",
+        "properties": {
+          "currentPassword": {
+            "type": "string",
+            "example": "Senha@123"
+          },
+          "newPassword": {
+            "type": "string",
+            "example": "Nova@4567",
+            "description": "Mínimo 8 caracteres, com maiúscula, minúscula, número e símbolo."
+          }
+        },
+        "required": [
+          "currentPassword",
+          "newPassword"
+        ]
+      },
+      "DeleteAccountBody": {
+        "type": "object",
+        "properties": {
+          "currentPassword": {
+            "type": "string",
+            "example": "Senha@123"
+          }
+        },
+        "required": [
+          "currentPassword"
+        ]
+      },
+      "AvailabilityWindowBody": {
+        "type": "object",
+        "properties": {
+          "weekday": {
+            "type": "number",
+            "example": 0,
+            "description": "0 = segunda … 6 = domingo."
+          },
+          "startMinute": {
+            "type": "number",
+            "example": 1140,
+            "description": "Minutos desde 00:00 (local)."
+          },
+          "endMinute": {
+            "type": "number",
+            "example": 1380,
+            "description": "Minutos desde 00:00 (local)."
+          }
+        },
+        "required": [
+          "weekday",
+          "startMinute",
+          "endMinute"
+        ]
+      },
+      "WeeklyAvailabilityView": {
+        "type": "object",
+        "properties": {
+          "windows": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/AvailabilityWindowBody"
+            }
+          },
+          "dailyLimitMinutes": {
+            "type": "number",
+            "example": 180
+          }
+        },
+        "required": [
+          "windows",
+          "dailyLimitMinutes"
+        ]
+      },
+      "WeeklyAvailabilityResponse": {
+        "type": "object",
+        "properties": {
+          "availability": {
+            "$ref": "#/components/schemas/WeeklyAvailabilityView"
+          }
+        },
+        "required": [
+          "availability"
+        ]
+      },
+      "CommitmentRecurrenceView": {
+        "type": "object",
+        "properties": {
+          "weekdays": {
+            "example": [
+              0,
+              2
+            ],
+            "type": "array",
+            "items": {
+              "type": "string"
+            }
+          },
+          "endDate": {
+            "type": "string",
+            "example": "2026-12-12"
+          }
+        },
+        "required": [
+          "weekdays"
+        ]
+      },
+      "CommitmentOccurrenceResponse": {
+        "type": "object",
+        "properties": {
+          "commitmentId": {
+            "type": "string",
+            "format": "uuid"
+          },
+          "title": {
+            "type": "string",
+            "example": "Aula de Cálculo"
+          },
+          "category": {
+            "type": "string",
+            "enum": [
+              "aula",
+              "trabalho",
+              "saude",
+              "pessoal"
+            ]
+          },
+          "date": {
+            "type": "string",
+            "example": "2026-11-25",
+            "description": "Dia em que acontece (na movida, o novo dia)."
+          },
+          "originalDate": {
+            "type": "string",
+            "example": "2026-11-25",
+            "description": "Dia da série de onde veio."
+          },
+          "startMinute": {
+            "type": "number",
+            "example": 480
+          },
+          "endMinute": {
+            "type": "number",
+            "example": 580
+          },
+          "status": {
+            "type": "string",
+            "enum": [
+              "normal",
+              "cancelled",
+              "moved"
+            ]
+          },
+          "recurrence": {
+            "nullable": true,
+            "type": "object",
+            "allOf": [
+              {
+                "$ref": "#/components/schemas/CommitmentRecurrenceView"
+              }
+            ]
+          }
+        },
+        "required": [
+          "commitmentId",
+          "title",
+          "category",
+          "date",
+          "originalDate",
+          "startMinute",
+          "endMinute",
+          "status",
+          "recurrence"
+        ]
+      },
+      "CommitmentOccurrencesResponse": {
+        "type": "object",
+        "properties": {
+          "occurrences": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/CommitmentOccurrenceResponse"
+            }
+          }
+        },
+        "required": [
+          "occurrences"
+        ]
+      },
+      "CommitmentExceptionView": {
+        "type": "object",
+        "properties": {
+          "date": {
+            "type": "string",
+            "example": "2026-11-25"
+          },
+          "type": {
+            "type": "string",
+            "enum": [
+              "cancelled",
+              "moved"
+            ]
+          },
+          "newDate": {
+            "type": "string",
+            "example": "2026-11-26"
+          },
+          "startMinute": {
+            "type": "number",
+            "example": 600
+          },
+          "endMinute": {
+            "type": "number",
+            "example": 700
+          }
+        },
+        "required": [
+          "date",
+          "type"
+        ]
+      },
+      "CommitmentView": {
+        "type": "object",
+        "properties": {
+          "id": {
+            "type": "string",
+            "format": "uuid"
+          },
+          "title": {
+            "type": "string",
+            "example": "Aula de Cálculo"
+          },
+          "category": {
+            "type": "string",
+            "enum": [
+              "aula",
+              "trabalho",
+              "saude",
+              "pessoal"
+            ]
+          },
+          "startDate": {
+            "type": "string",
+            "example": "2026-11-23"
+          },
+          "startMinute": {
+            "type": "number",
+            "example": 480
+          },
+          "endMinute": {
+            "type": "number",
+            "example": 580
+          },
+          "recurrence": {
+            "nullable": true,
+            "type": "object",
+            "allOf": [
+              {
+                "$ref": "#/components/schemas/CommitmentRecurrenceView"
+              }
+            ]
+          },
+          "exceptions": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/CommitmentExceptionView"
+            }
+          }
+        },
+        "required": [
+          "id",
+          "title",
+          "category",
+          "startDate",
+          "startMinute",
+          "endMinute",
+          "recurrence",
+          "exceptions"
+        ]
+      },
+      "CommitmentResponse": {
+        "type": "object",
+        "properties": {
+          "commitment": {
+            "$ref": "#/components/schemas/CommitmentView"
+          }
+        },
+        "required": [
+          "commitment"
+        ]
+      },
+      "SetWeeklyAvailabilityBody": {
+        "type": "object",
+        "properties": {
+          "windows": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/AvailabilityWindowBody"
+            }
+          },
+          "dailyLimitMinutes": {
+            "type": "number",
+            "example": 180,
+            "description": "Limite diário em minutos: de 60 a 480, múltiplo de 30."
+          }
+        },
+        "required": [
+          "windows",
+          "dailyLimitMinutes"
+        ]
+      },
+      "PlanGoalResponse": {
+        "type": "object",
+        "properties": {
+          "goalId": {
+            "type": "string",
+            "format": "uuid"
+          },
+          "feasible": {
+            "type": "boolean",
+            "example": true
+          },
+          "usedSlack": {
+            "type": "boolean",
+            "example": true,
+            "description": "true quando o plano manteve a folga antes do prazo."
+          },
+          "slackDays": {
+            "type": "number",
+            "nullable": true,
+            "example": 1,
+            "description": "Dias de folga mantidos; null para objetivo sem prazo."
+          },
+          "scheduledMinutes": {
+            "type": "number",
+            "example": 495
+          },
+          "unscheduledMinutes": {
+            "type": "number",
+            "example": 0
+          }
+        },
+        "required": [
+          "goalId",
+          "feasible",
+          "usedSlack",
+          "slackDays",
+          "scheduledMinutes",
+          "unscheduledMinutes"
+        ]
+      },
+      "PlanResponse": {
+        "type": "object",
+        "properties": {
+          "totalMinutes": {
+            "type": "number",
+            "example": 495
+          },
+          "days": {
+            "type": "number",
+            "example": 6
+          },
+          "goals": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/PlanGoalResponse"
+            }
+          }
+        },
+        "required": [
+          "totalMinutes",
+          "days",
+          "goals"
+        ]
+      },
+      "SetAvailabilityResponse": {
+        "type": "object",
+        "properties": {
+          "availability": {
+            "$ref": "#/components/schemas/WeeklyAvailabilityView"
+          },
+          "plan": {
+            "$ref": "#/components/schemas/PlanResponse"
+          }
+        },
+        "required": [
+          "availability",
+          "plan"
+        ]
+      },
+      "CommitmentRecurrenceBody": {
+        "type": "object",
+        "properties": {
+          "weekdays": {
+            "example": [
+              0,
+              2
+            ],
+            "description": "Dias da semana: 0 = segunda … 6 = domingo.",
+            "type": "array",
+            "items": {
+              "type": "string"
+            }
+          },
+          "endDate": {
+            "type": "string",
+            "example": "2026-12-12",
+            "description": "Último dia da série (data local YYYY-MM-DD); sem ele, não termina."
+          }
+        },
+        "required": [
+          "weekdays"
+        ]
+      },
+      "CreateCommitmentBody": {
+        "type": "object",
+        "properties": {
+          "title": {
+            "type": "string",
+            "example": "Aula de Cálculo",
+            "description": "2 a 80 caracteres."
+          },
+          "category": {
+            "type": "string",
+            "enum": [
+              "aula",
+              "trabalho",
+              "saude",
+              "pessoal"
+            ]
+          },
+          "startDate": {
+            "type": "string",
+            "example": "2026-11-23",
+            "description": "Data local YYYY-MM-DD do compromisso único ou do início da série."
+          },
+          "startMinute": {
+            "type": "number",
+            "example": 480,
+            "description": "Minutos desde 00:00, múltiplo de 5 (MC2)."
+          },
+          "endMinute": {
+            "type": "number",
+            "example": 580,
+            "description": "Minutos desde 00:00, múltiplo de 5, depois do início."
+          },
+          "recurrence": {
+            "nullable": true,
+            "description": "null = compromisso único.",
+            "type": "object",
+            "allOf": [
+              {
+                "$ref": "#/components/schemas/CommitmentRecurrenceBody"
+              }
+            ]
+          }
+        },
+        "required": [
+          "title",
+          "category",
+          "startDate",
+          "startMinute",
+          "endMinute",
+          "recurrence"
+        ]
+      },
+      "CommitmentWithPlanResponse": {
+        "type": "object",
+        "properties": {
+          "commitment": {
+            "$ref": "#/components/schemas/CommitmentView"
+          },
+          "plan": {
+            "$ref": "#/components/schemas/PlanResponse"
+          }
+        },
+        "required": [
+          "commitment",
+          "plan"
+        ]
+      },
+      "UpdateCommitmentBody": {
+        "type": "object",
+        "properties": {
+          "scope": {
+            "type": "string",
+            "enum": [
+              "all",
+              "following"
+            ],
+            "description": "\"all\" = a série toda; \"following\" = desse dia em diante (MC12)."
+          },
+          "fromDate": {
+            "type": "string",
+            "example": "2026-11-25",
+            "description": "Obrigatório em \"following\": primeiro dia da série nova."
+          },
+          "title": {
+            "type": "string",
+            "example": "Aula de Cálculo II"
+          },
+          "category": {
+            "type": "string",
+            "enum": [
+              "aula",
+              "trabalho",
+              "saude",
+              "pessoal"
+            ]
+          },
+          "startDate": {
+            "type": "string",
+            "example": "2026-11-23",
+            "description": "Só no escopo \"all\" (em \"following\" a série nova começa em fromDate)."
+          },
+          "startMinute": {
+            "type": "number",
+            "example": 480
+          },
+          "endMinute": {
+            "type": "number",
+            "example": 580
+          },
+          "recurrence": {
+            "nullable": true,
+            "description": "Ausente = mantém; null = vira compromisso único; objeto = nova recorrência.",
+            "type": "object",
+            "allOf": [
+              {
+                "$ref": "#/components/schemas/CommitmentRecurrenceBody"
+              }
+            ]
+          }
+        },
+        "required": [
+          "scope"
+        ]
+      },
+      "CommitmentPlanResponse": {
+        "type": "object",
+        "properties": {
+          "plan": {
+            "$ref": "#/components/schemas/PlanResponse"
+          }
+        },
+        "required": [
+          "plan"
+        ]
+      },
+      "SetOccurrenceBody": {
+        "type": "object",
+        "properties": {
+          "status": {
+            "type": "string",
+            "enum": [
+              "cancelled",
+              "moved"
+            ],
+            "description": "\"cancelled\" = não vai ter; \"moved\" = horário alterado (pede newDate e horários)."
+          },
+          "newDate": {
+            "type": "string",
+            "example": "2026-11-26"
+          },
+          "startMinute": {
+            "type": "number",
+            "example": 600
+          },
+          "endMinute": {
+            "type": "number",
+            "example": 700
+          }
+        },
+        "required": [
+          "status"
+        ]
+      },
+      "GoalDraftBody": {
+        "type": "object",
+        "properties": {
+          "text": {
+            "type": "string",
+            "example": "Trabalho de Algoritmos — implementar e comparar 3 algoritmos de ordenação, entrega 24/11",
+            "description": "Texto livre do usuário, 1–2000 caracteres."
+          }
+        },
+        "required": [
+          "text"
+        ]
+      },
+      "GoalDraftStepResponse": {
+        "type": "object",
+        "properties": {
+          "title": {
+            "type": "string",
+            "example": "Ler o enunciado e listar requisitos"
+          },
+          "estimatedMinutes": {
+            "type": "number",
+            "example": 30,
+            "description": "Múltiplo de 15, de 15 a 240."
+          },
+          "aiEstimatedMinutes": {
+            "type": "number",
+            "example": 30,
+            "description": "Estimativa da IA; vai no POST /goals como aiEstimatedMinutes."
+          },
+          "microSteps": {
+            "example": [
+              "Abra o enunciado"
+            ],
+            "type": "array",
+            "items": {
+              "type": "string"
+            }
+          }
+        },
+        "required": [
+          "title",
+          "estimatedMinutes",
+          "aiEstimatedMinutes",
+          "microSteps"
+        ]
+      },
+      "GoalDraftResponse": {
+        "type": "object",
+        "properties": {
+          "title": {
+            "type": "string",
+            "nullable": true,
+            "example": "Trabalho de Algoritmos"
+          },
+          "deadline": {
+            "type": "string",
+            "nullable": true,
+            "example": "2026-11-24"
+          },
+          "category": {
+            "type": "string",
+            "enum": [
+              "assignment",
+              "exam",
+              "project",
+              "generic"
+            ]
+          },
+          "requirements": {
+            "type": "array",
+            "items": {
+              "type": "string"
+            }
+          },
+          "missingFields": {
+            "type": "array",
+            "description": "Informativo (IA2): a tela mostra o campo vazio.",
+            "items": {
+              "type": "string",
+              "enum": [
+                "title",
+                "deadline"
+              ]
+            }
+          },
+          "steps": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/GoalDraftStepResponse"
+            }
+          },
+          "totalMinutes": {
+            "type": "number",
+            "example": 300
+          }
+        },
+        "required": [
+          "title",
+          "deadline",
+          "category",
+          "requirements",
+          "missingFields",
+          "steps",
+          "totalMinutes"
+        ]
+      },
+      "DraftGoalResponse": {
+        "type": "object",
+        "properties": {
+          "draft": {
+            "$ref": "#/components/schemas/GoalDraftResponse"
+          },
+          "engine": {
+            "type": "string",
+            "enum": [
+              "llm",
+              "rules"
+            ],
+            "description": "Quem respondeu; nenhuma tela depende disso."
+          }
+        },
+        "required": [
+          "draft",
+          "engine"
+        ]
+      },
+      "CreateGoalStepBody": {
+        "type": "object",
+        "properties": {
+          "title": {
+            "type": "string",
+            "example": "Ler o enunciado e listar requisitos"
+          },
+          "estimatedMinutes": {
+            "type": "number",
+            "example": 30,
+            "description": "Mínimo 15, múltiplo de 15 (P5)."
+          },
+          "aiEstimatedMinutes": {
+            "type": "number",
+            "nullable": true,
+            "example": 30,
+            "description": "Estimativa original da IA (D 4f, IA1): mínimo 15, múltiplo de 15; null no objetivo manual."
+          },
+          "microSteps": {
+            "description": "Textos do micro-passo (P6).",
+            "type": "array",
+            "items": {
+              "type": "string"
+            }
+          }
+        },
+        "required": [
+          "title",
+          "estimatedMinutes"
+        ]
+      },
+      "CreateGoalBody": {
+        "type": "object",
+        "properties": {
+          "title": {
+            "type": "string",
+            "example": "Trabalho de Algoritmos"
+          },
+          "deadline": {
+            "type": "string",
+            "nullable": true,
+            "example": "2026-11-24",
+            "description": "Data local YYYY-MM-DD da entrega; opcional (P3)."
+          },
+          "plannedDate": {
+            "type": "string",
+            "nullable": true,
+            "example": "2026-11-21",
+            "description": "Data local YYYY-MM-DD a partir da qual a tarefa única entra no plano (MC7); só com kind \"single\" (com \"goal\" → 422). null ou ausente: \"Sem data\"."
+          },
+          "kind": {
+            "type": "string",
+            "enum": [
+              "goal",
+              "single"
+            ]
+          },
+          "source": {
+            "type": "string",
+            "enum": [
+              "manual",
+              "ai"
+            ],
+            "default": "manual",
+            "description": "\"ai\" quando o objetivo veio do rascunho do assistente (IA1)."
+          },
+          "steps": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/CreateGoalStepBody"
+            }
+          }
+        },
+        "required": [
+          "title",
+          "kind",
+          "steps"
+        ]
+      },
+      "StepResponse": {
+        "type": "object",
+        "properties": {
+          "id": {
+            "type": "string",
+            "format": "uuid"
+          },
+          "order": {
+            "type": "number",
+            "example": 1
+          },
+          "title": {
+            "type": "string",
+            "example": "Ler os artigos"
+          },
+          "estimatedMinutes": {
+            "type": "number",
+            "example": 60
+          },
+          "aiEstimatedMinutes": {
+            "type": "number",
+            "nullable": true
+          },
+          "progressPct": {
+            "type": "number",
+            "example": 0
+          },
+          "status": {
+            "type": "string",
+            "enum": [
+              "pending",
+              "done",
+              "superseded"
+            ]
+          },
+          "microSteps": {
+            "type": "array",
+            "items": {
+              "type": "string"
+            }
+          },
+          "remainingMinutes": {
+            "type": "number",
+            "example": 60,
+            "description": "Minutos restantes, arredondados para cima em blocos de 15."
+          }
+        },
+        "required": [
+          "id",
+          "order",
+          "title",
+          "estimatedMinutes",
+          "aiEstimatedMinutes",
+          "progressPct",
+          "status",
+          "microSteps",
+          "remainingMinutes"
+        ]
+      },
+      "GoalViewResponse": {
+        "type": "object",
+        "properties": {
+          "id": {
+            "type": "string",
+            "format": "uuid"
+          },
+          "title": {
+            "type": "string",
+            "example": "TCC"
+          },
+          "deadline": {
+            "type": "string",
+            "nullable": true,
+            "example": "2026-12-15",
+            "description": "Data local YYYY-MM-DD."
+          },
+          "kind": {
+            "type": "string",
+            "enum": [
+              "goal",
+              "single"
+            ]
+          },
+          "colorIndex": {
+            "type": "number",
+            "enum": [
+              1,
+              2,
+              3,
+              4
+            ]
+          },
+          "source": {
+            "type": "string",
+            "enum": [
+              "manual",
+              "ai"
+            ]
+          },
+          "status": {
+            "type": "string",
+            "enum": [
+              "active",
+              "done"
+            ]
+          },
+          "progressPct": {
+            "type": "number",
+            "example": 0
+          },
+          "steps": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/StepResponse"
+            }
+          }
+        },
+        "required": [
+          "id",
+          "title",
+          "deadline",
+          "kind",
+          "colorIndex",
+          "source",
+          "status",
+          "progressPct",
+          "steps"
+        ]
+      },
+      "CreateGoalResponse": {
+        "type": "object",
+        "properties": {
+          "goal": {
+            "$ref": "#/components/schemas/GoalViewResponse"
+          },
+          "plan": {
+            "$ref": "#/components/schemas/PlanResponse"
+          }
+        },
+        "required": [
+          "goal",
+          "plan"
+        ]
+      },
+      "GoalListItemResponse": {
+        "type": "object",
+        "properties": {
+          "id": {
+            "type": "string",
+            "format": "uuid"
+          },
+          "title": {
+            "type": "string",
+            "example": "TCC"
+          },
+          "deadline": {
+            "type": "string",
+            "nullable": true,
+            "example": "2026-12-15"
+          },
+          "kind": {
+            "type": "string",
+            "enum": [
+              "goal",
+              "single"
+            ]
+          },
+          "plannedDate": {
+            "type": "string",
+            "nullable": true,
+            "example": "2026-11-21",
+            "description": "Data local YYYY-MM-DD planejada da tarefa única (MC7); null no objetivo comum ou \"Sem data\"."
+          },
+          "estimatedMinutes": {
+            "type": "number",
+            "example": 30,
+            "description": "Soma das estimativas das etapas, em minutos (MC8)."
+          },
+          "colorIndex": {
+            "type": "number",
+            "enum": [
+              1,
+              2,
+              3,
+              4
+            ]
+          },
+          "progressPct": {
+            "type": "number",
+            "example": 20
+          },
+          "done": {
+            "type": "number",
+            "example": 1,
+            "description": "Quantidade de etapas concluídas."
+          },
+          "total": {
+            "type": "number",
+            "example": 5
+          },
+          "status": {
+            "type": "string",
+            "enum": [
+              "active",
+              "done"
+            ]
+          },
+          "slackDays": {
+            "type": "number",
+            "nullable": true,
+            "example": 1,
+            "description": "Folga no plano atual; null para objetivo sem prazo ou concluído."
+          },
+          "createdAt": {
+            "type": "string",
+            "format": "date-time",
+            "example": "2026-11-10T22:00:00.000Z",
+            "description": "Instante de criação (ISO 8601 UTC)."
+          }
+        },
+        "required": [
+          "id",
+          "title",
+          "deadline",
+          "kind",
+          "plannedDate",
+          "estimatedMinutes",
+          "colorIndex",
+          "progressPct",
+          "done",
+          "total",
+          "status",
+          "slackDays",
+          "createdAt"
+        ]
+      },
+      "GoalListResponse": {
+        "type": "object",
+        "properties": {
+          "goals": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/GoalListItemResponse"
+            }
+          }
+        },
+        "required": [
+          "goals"
+        ]
+      },
+      "GoalHeaderResponse": {
+        "type": "object",
+        "properties": {
+          "id": {
+            "type": "string",
+            "format": "uuid"
+          },
+          "title": {
+            "type": "string",
+            "example": "TCC"
+          },
+          "deadline": {
+            "type": "string",
+            "nullable": true,
+            "example": "2026-12-15",
+            "description": "Data local YYYY-MM-DD."
+          },
+          "kind": {
+            "type": "string",
+            "enum": [
+              "goal",
+              "single"
+            ]
+          },
+          "colorIndex": {
+            "type": "number",
+            "enum": [
+              1,
+              2,
+              3,
+              4
+            ]
+          },
+          "source": {
+            "type": "string",
+            "enum": [
+              "manual",
+              "ai"
+            ]
+          },
+          "status": {
+            "type": "string",
+            "enum": [
+              "active",
+              "done"
+            ]
+          }
+        },
+        "required": [
+          "id",
+          "title",
+          "deadline",
+          "kind",
+          "colorIndex",
+          "source",
+          "status"
+        ]
+      },
+      "NextBlockResponse": {
+        "type": "object",
+        "properties": {
+          "id": {
+            "type": "string",
+            "format": "uuid"
+          },
+          "start": {
+            "type": "string",
+            "format": "date-time"
+          },
+          "end": {
+            "type": "string",
+            "format": "date-time"
+          }
+        },
+        "required": [
+          "id",
+          "start",
+          "end"
+        ]
+      },
+      "StepWithNextBlockResponse": {
+        "type": "object",
+        "properties": {
+          "id": {
+            "type": "string",
+            "format": "uuid"
+          },
+          "order": {
+            "type": "number",
+            "example": 1
+          },
+          "title": {
+            "type": "string",
+            "example": "Ler os artigos"
+          },
+          "estimatedMinutes": {
+            "type": "number",
+            "example": 60
+          },
+          "aiEstimatedMinutes": {
+            "type": "number",
+            "nullable": true
+          },
+          "progressPct": {
+            "type": "number",
+            "example": 0
+          },
+          "status": {
+            "type": "string",
+            "enum": [
+              "pending",
+              "done",
+              "superseded"
+            ]
+          },
+          "microSteps": {
+            "type": "array",
+            "items": {
+              "type": "string"
+            }
+          },
+          "remainingMinutes": {
+            "type": "number",
+            "example": 60,
+            "description": "Minutos restantes, arredondados para cima em blocos de 15."
+          },
+          "nextBlock": {
+            "description": "Próximo bloco planejado; só nas etapas pendentes que têm bloco.",
+            "allOf": [
+              {
+                "$ref": "#/components/schemas/NextBlockResponse"
+              }
+            ]
+          }
+        },
+        "required": [
+          "id",
+          "order",
+          "title",
+          "estimatedMinutes",
+          "aiEstimatedMinutes",
+          "progressPct",
+          "status",
+          "microSteps",
+          "remainingMinutes"
+        ]
+      },
+      "GoalDetailResponse": {
+        "type": "object",
+        "properties": {
+          "goal": {
+            "$ref": "#/components/schemas/GoalHeaderResponse"
+          },
+          "steps": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/StepWithNextBlockResponse"
+            }
+          },
+          "progressPct": {
+            "type": "number",
+            "example": 0
+          },
+          "done": {
+            "type": "number",
+            "example": 0
+          },
+          "total": {
+            "type": "number",
+            "example": 2
+          }
+        },
+        "required": [
+          "goal",
+          "steps",
+          "progressPct",
+          "done",
+          "total"
+        ]
+      },
+      "SingleTaskDoneBody": {
+        "type": "object",
+        "properties": {
+          "done": {
+            "type": "boolean",
+            "example": true,
+            "description": "true: a etapa vai a 100% e o status a \"done\"; false: volta a 0% e \"active\" (MC10)."
+          }
+        },
+        "required": [
+          "done"
+        ]
+      },
+      "SingleTaskDoneResponse": {
+        "type": "object",
+        "properties": {
+          "goal": {
+            "$ref": "#/components/schemas/GoalViewResponse"
+          },
+          "plan": {
+            "$ref": "#/components/schemas/PlanResponse"
+          }
+        },
+        "required": [
+          "goal",
+          "plan"
+        ]
+      },
+      "GoalDeleteResponse": {
+        "type": "object",
+        "properties": {
+          "plan": {
+            "$ref": "#/components/schemas/PlanResponse"
+          }
+        },
+        "required": [
+          "plan"
+        ]
+      },
+      "PlanBlockResponse": {
+        "type": "object",
+        "properties": {
+          "id": {
+            "type": "string",
+            "format": "uuid"
+          },
+          "start": {
+            "format": "date-time",
+            "type": "string",
+            "example": "2026-11-10T22:00:00.000Z"
+          },
+          "end": {
+            "format": "date-time",
+            "type": "string",
+            "example": "2026-11-10T23:00:00.000Z"
+          },
+          "status": {
+            "type": "string",
+            "enum": [
+              "planned",
+              "done",
+              "partial",
+              "missed"
+            ]
+          },
+          "goalId": {
+            "type": "string",
+            "format": "uuid"
+          },
+          "goalTitle": {
+            "type": "string",
+            "example": "Trabalho de Algoritmos"
+          },
+          "colorIndex": {
+            "type": "number",
+            "enum": [
+              1,
+              2,
+              3,
+              4
+            ]
+          },
+          "stepId": {
+            "type": "string",
+            "format": "uuid"
+          },
+          "stepTitle": {
+            "type": "string",
+            "example": "Ler o enunciado e listar requisitos"
+          }
+        },
+        "required": [
+          "id",
+          "start",
+          "end",
+          "status",
+          "goalId",
+          "goalTitle",
+          "colorIndex",
+          "stepId",
+          "stepTitle"
+        ]
+      },
+      "DayPlanResponse": {
+        "type": "object",
+        "properties": {
+          "date": {
+            "type": "string",
+            "example": "2026-11-10"
+          },
+          "blocks": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/PlanBlockResponse"
+            }
+          },
+          "usedMinutes": {
+            "type": "number",
+            "example": 120
+          },
+          "limitMinutes": {
+            "type": "number",
+            "example": 180
+          }
+        },
+        "required": [
+          "date",
+          "blocks",
+          "usedMinutes",
+          "limitMinutes"
+        ]
+      },
+      "WeekPlanResponse": {
+        "type": "object",
+        "properties": {
+          "days": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/DayPlanResponse"
+            }
+          }
+        },
+        "required": [
+          "days"
+        ]
+      },
+      "ChallengeProblemResponse": {
+        "type": "object",
+        "properties": {
+          "a": {
+            "type": "number",
+            "example": 7
+          },
+          "b": {
+            "type": "number",
+            "example": 5
+          },
+          "op": {
+            "type": "string",
+            "enum": [
+              "+",
+              "−",
+              "×"
+            ]
+          }
+        },
+        "required": [
+          "a",
+          "b",
+          "op"
+        ]
+      },
+      "RampOptionResponse": {
+        "type": "object",
+        "properties": {
+          "id": {
+            "type": "string",
+            "example": "warmup-1"
+          },
+          "stepKind": {
+            "type": "string",
+            "enum": [
+              "warmup",
+              "challenge",
+              "micro",
+              "focus",
+              "log"
+            ]
+          },
+          "title": {
+            "type": "string",
+            "example": "Alongamento de 3 min"
+          },
+          "durationLabel": {
+            "type": "string",
+            "example": "3 min"
+          },
+          "durationSeconds": {
+            "type": "number",
+            "example": 180
+          },
+          "description": {
+            "type": "string"
+          },
+          "icon": {
+            "type": "string",
+            "example": "footprints"
+          },
+          "steps": {
+            "type": "array",
+            "items": {
+              "type": "string"
+            }
+          },
+          "operation": {
+            "type": "string",
+            "enum": [
+              "+",
+              "−",
+              "×",
+              "mix"
+            ]
+          },
+          "problems": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/ChallengeProblemResponse"
+            }
+          }
+        },
+        "required": [
+          "id",
+          "stepKind",
+          "title",
+          "durationLabel",
+          "description",
+          "icon"
+        ]
+      },
+      "RampStepResponse": {
+        "type": "object",
+        "properties": {
+          "kind": {
+            "type": "string",
+            "enum": [
+              "warmup",
+              "challenge",
+              "micro",
+              "focus",
+              "log"
+            ]
+          },
+          "options": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/RampOptionResponse"
+            }
+          }
+        },
+        "required": [
+          "kind",
+          "options"
+        ]
+      },
+      "RampResponse": {
+        "type": "object",
+        "properties": {
+          "steps": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/RampStepResponse"
+            }
+          },
+          "suggested": {
+            "type": "string",
+            "enum": [
+              "warmup",
+              "challenge",
+              "micro",
+              "focus",
+              "log"
+            ]
+          }
+        },
+        "required": [
+          "steps",
+          "suggested"
+        ]
+      },
+      "RecordSessionBody": {
+        "type": "object",
+        "properties": {
+          "goalId": {
+            "type": "string",
+            "format": "uuid"
+          },
+          "stepId": {
+            "type": "string",
+            "format": "uuid"
+          },
+          "blockId": {
+            "type": "string",
+            "format": "uuid",
+            "description": "Bloco do plano, quando a sessão começou por ele."
+          },
+          "energy": {
+            "type": "string",
+            "enum": [
+              "low",
+              "medium",
+              "high",
+              "electric"
+            ]
+          },
+          "availableTime": {
+            "type": "string",
+            "enum": [
+              "15m",
+              "30m",
+              "1h",
+              "2h+"
+            ]
+          },
+          "startedAt": {
+            "type": "string",
+            "example": "2026-11-10T22:00:00.000Z"
+          },
+          "endedAt": {
+            "type": "string",
+            "example": "2026-11-10T22:25:00.000Z"
+          },
+          "focusedMinutes": {
+            "type": "number",
+            "example": 25
+          },
+          "outcome": {
+            "type": "string",
+            "enum": [
+              "done",
+              "partial",
+              "not_done"
+            ]
+          },
+          "partialPct": {
+            "type": "number",
+            "example": 70,
+            "description": "Obrigatório (1–99) só com outcome partial."
+          }
+        },
+        "required": [
+          "goalId",
+          "stepId",
+          "energy",
+          "startedAt",
+          "endedAt",
+          "focusedMinutes",
+          "outcome"
+        ]
+      },
+      "FocusSessionResponse": {
+        "type": "object",
+        "properties": {
+          "id": {
+            "type": "string",
+            "format": "uuid"
+          },
+          "goalId": {
+            "type": "string",
+            "format": "uuid"
+          },
+          "stepId": {
+            "type": "string",
+            "format": "uuid"
+          },
+          "blockId": {
+            "type": "string",
+            "format": "uuid",
+            "nullable": true
+          },
+          "energy": {
+            "type": "string",
+            "enum": [
+              "low",
+              "medium",
+              "high",
+              "electric"
+            ]
+          },
+          "availableTime": {
+            "type": "string",
+            "enum": [
+              "15m",
+              "30m",
+              "1h",
+              "2h+"
+            ],
+            "nullable": true
+          },
+          "startedAt": {
+            "type": "string",
+            "format": "date-time"
+          },
+          "endedAt": {
+            "type": "string",
+            "format": "date-time"
+          },
+          "focusedMinutes": {
+            "type": "number",
+            "example": 25
+          },
+          "outcome": {
+            "type": "string",
+            "enum": [
+              "done",
+              "partial",
+              "not_done"
+            ]
+          },
+          "partialPct": {
+            "type": "number",
+            "nullable": true,
+            "example": 70
+          }
+        },
+        "required": [
+          "id",
+          "goalId",
+          "stepId",
+          "blockId",
+          "energy",
+          "availableTime",
+          "startedAt",
+          "endedAt",
+          "focusedMinutes",
+          "outcome",
+          "partialPct"
+        ]
+      },
+      "RecordSessionResponse": {
+        "type": "object",
+        "properties": {
+          "session": {
+            "$ref": "#/components/schemas/FocusSessionResponse"
+          },
+          "step": {
+            "$ref": "#/components/schemas/StepResponse"
+          },
+          "goalProgressPct": {
+            "type": "number",
+            "example": 57
+          },
+          "plan": {
+            "$ref": "#/components/schemas/PlanResponse"
+          }
+        },
+        "required": [
+          "session",
+          "step",
+          "goalProgressPct",
+          "plan"
         ]
       }
     }

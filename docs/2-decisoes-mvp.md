@@ -81,6 +81,7 @@ Aceito como proposto: estrutura própria `{ diasDaSemana[], horaInicio, duracaoM
 - **Estimativa:** a IA sugere e o usuário confirma; `aiEstimate` e `estimate` ficam salvos separadamente.
 - **O motor do calendário nunca usa IA.**
 - O fornecedor está em aberto (5.8). O `GoalAssistantProvider` é neutro.
+- Detalhada em **IA1–IA7** (12/11/2026, abaixo): arquitetura, contrato, motor de regras e o que fica para sexta. **IA8** (16/11/2026): Ollama local com modelo instalado para os testes.
 
 ## 4g. Motor do calendário
 
@@ -182,13 +183,544 @@ Aceito como proposto:
 
 ---
 
+## Decisões da Etapa A (P1–P28) — 10/11/2026
+
+**Origem:** a Etapa A produziu a modelagem (`docs/3-modelagem-dominio.md`), o contrato da API (`docs/4-contrato-api.md`) e o plano (`docs/5-plano-execucao.md`). Escrever esses documentos revelou 28 pontos que nem as decisões anteriores, nem os casos de uso, nem os protótipos definiam, ou em que os protótipos web e mobile se contradiziam. Eles foram numerados P1–P28 e respondidos pelo dono do produto em 10/11/2026.
+
+Regra geral da resposta: adotar a proposta do agente em todas, com os destaques em P6, P14, P20, P21, P22/P23, P24 e P28.
+
+**Siglas das telas:**
+
+| Sigla | Fonte |
+|---|---|
+| **W##** | `design/web/SCREENS.md` |
+| **M##** | `design/mobile/app/SCREENS.md` |
+| **T##** | `design/mobile/telas/SCREENS.md` |
+| **DATA** | `design/mobile/app/source/bora-data.js` |
+
+---
+
+### P1 — Onde fica o fuso horário do usuário
+
+- **Contexto:** a decisão 4c diz que todo horário agendado é guardado em UTC e que a grade semanal é guardada em hora local, interpretada "no fuso do usuário". A 4d lista "timezone" como atributo do usuário. Mas a entidade `User` implementada na Fase 6 (auth) tem só `name`, `email` e `password`. Sem o fuso, o motor do plano não sabe converter "segunda 19h" para um instante.
+- **Opções:**
+  - (a) acrescentar `timezone` ao `User`, enviado pelo cliente no cadastro;
+  - (b) fixar `America/Sao_Paulo` para todos no MVP, sem campo novo;
+  - (c) guardar o fuso na disponibilidade (`WeeklyAvailability`).
+- **Decisão:** (a). Campo `timezone: string` no `User`, com um identificador IANA (ex.: `America/Sao_Paulo`).
+  - É obrigatório na entidade.
+  - No cadastro é **opcional na requisição**: se o cliente não mandar, vale `America/Sao_Paulo`.
+  - O web lê o fuso do navegador (`Intl.DateTimeFormat().resolvedOptions().timeZone`) e o mobile, do aparelho.
+- **Motivo:** é o que as decisões 4c e 4d já previam. O fuso é do usuário, não da agenda, e serve depois para e-mails (notifications) e para outras agendas. Com o padrão, nada quebra para quem não mandar.
+- **Consequências:**
+  - tarefa **C0** (`feat/auth-timezone`): muda a entidade `User`, o `RegisterUser`, a tabela `users` (migration com padrão para quem já existe), o `POST /auth/register` e o seed do usuário demo;
+  - o `GET /auth/me` passa a devolver o `timezone`;
+  - os orquestradores leem o fuso do usuário e o passam ao `GeneratePlan`;
+  - fica preparado para mudar de fuso depois (um caso de uso de perfil, fora do MVP).
+- **Status:** definitiva.
+
+### P2 — Tamanho máximo dos títulos (objetivo e etapa)
+
+- **Contexto:** nenhum documento nem design define limite para o título de um objetivo ou de uma etapa. A validação da entidade precisa de um número.
+- **Opções:** sem limite; 80 (como o nome do usuário); 120.
+- **Decisão:** de 1 a 120 caracteres, para objetivo e para etapa, depois de remover espaços nas pontas.
+- **Motivo:** cabe títulos longos como "Trabalho de Algoritmos — implementar e comparar 3 algoritmos de ordenação" (75 caracteres, F §4) com folga, e protege o banco e as telas.
+- **Consequências:** as regras `RequiredRule` + `MaxLengthRule(120)` em `Goal` e `Step`; cenários de erro na modelagem; o contrato responde 422 acima do limite.
+- **Status:** definitiva.
+
+### P3 — Prazo opcional
+
+- **Contexto:** o caso de uso UC02 fala em prazo. Mas a tela "Preencher à mão" do mobile (M16) mostra "prazo opcional", e o objetivo "Portfólio no GitHub" do protótipo (DATA `ENTREGA[3] = null`) não tem prazo.
+- **Opções:**
+  - (a) prazo obrigatório;
+  - (b) prazo opcional, e objetivos sem prazo entram no plano depois dos que têm prazo.
+- **Decisão:** (b). `Goal.deadline` é uma data local (`YYYY-MM-DD`) ou `null`. No `PlanCalculator`, os sem prazo são ordenados depois de todos os com prazo (desempate pela data de criação). Sem prazo, não há folga nem inviabilidade: o objetivo usa o espaço que sobrar.
+- **Motivo:** é o que os dois designs mostram, e combina com o algoritmo "prazo mais cedo primeiro" (D 4g).
+- **Consequências:** cenário 10 do `PlanCalculator`; o contrato aceita `deadline: null`; as telas mostram "sem prazo" onde o protótipo mostra a data.
+- **Status:** definitiva.
+
+### P4 — Cor do objetivo
+
+- **Contexto:** os protótipos dão uma cor a cada objetivo (`--obj1` a `--obj4`; DATA `OBJ`), usada nos pontos do calendário, na timeline e na trilha. Nada diz como a cor é escolhida. No web, a 4ª cor é roxa (W31).
+- **Opções:** escolha do usuário; derivada do id; sequencial.
+- **Decisão:** sequencial. Ao criar um objetivo, `colorIndex` = próximo índice de 1 a 4 entre os objetivos **ativos** do usuário, voltando ao 1 depois do 4. A cor é guardada e não muda depois.
+- **Motivo:** não há tela para escolher cor, e o resultado coincide com o protótipo (o 1º verde, o 2º azul, o 3º verde-água, o 4º roxo no web).
+- **Consequências:** `CreateGoal` calcula o índice a partir de `findAllByUser`; cenário específico no `CreateGoal`; o web e o mobile mapeiam o índice para o token `--obj<n>` de cada um.
+- **Status:** definitiva.
+
+### P5 — Estimativa de cada etapa
+
+- **Contexto:** a decisão 4c define granularidade de 15 min e bloco mínimo de 30 min. O mobile oferece chips de 15 min a 2h (M16) e o web soma ou subtrai 15 min ao editar a trilha (W23). Faltava o mínimo e o passo.
+- **Decisão:** `estimatedMinutes` é inteiro, no mínimo 15 e múltiplo de 15.
+- **Motivo:** bate com a granularidade da agenda e com os controles dos dois designs.
+- **Consequências:** validação na entidade `Step`; cenário de erro com 20 min; o contrato responde 422.
+- **Status:** definitiva.
+
+### P6 — Texto do micro-passo no objetivo manual
+
+- **Contexto:** o degrau Micro-passo da rampa mostra uma instrução mínima da etapa (F §3). No protótipo, cada etapa traz os seus micro-passos (DATA `ETAPAS[].micro`), que viriam da IA. Num objetivo criado à mão, não há de onde tirá-los.
+- **Opções:** obrigar o usuário a escrever; campo opcional com um texto genérico quando vazio; esconder o degrau.
+- **Decisão:** `Step.microSteps` é uma lista opcional. Quando vazia, a rampa usa o texto genérico:
+  > **"Abra o material desta etapa e faça só a primeira linha: o título ou a primeira frase."**
+
+  **Status: provisório, a validar com o time.**
+- **Motivo:** mantém a rampa completa sem IA e no espírito do produto ("um passo tão pequeno que não dá pra travar", landing).
+- **Consequências:**
+  - o `BuildRamp` recebe os micro-passos da etapa e, se vierem vazios, devolve a opção genérica;
+  - novo cenário em `BuildRamp`;
+  - o texto fica numa constante do domínio (`activation`), fácil de trocar;
+  - quando a IA entrar (Fase 7), ela preenche `microSteps`.
+- **Status:** **provisória**.
+
+### P7 — Faixa do limite diário
+
+- **Contexto:** o onboarding web usa um slider de 60 a 300 min, de 30 em 30, começando em 180 (W09; `AppOnboarding.dc.html`). O onboarding mobile usa um slider de 1h a 8h (T03).
+- **Decisão:** o domínio aceita de **60 a 480 min, em múltiplos de 30**. Cada cliente mostra a faixa e o passo do seu próprio design.
+- **Motivo:** o domínio cobre os dois designs sem forçar nenhum a mudar.
+- **Consequências:** validação em `WeeklyAvailability`; cenários de limite 25, 490 e 45 (inválidos) e 60, 480 (válidos).
+- **Status:** definitiva.
+
+### P8 — Compromissos (aula, estágio) sem tela
+
+- **Contexto:** as decisões 4b e 4e preveem `Commitment` (compromisso único ou recorrente que ocupa tempo). Nenhum design tem tela para cadastrá-los. A grade do onboarding web (W07) mostra "Aula" e "Estágio" ocupando horários, mas isso está **fixo no código do protótipo** (`AvailGrid.dc.html`, função `busy`), não vem de dados do usuário.
+- **Decisão:**
+  - nesta fase, existem só o domínio: a entidade `Commitment`, o `RecurrenceExpander` e a fonte `CommitmentBusySource`, todos testados;
+  - não há endpoint nem tela;
+  - a grade do onboarding web mostra células de ocupado **só se** houver compromissos; no MVP, nenhuma.
+- **Motivo:** não inventar tela, e deixar o motor pronto para quando a tela, o parser de rotina por IA (4b) ou o Google Calendar existirem.
+- **Consequências:** B2 implementa o domínio; C2 não cria tabela de compromissos (**pendência registrada**: a migration de `commitments` entra quando houver tela); a grade web fica sem hachurado.
+- **Status:** definitiva para o MVP.
+
+### P9 — Último dia de trabalho com folga
+
+- **Contexto:** a decisão 4g diz "folga de 1 dia antes do prazo", mas não diz se o prazo é o dia da entrega nem se dá para trabalhar nele.
+- **Decisão:** o prazo é o **dia da entrega**, e não se agenda trabalho nele. O último dia de trabalho é **prazo − 1 − folga**. Com folga de 1 dia e prazo 24/11, o último dia é 22/11 (o 23/11 é a folga).
+  - Se não couber, o motor tenta sem a folga (último dia 23/11).
+  - Se ainda não couber, o objetivo é inviável.
+- **Motivo:** é a leitura mais segura para o estudante: entregar não é dia de fazer, e a folga existe de verdade.
+- **Consequências:** regra central do `PlanCalculator`; cenários 1, 4 e 5.
+- **Status:** definitiva.
+
+### P10 — Bloco mínimo × etapa curta
+
+- **Contexto:** o bloco mínimo é de 30 min (4c), mas uma etapa pode ter 15 min (P5).
+- **Decisão:** o mínimo de 30 min vale **ao dividir** uma etapa em vários blocos. Uma etapa (ou o resto dela) menor que 30 min vira um bloco do próprio tamanho.
+- **Consequências:** regra do `PlanCalculator`; invariante verificada no cenário 1.
+- **Status:** definitiva.
+
+### P11 — O exemplo "8h15 em 6 dias · folga de 1 dia"
+
+- **Contexto:** F §5 mostra o resumo "8h15 encaixadas em 6 dias · folga de 1 dia" para o exemplo das 7 etapas, mas não diz qual era a disponibilidade.
+- **Decisão:** o teste do exemplo verifica **invariantes**:
+  - os 495 min alocados;
+  - a ordem das etapas;
+  - o limite diário;
+  - o bloco mínimo;
+  - o último dia permitido.
+
+  Não verifica o número "6 dias". A disponibilidade do teste é fixa e explícita: todos os dias das 19h às 23h e limite de 120 min.
+- **Status:** definitiva.
+
+### P12 — Gerar plano sem disponibilidade cadastrada
+
+- **Decisão:** `GeneratePlan` (e todo fluxo que o chama) responde `NotFoundError` (404) se o usuário ainda não fez o onboarding. O web e o mobile mandam o usuário ao onboarding depois do login quando `GET /scheduling/availability` responde 404.
+- **Status:** definitiva.
+
+### P13 — Bloco que atravessa a meia-noite
+
+- **Decisão:** o bloco pertence ao dia (local) em que começa. Nos designs as janelas vão até 23h, então é raro.
+- **Status:** definitiva.
+
+### P14 — Níveis de energia e degrau sugerido
+
+- **Contexto:** os dois protótipos se contradizem:
+  - **mobile** (M05; F §3): 4 níveis (Baixa, Média, Alta, Elétrico) e a tabela Baixa → Aquecer, Média → Desafio, Alta → Micro-passo, Elétrico → Foco;
+  - **web** (W12–W14; landing): 3 níveis (Baixa, Média, Alta), com "Alta" levando "direto pro desafio".
+- **Opções:** cada app segue o seu protótipo; os dois seguem o mobile; os dois seguem o web.
+- **Decisão:** **web e mobile seguem os 4 níveis do mobile e a tabela de `docs/0-fluxos.md` §3.** O web deixa de seguir o protótipo **só neste ponto**: o check-in do Hoje web (W12–W14) ganha o 4º chip "Elétrico", com o mesmo estilo visual dos outros três, e o degrau sugerido segue a tabela. A landing não muda (é marketing e continua com o texto do protótipo).
+- **Motivo:** uma regra só no domínio, um só comportamento para o usuário, e a tabela dos fluxos é a fonte mais antiga e explícita.
+- **Consequências:**
+  - `RampSuggestion` com a tabela de F §3;
+  - B4 implementa o 4º chip no web e registra isso como **diferença intencional** em relação ao screenshot;
+  - o contrato aceita `low | medium | high | electric`.
+- **Status:** definitiva.
+
+### P15 — Efeito do "tempo disponível agora"
+
+- **Contexto:** o check-in mobile pergunta "Quanto tempo você tem agora?" (15 min, 30 min, 1h, 2h+; M05). Nenhum documento diz o que essa resposta muda.
+- **Decisão:** nesta fase ela é **só gravada** na sessão de foco (`FocusSession.availableTime`), sem efeito na rampa nem no foco. O web não pergunta (`null`).
+- **Motivo:** não inventar regra; guardar o dado para usar depois (ex.: encurtar o foco ou escolher etapa menor).
+- **Status:** definitiva para o MVP.
+
+### P16 — Texto da opção "Tarefa leve de 5 min" do aquecimento
+
+- **Contexto:** o catálogo do aquecimento (DATA `ALTS.aquecer`) inclui "Tarefa leve de 5 min", cuja descrição cita um dado de exemplo ("Renomear os PDFs de Cálculo").
+- **Decisão:** manter o texto **literal** do protótipo no catálogo fixo do MVP. Quando as tarefas leves do usuário entrarem (UC13, outra `RampOptionSource`), essa opção passa a vir delas.
+- **Status:** provisória até o UC13.
+
+### P17 — Orquestradores de leitura que juntam dados
+
+- **Contexto:** a decisão 5.9 diz que o orquestrador "só encadeia casos de uso, nunca calcula". Para a tela Hoje, o calendário e a lista de objetivos, os blocos do plano (`scheduling`) precisam do título e da cor do objetivo (`goals`).
+- **Decisão:** aceitar orquestradores de leitura (`day-view`, `week-view`, `goals-view`) que **juntam** o resultado de dois casos de uso por id. Juntar não é calcular: nenhuma regra de negócio mora neles.
+- **Status:** definitiva.
+
+### P18 — Barra gamificada e celebração
+
+- **Contexto:** gamificação está fora do MVP (D 4a, "Fora do MVP"), mas os designs mostram a barra de sequência, gotas e nível (M01, W12), as gotas nos degraus e a celebração com "+20" e XP (M12, W41).
+- **Decisão:** as telas mostram esses elementos **com os valores fixos do protótipo**, sem lógica e sem endpoint.
+- **Motivo:** fidelidade ao design sem implementar regras fora do escopo.
+- **Consequências:** os valores ficam nos dados de exemplo das telas; o módulo `gamification` continua vazio; quando ele existir, só a fonte desses números muda.
+- **Status:** provisória até a gamificação.
+
+### P19 — Erro de formato (400) × regra de domínio (422)
+
+- **Contexto:** o contrato pede 400 para requisição malformada. Hoje o backend só tem a validação do domínio, que responde 422, e um tipo errado pode virar 500.
+- **Opções:** `class-validator` + `class-transformer` (padrão do Nest); validação à mão no controller.
+- **Decisão:** `class-validator` + `class-transformer`, com `ValidationPipe` global (`whitelist: true`, `forbidNonWhitelisted: true`, `transform: true`).
+  - Formato ou tipo inválido → **400**.
+  - Regra de domínio → **422**.
+  - Os corpos já são classes do Swagger (D 5.5), e os decorators de validação entram nelas.
+- **Consequências:**
+  - dependências novas no backend;
+  - o filtro de erros já trata `HttpException` (400);
+  - cada endpoint ganha um teste de integração de 400;
+  - com `forbidNonWhitelisted`, um `userId` no corpo passa a dar 400, em vez de ser ignorado.
+- **Status:** definitiva.
+
+### P20 — Telas do objetivo manual com etapas
+
+- **Contexto:** "objetivo manual com etapas" está no mínimo obrigatório (4a), mas não tem design em nenhum app:
+  - no web só existe o fluxo com IA (W27–W31);
+  - no mobile, "Preencher à mão" (M16) é uma tarefa única;
+  - os dois têm uma lista de etapas editáveis que normalmente vem da IA (W30, M15).
+- **Opções:**
+  - (a) usar as telas de etapas editáveis (W30/M15) começando vazias;
+  - (b) placeholder;
+  - (c) só a tarefa única.
+- **Decisão:** (a). O objetivo manual usa as telas **W30 (web)** e **M15 (mobile)** começando **vazias**: título, prazo, a lista de etapas com tempo e total, "Adicionar etapa" e o botão de encaixar no calendário. Os elementos que dependem da IA (requisitos encontrados, "analisando") não aparecem.
+  - O mobile continua oferecendo também "Preencher à mão" (M16) para a tarefa única (`kind 'single'`).
+- **Motivo:** aproveita o design existente mais próximo e mantém o mesmo fluxo quando a IA entrar (ela só vai preencher a mesma lista).
+- **Consequências:** B4 e B5 implementam essas telas e registram como **adaptação intencional** o estado vazio e a entrada direta (sem passar pelo chat); `POST /goals` atende os dois casos.
+- **Status:** definitiva.
+
+### P21 — Testes no web
+
+- **Decisão:** `vitest` + `@testing-library/react` + `jsdom` em `apps/frontend`, com script `test` no workspace (entra no `npm run test --workspaces`).
+- **Motivo:** o processo exige TDD no web, e o frontend não tinha executor de teste. O Vitest é leve e se integra a TypeScript e React sem configuração pesada.
+- **Status:** definitiva.
+
+### P22 — Fontes no Flutter
+
+- **Decisão:** usar o pacote **`google_fonts`** para Fredoka e Nunito, com os pesos dos protótipos.
+- **Motivo:** dispensa baixar e versionar arquivos de fonte agora.
+- **Atenção:** o pacote baixa as fontes na primeira execução. Para os testes não dependerem de rede, eles usam `GoogleFonts.config.allowRuntimeFetching = false` e caem na fonte padrão.
+- **Status:** definitiva; trocar por `.ttf` locais é simples se a rede incomodar.
+
+### P23 — Ícones no Flutter
+
+- **Decisão:** pacote **`phosphor_flutter`**, a mesma família de ícones (Phosphor) dos protótipos.
+- **Status:** definitiva.
+
+### P24 — URLs do web
+
+- **Contexto:** os protótipos navegam por âncoras (`#login`, `#cadastro`).
+- **Decisão:** `/entrar`, `/cadastro`, `/onboarding`, `/hoje`, `/calendario`, `/objetivos/[id]`. A rampa e o novo objetivo são modais sobre `/hoje`, como no protótipo. "Entrar" e "Começar grátis" da landing passam a levar a `/entrar` e `/cadastro`.
+- **Status:** definitiva.
+
+### P25 — Ponta a ponta do web
+
+- **Decisão:** `@playwright/test`, para o teste da Etapa E.
+- **Status:** definitiva.
+
+### P26 — Cliente HTTP do mobile
+
+- **Decisão:** pacote **`http`** (oficial do Dart).
+- **Motivo:** é o mais simples; não precisamos de interceptadores elaborados no MVP.
+- **Status:** definitiva.
+
+### P27 — Passos do onboarding mobile sem design
+
+- **Contexto:** o "Bora Telas" traz 3 telas do onboarding (passos 2, 4 e 5 de 6: T01, T02, T03). Os blocos 2 e 3 do design não vieram.
+- **Decisão:** os passos sem design são **placeholder** (nome da tela + um botão que avança), conforme a regra das telas sem design (4i). Login e cadastro mobile também são placeholder.
+- **Status:** provisória até o design.
+
+### P28 — Preparação das worktrees dos subagentes
+
+- **Contexto:** cada subagente da Etapa B trabalha numa worktree nova, que não tem `node_modules`, e o subagente não pode instalar dependências.
+- **Decisão:** antes de entregar a worktree, o orquestrador roda `npm ci` (instala exatamente o que está no `package-lock.json`, sem acrescentar nada) e `flutter pub get` (mobile).
+- **Status:** definitiva.
+
+### Dependências novas aprovadas (e nenhuma outra)
+
+| Dependência | Onde | Decisão |
+|---|---|---|
+| `vitest`, `@testing-library/react`, `jsdom` | `apps/frontend` | P21 |
+| `class-validator`, `class-transformer` | `apps/backend` | P19 |
+| `@playwright/test` | `apps/frontend` | P25 |
+| `go_router` | `apps/mobile` | 5.7 |
+| `google_fonts`, `phosphor_flutter` | `apps/mobile` | P22, P23 |
+| `http` | `apps/mobile` | P26 |
+
+Dependências técnicas indispensáveis para as aprovadas funcionarem (ex.: `@vitejs/plugin-react` para o Vitest entender JSX, `@testing-library/dom` exigida pela Testing Library) são registradas no diário (`docs/6-diario-execucao.md`) quando instaladas.
+
+---
+
+## Decisões da proposta de IA (IA1–IA7) — 12/11/2026
+
+**Origem:** a `docs/7-proposta-ia.md` (11/11/2026) propôs como a IA entra no projeto e abriu [DECIDIR] no `afazeres.md`. O dono do produto respondeu em 12/11/2026. Os pontos de fornecedor, chave, custo, limite de uso, privacidade e política de falha ficam para a reunião do time de sexta, 13/11 (IA6).
+
+### IA1 — Aprovação da proposta de IA
+
+- **Contexto:** a 4f define o papel da IA no novo objetivo (`parseGoal` + `suggestSteps`, confirmação do usuário, formulário manual se a IA falhar), mas não a arquitetura, o contrato nem como testar o fluxo antes de escolher o fornecedor. A `docs/7` propôs tudo isso e listou, no §e.2, 12 mudanças em relação à proposta inicial do dono do produto.
+- **Opções:** (a) aprovar a proposta com as mudanças do §e.2; (b) aprovar a proposta inicial sem as mudanças; (c) esperar a reunião de sexta.
+- **Decisão:** (a). Proposta **aprovada**, com todas as divergências do §e.2:
+  - motor de regras (`AI_PROVIDER=rules`, `RulesGoalAssistantProvider`) em vez de "fake"; o `FakeGoalAssistantProvider` existe só como dublê de teste em `modules/goals/test/mock`;
+  - **15 s de orçamento total** do rascunho (as duas chamadas), com o rascunho refeito inteiro pelo motor de regras quando a IA falha e `engine: 'llm' | 'rules'` na resposta;
+  - validação em duas camadas: formato no adaptador e regras do domínio no `GoalDraftNormalizer`, classe pura em `goals`;
+  - `category` (`assignment | exam | project | generic`) em vez de "tipo";
+  - `today` e `timezone` na entrada do motor;
+  - `POST /goals` aceita `source` e `steps[].aiEstimatedMinutes`;
+  - **limite de 240 min por etapa** no rascunho (P5 só define mínimo 15 e múltiplo de 15).
+- **Motivo:** permite testar os fluxos de ponta a ponta antes de sexta e trocar para a IA real só pelo `.env`, sem mexer no domínio, nos casos de uso nem nas telas do mobile.
+- **Consequências:**
+  - plano de execução do §g, tarefas 0 a 11 (a 12 fica fora, IA7);
+  - o contrato está em `docs/3-modelagem-dominio.md` §2.6 e `docs/4-contrato-api.md` §3;
+  - o web precisa das telas W27, W29 e W30 preenchida uma vez (tarefa 8);
+  - o limite de 240 min vale só para o rascunho da IA; o `POST /goals` continua aceitando etapas maiores (P5 não muda).
+- **Status:** definitiva.
+- **Data:** 12/11/2026.
+
+### IA2 — Conversa do chat: um turno, sem perguntas
+
+- **Contexto:** o chat do novo objetivo (M13–M15, W27–W30) pode faltar dados (sobretudo o prazo). Nenhum design mostra a IA perguntando (`docs/7` §b).
+- **Opções:** (1) sem estado, um turno; (2) sem estado, com pergunta; (2b) sem estado, com histórico; (3) sessão no backend.
+- **Decisão:** (1). Um pedido, uma resposta, **sem perguntas**. `missingFields` é **informativo**: a tela de etapas (M15/W30) mostra o campo vazio e o usuário completa se quiser (o prazo é opcional, P3).
+- **Motivo:** nada novo no backend nem no design; funciona igual com o motor de regras e com o LLM.
+- **Consequências:** o backend não guarda conversa; o [DECIDIR] "Perguntas de esclarecimento no chat" fecha. Perguntas ficam para depois, com design (opção 2).
+- **Status:** definitiva para o MVP.
+- **Data:** 12/11/2026.
+
+### IA3 — Entrada do caminho manual no web
+
+- **Contexto:** com a IA, o "Novo objetivo" do web passa a abrir na W27 (Escrever / Colar link, "Analisar com IA"). O design web não tem "Preencher à mão"; o mobile tem (M16). Sem uma entrada, o objetivo manual com etapas (P20, mínimo obrigatório) só apareceria quando a IA falhasse.
+- **Opções:** (1) link na W27 que abre a W30 vazia; (2) "Analisar com IA" com o texto vazio abre a W30 vazia; (3) W30 vazia como entrada e a IA atrás de um botão.
+- **Decisão:** (1), com o texto do mobile: um link discreto **"Prefiro preencher à mão"** na W27, **abaixo** do botão "Analisar com IA", com a mesma intenção do M16, usando **só os tokens existentes**. Ele abre a **W30 vazia**.
+- **Motivo:** o caminho manual fica a um clique e igual nos dois apps.
+- **Consequências:** elemento fora do protótipo web, registrado como adaptação intencional; [EXECUTAR] no `afazeres.md` para desenhar esse estado no Claude Design.
+- **Status:** **provisória** até o desenho no Claude Design.
+- **Data:** 12/11/2026.
+
+### IA4 — Mobile: "Novo objetivo" abre o chat
+
+- **Contexto:** o chat do novo objetivo (M13–M15) foi integrado na rodada de 11/11 na rota `/objetivos/chat`, mas o botão "Novo objetivo" (M02) ainda abre a M15 vazia. Trocar o destino muda o fluxo que dois testes existentes verificam.
+- **Opções:** (1) autorizar a mudança dos testes; (2) manter o botão abrindo a M15 vazia.
+- **Decisão:** (1). O botão "Novo objetivo" abre o chat. **Autorizada a alteração** de `test/features/goals/goals_screens_test.dart` ("Novo objetivo (M15 vazia)…") e do ponta a ponta `integration_test/fluxo_principal_test.dart`, que passam a tocar em **"Preencher à mão"** depois de "Novo objetivo".
+- **Motivo:** é o fluxo pedido; o que os testes provam (o objetivo manual com etapas) continua igual.
+- **Consequências:** o relatório mostra o antes e o depois de cada teste alterado; o [DECIDIR] "Ligar 'Novo objetivo' (M02) ao chat" fecha.
+- **Status:** definitiva.
+- **Data:** 12/11/2026.
+
+### IA5 — Formato dos prompts do LLM
+
+- **Contexto:** o Nest não copia arquivos que não são `.ts` para o `dist` (`docs/7` §c.7).
+- **Opções:** (a) `.md` com `assets` no `nest-cli.json`; (b) `.prompt.ts` exportando uma string.
+- **Decisão:** (b). Cada prompt é um arquivo **`<nome>.v<versão>.prompt.ts`** que exporta uma string (ex.: `parse-goal.v1.prompt.ts`). **Não** usar `.md` nem `assets` no `nest-cli.json`.
+- **Motivo:** funciona no build sem configuração extra; continua versionado e fora da lógica.
+- **Consequências:** a versão está no nome do arquivo e vai para o log de cada chamada (`prompt=parse-goal@v1`).
+- **Status:** definitiva.
+- **Data:** 12/11/2026.
+
+### IA6 — O que fica para a reunião de sexta (13/11)
+
+- **Contexto:** fornecedor, chave e política de falha dependem do time e dos parceiros do hackathon (5.8).
+- **Decisão:** **não** são decididos agora: fornecedor e modelo de produção; chave e custo; limite de uso; privacidade; política de falha (`AI_FALLBACK`). Até a reunião:
+  - o padrão do `apps/backend/.env.example` é `AI_PROVIDER=rules` e `AI_FALLBACK=rules`;
+  - o limite de uso **não** é implementado;
+  - os testes automáticos (unitários, integração, Playwright e `integration_test`) rodam sempre com `AI_PROVIDER=rules`, sem rede.
+- **Motivo:** a escolha sai com os números do `ai:eval` (`docs/8-avaliacao-ia.md`).
+- **Consequências:** `AI_FALLBACK=rules` como padrão provisório diverge da 4f ("falhou → formulário manual") até sexta; com `AI_FALLBACK=none` o comportamento da 4f volta (503 → formulário manual).
+- **Status:** provisória até 13/11/2026.
+- **Data:** 12/11/2026.
+
+### IA7 — Respostas gravadas (`AI_PROVIDER=recorded`)
+
+- **Contexto:** a tarefa 12 do §g (opcional) gravaria respostas reais do LLM para a demo offline.
+- **Decisão:** fora por enquanto.
+- **Status:** adiada.
+- **Data:** 12/11/2026.
+
+### IA8 — Ollama local com modelo instalado para os testes
+
+- **Contexto:** em 12/11 o Ollama do Mac de desenvolvimento não tinha modelo ([DECIDIR] "Ollama local sem modelo instalado"), e todo pedido caía no motor de regras.
+- **Decisão:** o dono do produto autorizou instalar e configurar o Ollama no Mac (alternativa 1 do item). Ficou como serviço do Homebrew (`brew services`) com `OLLAMA_KEEP_ALIVE=24h` e os modelos `qwen2.5:3b` e `qwen2.5:7b`. Só o `apps/backend/.env` local aponta para ele; o `.env.example` e os testes automáticos continuam com `AI_PROVIDER=rules` (IA6).
+- **Consequências:** o 7b não cabe nos 15 s e o 3b repete etapas em alguns textos (`docs/8-avaliacao-ia.md`); o modelo a usar é um [DECIDIR] novo ("Modelo local do Ollama"), e o `.env` local fica com o 3b até lá. Comandos em `docs/backend/COMO-TESTAR.md` (passo 6a e seção 8b).
+- **Status:** valendo para o ambiente local; não muda o fornecedor do projeto (IA6).
+- **Data:** 16/11/2026.
+
+---
+
 ## Pendências para sexta, 13/11
 
 1. Hospedagem da landing e do web (provavelmente Vercel).
 2. Hospedagem do backend e do banco, e como fazer o deploy do monorepo (5.1, 5.2).
 3. CI (5.12).
-4. Provedor de LLM entre os parceiros (5.8).
+4. Provedor de LLM entre os parceiros (5.8), com chave, custo, limite de uso, privacidade e política de falha (IA6).
 5. Escopo do web app: o export web traz o app completo (ver `design/web/SCREENS.md`); confirmar quais telas entram no MVP.
 6. Divergências de tokens (`design/tokens.md`): decidir a cor de fundo do mobile (`#FFFFFF` × `#F6FAF8`), a cor do 4º objetivo (roxo na web × verde no mobile), os estágios do Broto e o check-in de 3 × 4 níveis na web.
 7. Mobile: login, cadastro e os blocos 2 e 3 do onboarding não têm design; ficam como placeholder (4i) até o design ser feito no Claude Design.
 8. Cronograma revisado e divisão de tarefas entre as 4 pessoas.
+
+---
+
+## Decisões da rodada mobile Acesso/Perfil/Jardim (MP1–MP14) — 19/11/2026
+
+**Origem:** o zip novo do Bora App (19/11/2026) trouxe as telas de acesso (login, criar conta, recuperação de senha) e mudou a navegação (Jardim pelo Broto, aba Compromissos). As opções estão em `plano-mobile-acesso-perfil-jardim.md` (seção 2, D1–D14); o usuário marcou as escolhas abaixo em 19/11/2026. MPn = Dn do plano.
+
+### MP1 — Regra da senha no cadastro
+- **Contexto:** o design diz "Mínimo de 6 caracteres"; o backend exige 8 ou mais, com maiúscula, minúscula, número e símbolo (`StrongPasswordRule`).
+- **Decisão:** manter a regra do backend. A dica da tela vira "Mínimo de 8 caracteres, com maiúscula, minúscula, número e símbolo", e o app confere a mesma regra antes de enviar.
+- **Consequência:** diferença de texto em relação ao design (M34/M35). **Status:** definitiva.
+
+### MP2 — Nome com uma palavra só
+- **Contexto:** o design pede "Como quer ser chamado? Ex.: Arthur"; o `User` exigia nome e sobrenome (`PersonNameRule`) e 3 caracteres.
+- **Decisão:** o nome aceita uma palavra ou mais, só com letras (acentos, hífen e apóstrofo valem), de 2 a 80 caracteres: regra nova `DisplayNameRule` no `packages/shared`, no lugar de `PersonNameRule` + `MinLengthRule(3)`.
+- **Consequência:** o web também passa a aceitar um nome só; 422 com o código `display.name`. **Status:** definitiva.
+
+### MP3 — "Entrar com Google"
+- **Decisão:** esconder o botão e o divisor "ou" até existir login com Google. **Status:** provisória.
+
+### MP4 — "Esqueci minha senha"
+- **Decisão:** o link aparece como no design e abre um **placeholder** "Esqueci minha senha" com "Voltar pro login" (regra 4i). As 3 telas do design (M36–M38) entram quando houver backend de recuperação. **Status:** provisória.
+
+### MP5 — Botão de demo
+- **Contexto:** a decisão 5.4 e os ponta a ponta usam "Entrar direto como Arthur (demo)"; o design novo do login não tem o botão.
+- **Decisão:** o botão aparece só quando `SHOW_DEMO=true` no `env/<ambiente>.json` (lido no `AppConfig`): ligado em `local-simulator`, `local-iphone` e `developer`, desligado em `prod`. **Status:** definitiva.
+
+### MP6 — Subtítulo do Perfil
+- **Decisão:** mostrar o e-mail do usuário (`GET /auth/me`) no lugar de "Ciência da Computação · 21 anos", que não existe no backend. **Status:** definitiva.
+
+### MP7 — Modo escuro
+- **Decisão:** o interruptor troca o tema de verdade, com a paleta escura do design (`[data-theme="dark"]`, M30), guardado só em memória (fechar o app volta ao claro). **Status:** provisória até a sessão persistir.
+
+### MP8 — Bloquear apps, Lembrete da rampa e Idioma
+- **Decisão:** visuais, como no protótipo: "Bloquear apps" liga e desliga em memória, sem efeito; "Lembrete da rampa" mostra 09:30 fixo; "Idioma" abre o sheet (M28) e muda o texto da linha, mas o app continua em português. **Status:** provisória.
+
+### MP9 — Enviar sugestão
+- **Decisão:** só visual. Um repositório de exemplo recebe o texto em memória e a tela mostra o toast "Sugestão enviada"; nada vai ao backend. **Status:** provisória (o usuário aceitou a desvantagem de dizer que enviou sem enviar).
+
+### MP10 — Tab bar
+- **Decisão:** manter **Hoje · Objetivos · Semana · Jardim** e também fazer o Broto do topo abrir o Jardim. Compromissos (M41–M42) e Tarefas únicas (M43) ficam para uma rodada própria (P8). **Status:** provisória.
+
+### MP11 — Grade do "Redefinir minha rotina"
+- **Decisão:** a grade do design (2 em 2 horas, 8h–22h, 7 dias). Ao abrir, uma célula aparece "Livre" se o intervalo inteiro dela estiver dentro de uma janela salva. Ao salvar, células vizinhas do mesmo dia viram uma janela só e a grade **substitui** a disponibilidade inteira (o que estava fora de 8h–22h deixa de valer). **Status:** definitiva.
+
+### MP12 — Sair da conta
+- **Decisão:** não criar agora; a sessão fica em memória e fechar o app desloga. **Status:** provisória, ligada ao [DECIDIR] do token.
+
+### MP13 — "Trocar por 50" no Jardim
+- **Decisão:** botão sem ação (como o "Comprar" do web). **Status:** provisória (gamificação fora do MVP, P18).
+
+### MP14 — `design/mobile/app/` atualizado com o zip
+- **Decisão:** substituir `source/Bora App.dc.html`, capturar as telas 33–43 e atualizar o `SCREENS.md`. Por pedido do usuário em 19/11/2026, o próprio zip também foi commitado (`design/mobile/Bora app anti-procrastinação telas principais.zip`).
+- **Status:** definitiva.
+
+### Atualização da P27
+- Login e cadastro mobile deixam de ser placeholder (MP1–MP5). Os passos sem design do onboarding continuam placeholder.
+
+---
+
+## Decisões da rodada de compromissos e tarefas únicas (MC1–MC14) — 20/11/2026
+
+**Origem:** o zip de 20/11/2026 tirou a página de Compromissos e pôs o cadastro no "+ Compromisso" da Semana, com exceções por dia e escopo de edição; trouxe também a tela Tarefas únicas. Opções em `plano-mobile-compromissos-tarefas-unicas.md` (seção 2, C1–C14); o usuário marcou as escolhas em 20/11/2026. MCn = Cn do plano.
+
+### MC1 — Exceções por dia dentro do agregado `Commitment`
+- **Decisão:** `exceptions: [{ date, type: 'cancelled' | 'moved', newDate?, startMinute?, endMinute? }]` dentro do agregado, como as `Step` no `Goal`; tabela filha `commitment_exceptions` com cascata. O `RecurrenceExpander` aplica as exceções. **Status:** definitiva.
+
+### MC2 — Horário do compromisso em múltiplos de 5 min
+- **Contexto:** o domínio exigia 15 min; aulas reais terminam às 09:40.
+- **Decisão:** início e fim em múltiplos de 5 min; seletor de 5 em 5. O motor continua alinhando os horários livres em 15 min (`AvailabilityCalculator`). **Status:** definitiva.
+
+### MC3 — "Fim do semestre" = `SEMESTER_END` do app
+- **Decisão:** data fixa no `env/<ambiente>.json` (lida no `AppConfig`), inicialmente `2026-12-12`; atualizar a cada semestre. **Status:** provisória.
+
+### MC4 — Endpoint próprio para as ocorrências
+- **Decisão:** `GET /scheduling/commitments/occurrences?from&to` devolve as ocorrências expandidas com as exceções; os endpoints de plano não mudam. **Status:** definitiva.
+
+### MC5 — Aviso de conflito calculado no app
+- **Decisão:** o formulário compara o horário com os blocos já carregados (semana visível e a seguinte) e mostra a primeira etapa que se sobrepõe; ao salvar, o backend recalcula o plano. **Status:** definitiva.
+
+### MC6 — Compromissos também no Hoje
+- **Decisão:** a linha do tempo do Hoje mostra os compromissos do dia, no mesmo cartão da Semana, e o toque abre o mesmo sheet. **Elemento sem design no Hoje** (o design do Hoje não mostra compromissos). **Status:** definitiva.
+
+### MC7 — Tarefa única = `Goal` `single` com `plannedDate`
+- **Contexto:** pela P9 não se agenda trabalho no dia do prazo, então uma tarefa "Hoje" com prazo hoje nunca seria encaixada.
+- **Decisão:** `Goal` com `kind: 'single'` ganha `plannedDate` (data local opcional). O `PlanCalculator` não encaixa a tarefa antes desse dia e ordena pela data; sem data, fica no fim da fila (como sem prazo, P3). O `deadline` das tarefas únicas fica nulo; a P9 continua valendo para os objetivos. **Status:** definitiva.
+
+### MC8 — Tarefas únicas só na tela própria
+- **Decisão:** Objetivos lista só `kind: 'goal'`; as tarefas do "Preencher à mão" (M16) também vão para Tarefas únicas. Os blocos continuam no Hoje e na Semana. **Status:** definitiva.
+
+### MC9 — Entrada para Tarefas únicas no Hoje
+- **Decisão:** botão terciário "Tarefas únicas" à direita do título "SEU DIA" do Hoje; o resumo "N etapas · N tarefas leves" passa para a linha de baixo. **Elemento sem design.** **Status:** provisória até o design.
+
+### MC10 — `PATCH /goals/:goalId/done`
+- **Decisão:** `{ done: boolean }`, só `kind: 'single'` (422 em objetivo comum): etapa em 100% (ou 0%), status `done` (ou `active`) e plano recalculado. **Status:** definitiva.
+
+### MC11 — `DELETE /goals/:goalId`
+- **Decisão:** apaga o objetivo e as etapas (qualquer `kind`; o app usa só nas tarefas únicas) e recalcula o plano. Blocos e sessões passados ficam no histórico. **Status:** definitiva.
+
+### MC12 — "Desse dia em diante" divide a série
+- **Decisão:** a série antiga termina no dia anterior (com as exceções anteriores) e uma nova começa no dia escolhido (com as exceções seguintes); se a antiga ficar sem nenhum dia, é apagada. Excluir desse dia em diante = encerrar a antiga. **Status:** definitiva.
+
+### MC13 — `design/mobile/app/` atualizado com o zip de 20/11
+- **Decisão:** `source/` substituído (com `vendor/` e `README.md`), telas 44–54 capturadas, M41/M42 marcadas como removidas no `SCREENS.md`, zip commitado. **Status:** definitiva.
+
+### MC14 — Ícone da aba Jardim continua `plant`
+- **Decisão:** o app mantém `plant` (o protótipo usa `leaf`). **Status:** definitiva.
+
+### Atualização da P8
+- Compromissos passam a ter tela (Semana, Hoje), endpoints (`/scheduling/commitments`, §7 do contrato) e tabela (`commitments`, `commitment_exceptions`). O `EmptyCommitmentRepository` sai.
+
+
+## Teste no Android físico (28/11/2026)
+
+**Origem:** o dono do produto testou o app num Galaxy S23 (Android 17) e o web, e decidiu os pedidos abaixo em 28/11/2026. Itens no `afazeres.md`, seção Mobile, "Teste no Android físico".
+
+### AT1 — Nome do app: Bora
+- **Decisão:** o app aparece como **Bora** na lista de apps (`android:label` e `CFBundleDisplayName`), com o ícone do Broto. **Status:** definitiva.
+
+### AT2 — Barra de navegação do Android escondida
+- **Decisão:** os botões do Android (voltar, início, abas) ficam escondidos; arrastar mostra, e eles somem sozinhos depois de 3 s. Enquanto aparecem, a tab bar sobe inteira, sem esticar, e o app pinta atrás dos botões o `#047857` translúcido. **Status:** definitiva.
+
+### AT3 — Editar o perfil: nome e e-mail
+- **Decisão:** dá para trocar o nome e o e-mail no Perfil do app e nas Configurações do web. Trocar o e-mail pede a senha atual (o e-mail é o login). O ID do usuário (UUID) não muda. Rota `PATCH /auth/me`. A troca de senha fica com a recuperação de senha. **Elemento sem design.** **Status:** provisória até o design.
+
+### AT4 — Interruptor do e-mail diário no app e no web, só visual
+- **Decisão:** o interruptor "E-mail diário" fica no web (W26) e entra no Perfil do app, mesmo sem envio (UC23 fora da fatia), para o MVP ficar completo nas telas. Fazer o envio de verdade fica para depois. **Status:** provisória.
+
+### AT5 — "Máximo por dia" editável direto no Perfil
+- **Decisão:** tocar na linha "Máximo por dia" abre um seletor só do limite; salvar grava com `PUT /scheduling/availability`, mantém a grade e recalcula o plano. **Elemento sem design.** **Status:** provisória até o design.
+
+### AT6 — "Enviar sugestão" no web, só visual
+- **Decisão:** o web ganha "Enviar sugestão" nas Configurações, igual ao app (MP9): mostra "Sugestão enviada", sem backend. O `POST /feedback` fica para depois. **Status:** provisória.
+
+### AT7 — Idioma no web, só visual
+- **Decisão:** o web ganha o seletor de Idioma nas Configurações, igual ao app (MP8), sem tradução. A tradução (i18n) fica para depois. **Status:** provisória.
+
+### AT8 — "Lembrete da rampa" editável, só visual
+- **Decisão (28/11/2026):** tocar na linha abre um seletor de horário e a linha explica o que é ("Um aviso por dia pra começar a rampa"). Não notifica ainda (notificações fora do MVP); a notificação local fica para depois. **Elemento sem design.** **Status:** provisória.
+
+### AT9 — Zona de risco: trocar senha, sair e apagar conta, de verdade
+- **Decisão (28/11/2026):** no Perfil (app) e nas Configurações (web), uma seção "Zona de risco" com:
+  - **Trocar senha:** `PATCH /auth/me/password` `{ currentPassword, newPassword }` → 204; senha atual errada → 403; senha nova fraca → 422.
+  - **Sair da conta:** limpa a sessão e volta ao login (no app, o token já fica só em memória; ver o item "Sair da conta no mobile").
+  - **Apagar conta:** `DELETE /auth/me` `{ currentPassword }` → 204. Apaga de verdade a conta e todos os dados dela (sessões, blocos, objetivos e etapas, disponibilidade, compromissos), numa transação (LGPD; Google Play e App Store exigem a exclusão dentro do app). Confirmação com a senha. A conta demo não pode ser apagada (403), para o "Entrar como demo" continuar funcionando.
+- **Elemento sem design.** **Status:** provisória até o design.
+
+### AT10 — Trilha do Hack Brasil: Saúde & bem-estar
+- **Decisão (28/11/2026):** o projeto concorre na trilha **Saúde & bem-estar**. O problema é contado como o ciclo de travar, se culpar e travar de novo (sobrecarga, ansiedade, culpa), e o impacto como bem-estar na rotina: limite diário de foco, replanejamento sem culpa, aquecimentos de autocuidado na rampa e, no futuro, bloqueio voluntário de distrações. O Bora não se apresenta como ferramenta clínica. README, `docs/9-pitch-e-descricao.md` e a descrição da submissão seguem esse ângulo. **Status:** definitiva.
+
+### AT11 — Landing responsiva; título e ícone da aba
+- **Decisão (28/11/2026):** só a landing fica responsiva (opção 3 do [DECIDIR] "Web em telas estreitas"); o app logado mantém a largura mínima de 1200 px. A partir de 1280 px (xl) a landing é o layout do protótipo; abaixo, as colunas empilham, a navegação do topo some (fica Entrar e Começar grátis), a ilustração do celular encolhe e os degraus da rampa rolam para o lado, centralizando o degrau atual. A aba do navegador mostra "bora" e o Broto (o ícone do app iOS). **Larguras sem design.** **Status:** provisória até o design.
+
+### AT12 — Calendário web com o dia inteiro (00h–24h)
+- **Decisão (28/11/2026):** na Semana e no Dia do calendário web, a grade vai sempre da meia-noite às 23h59 (00h–24h, 40 px por hora), no lugar das 08h–23h do protótipo. Um bloco que passa da meia-noite aparece até o fim do dia. As horas rolam dentro do cartão, com o cabeçalho dos dias fixo, e a grade abre (e reabre ao trocar de semana, dia ou visão) rolada até 1h antes da hora atual. **Diferença em relação ao design.** **Status:** definitiva.

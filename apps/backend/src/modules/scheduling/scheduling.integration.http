@@ -1,0 +1,309 @@
+@baseUrl = http://localhost:4000
+@scenarioVersion = {{$timestamp}}
+@password = Senha@123
+
+### Cadastro do dono → 201
+# @name register
+POST {{baseUrl}}/auth/register
+Content-Type: application/json
+
+{
+  "name": "Ana Souza",
+  "email": "scheduling.dono.{{scenarioVersion}}@bora.app",
+  "password": "{{password}}"
+}
+
+### Login do dono → 200 com token
+# @name login
+POST {{baseUrl}}/auth/login
+Content-Type: application/json
+
+{
+  "email": "{{register.request.body.$.email}}",
+  "password": "{{password}}"
+}
+
+### Cadastro de outro usuário → 201
+# @name registerOther
+POST {{baseUrl}}/auth/register
+Content-Type: application/json
+
+{
+  "name": "Bruno Lima",
+  "email": "scheduling.outro.{{scenarioVersion}}@bora.app",
+  "password": "{{password}}"
+}
+
+### Login do outro usuário → 200 com token
+# @name loginOther
+POST {{baseUrl}}/auth/login
+Content-Type: application/json
+
+{
+  "email": "{{registerOther.request.body.$.email}}",
+  "password": "{{password}}"
+}
+
+### Usuário novo pede a disponibilidade → 404 "Disponibilidade não encontrada."
+GET {{baseUrl}}/scheduling/availability
+Authorization: Bearer {{login.response.body.$.token}}
+
+### Grava a disponibilidade do dono → 200 { availability }
+PUT {{baseUrl}}/scheduling/availability
+Authorization: Bearer {{login.response.body.$.token}}
+Content-Type: application/json
+
+{
+  "windows": [
+    { "weekday": 0, "startMinute": 1140, "endMinute": 1380 },
+    { "weekday": 2, "startMinute": 480, "endMinute": 600 }
+  ],
+  "dailyLimitMinutes": 180
+}
+
+### Lê a disponibilidade do dono → 200 com os dados gravados
+GET {{baseUrl}}/scheduling/availability
+Authorization: Bearer {{login.response.body.$.token}}
+
+### Outro usuário pede a disponibilidade (o dono já salvou) → 404
+GET {{baseUrl}}/scheduling/availability
+Authorization: Bearer {{loginOther.response.body.$.token}}
+
+### Zero janelas → 422
+PUT {{baseUrl}}/scheduling/availability
+Authorization: Bearer {{login.response.body.$.token}}
+Content-Type: application/json
+
+{ "windows": [], "dailyLimitMinutes": 180 }
+
+### Limite 25 → 422
+PUT {{baseUrl}}/scheduling/availability
+Authorization: Bearer {{login.response.body.$.token}}
+Content-Type: application/json
+
+{
+  "windows": [{ "weekday": 0, "startMinute": 1140, "endMinute": 1380 }],
+  "dailyLimitMinutes": 25
+}
+
+### Corpo com userId (campo não previsto) → 400
+PUT {{baseUrl}}/scheduling/availability
+Authorization: Bearer {{login.response.body.$.token}}
+Content-Type: application/json
+
+{
+  "userId": "{{loginOther.response.body.$.user.id}}",
+  "windows": [{ "weekday": 0, "startMinute": 1140, "endMinute": 1380 }],
+  "dailyLimitMinutes": 180
+}
+
+### windows que não é array → 400
+PUT {{baseUrl}}/scheduling/availability
+Authorization: Bearer {{login.response.body.$.token}}
+Content-Type: application/json
+
+{ "windows": "segunda à noite", "dailyLimitMinutes": 180 }
+
+### weekday string → 400
+PUT {{baseUrl}}/scheduling/availability
+Authorization: Bearer {{login.response.body.$.token}}
+Content-Type: application/json
+
+{
+  "windows": [{ "weekday": "segunda", "startMinute": 1140, "endMinute": 1380 }],
+  "dailyLimitMinutes": 180
+}
+
+### PUT sem token → 401
+PUT {{baseUrl}}/scheduling/availability
+Content-Type: application/json
+
+{
+  "windows": [{ "weekday": 0, "startMinute": 1140, "endMinute": 1380 }],
+  "dailyLimitMinutes": 180
+}
+
+### GET sem token → 401
+GET {{baseUrl}}/scheduling/availability
+
+### GET com token inválido → 401
+GET {{baseUrl}}/scheduling/availability
+Authorization: Bearer token-invalido
+
+# ─── Compromissos (docs/4-contrato-api.md §5b; MC1–MC6, MC12) ───
+# Usa o dono acima, que já gravou a disponibilidade (sem ela o POST dá 404, P12).
+
+### Cria compromisso semanal (seg e qua, 08:00–09:40) → 201 { commitment, plan }
+# @name createWeekly
+POST {{baseUrl}}/scheduling/commitments
+Authorization: Bearer {{login.response.body.$.token}}
+Content-Type: application/json
+
+{
+  "title": "Aula de Cálculo",
+  "category": "aula",
+  "startDate": "2030-11-18",
+  "startMinute": 480,
+  "endMinute": 580,
+  "recurrence": { "weekdays": [0, 2], "endDate": "2030-12-13" }
+}
+
+### Cria compromisso único (recurrence null) → 201
+POST {{baseUrl}}/scheduling/commitments
+Authorization: Bearer {{login.response.body.$.token}}
+Content-Type: application/json
+
+{
+  "title": "Consulta no dentista",
+  "category": "saude",
+  "startDate": "2030-11-19",
+  "startMinute": 870,
+  "endMinute": 930,
+  "recurrence": null
+}
+
+### POST sem disponibilidade (outro usuário) → 404
+POST {{baseUrl}}/scheduling/commitments
+Authorization: Bearer {{loginOther.response.body.$.token}}
+Content-Type: application/json
+
+{
+  "title": "Aula",
+  "category": "aula",
+  "startDate": "2030-11-18",
+  "startMinute": 480,
+  "endMinute": 580,
+  "recurrence": null
+}
+
+### POST com userId no corpo → 400
+POST {{baseUrl}}/scheduling/commitments
+Authorization: Bearer {{login.response.body.$.token}}
+Content-Type: application/json
+
+{
+  "userId": "{{loginOther.response.body.$.user.id}}",
+  "title": "Aula",
+  "category": "aula",
+  "startDate": "2030-11-18",
+  "startMinute": 480,
+  "endMinute": 580,
+  "recurrence": null
+}
+
+### POST com fim antes do início → 422
+POST {{baseUrl}}/scheduling/commitments
+Authorization: Bearer {{login.response.body.$.token}}
+Content-Type: application/json
+
+{
+  "title": "Aula",
+  "category": "aula",
+  "startDate": "2030-11-18",
+  "startMinute": 600,
+  "endMinute": 540,
+  "recurrence": null
+}
+
+### POST sem token → 401
+POST {{baseUrl}}/scheduling/commitments
+Content-Type: application/json
+
+{ "title": "Aula", "category": "aula", "startDate": "2030-11-18", "startMinute": 480, "endMinute": 580, "recurrence": null }
+
+### Ocorrências da semana → 200 { occurrences }
+GET {{baseUrl}}/scheduling/commitments/occurrences?from=2030-11-18&to=2030-11-24
+Authorization: Bearer {{login.response.body.$.token}}
+
+### Ocorrências com mais de 62 dias → 422
+GET {{baseUrl}}/scheduling/commitments/occurrences?from=2030-11-18&to=2031-01-19
+Authorization: Bearer {{login.response.body.$.token}}
+
+### Ocorrências com data fora do formato → 400
+GET {{baseUrl}}/scheduling/commitments/occurrences?from=18/11/2030&to=2030-11-24
+Authorization: Bearer {{login.response.body.$.token}}
+
+### Lê o compromisso → 200 { commitment }
+GET {{baseUrl}}/scheduling/commitments/{{createWeekly.response.body.$.commitment.id}}
+Authorization: Bearer {{login.response.body.$.token}}
+
+### Outro usuário lê o compromisso → 404
+GET {{baseUrl}}/scheduling/commitments/{{createWeekly.response.body.$.commitment.id}}
+Authorization: Bearer {{loginOther.response.body.$.token}}
+
+### "Não vai ter nesse dia" (qua 20/11) → 200 { commitment, plan }
+PUT {{baseUrl}}/scheduling/commitments/{{createWeekly.response.body.$.commitment.id}}/occurrences/2030-11-20
+Authorization: Bearer {{login.response.body.$.token}}
+Content-Type: application/json
+
+{ "status": "cancelled" }
+
+### "Vai ter sim" (tira a exceção) → 200 { commitment, plan }
+DELETE {{baseUrl}}/scheduling/commitments/{{createWeekly.response.body.$.commitment.id}}/occurrences/2030-11-20
+Authorization: Bearer {{login.response.body.$.token}}
+
+### "Editar só nesse dia" → 200 com a exceção moved
+PUT {{baseUrl}}/scheduling/commitments/{{createWeekly.response.body.$.commitment.id}}/occurrences/2030-11-20
+Authorization: Bearer {{login.response.body.$.token}}
+Content-Type: application/json
+
+{ "status": "moved", "newDate": "2030-11-21", "startMinute": 600, "endMinute": 700 }
+
+### Exceção numa data que não é ocorrência (ter 19/11) → 422
+PUT {{baseUrl}}/scheduling/commitments/{{createWeekly.response.body.$.commitment.id}}/occurrences/2030-11-19
+Authorization: Bearer {{login.response.body.$.token}}
+Content-Type: application/json
+
+{ "status": "cancelled" }
+
+### Edita a série toda → 200 { commitment, plan }
+PATCH {{baseUrl}}/scheduling/commitments/{{createWeekly.response.body.$.commitment.id}}
+Authorization: Bearer {{login.response.body.$.token}}
+Content-Type: application/json
+
+{ "scope": "all", "title": "Aula de Cálculo II", "endMinute": 600 }
+
+### "Desse dia em diante" → 200 com a série nova
+# @name split
+PATCH {{baseUrl}}/scheduling/commitments/{{createWeekly.response.body.$.commitment.id}}
+Authorization: Bearer {{login.response.body.$.token}}
+Content-Type: application/json
+
+{ "scope": "following", "fromDate": "2030-11-25", "startMinute": 600, "endMinute": 700 }
+
+### Vira compromisso único (recurrence null) → 200 com recurrence null
+PATCH {{baseUrl}}/scheduling/commitments/{{split.response.body.$.commitment.id}}
+Authorization: Bearer {{login.response.body.$.token}}
+Content-Type: application/json
+
+{ "scope": "all", "recurrence": null }
+
+### "following" sem fromDate → 400
+PATCH {{baseUrl}}/scheduling/commitments/{{createWeekly.response.body.$.commitment.id}}
+Authorization: Bearer {{login.response.body.$.token}}
+Content-Type: application/json
+
+{ "scope": "following", "title": "Aula" }
+
+### Outro usuário edita → 404
+PATCH {{baseUrl}}/scheduling/commitments/{{createWeekly.response.body.$.commitment.id}}
+Authorization: Bearer {{loginOther.response.body.$.token}}
+Content-Type: application/json
+
+{ "scope": "all", "title": "Invadido" }
+
+### Exclui desse dia em diante → 200 { plan }
+DELETE {{baseUrl}}/scheduling/commitments/{{createWeekly.response.body.$.commitment.id}}?scope=following&fromDate=2030-11-20
+Authorization: Bearer {{login.response.body.$.token}}
+
+### DELETE sem scope → 400
+DELETE {{baseUrl}}/scheduling/commitments/{{createWeekly.response.body.$.commitment.id}}
+Authorization: Bearer {{login.response.body.$.token}}
+
+### Outro usuário exclui → 404
+DELETE {{baseUrl}}/scheduling/commitments/{{createWeekly.response.body.$.commitment.id}}?scope=all
+Authorization: Bearer {{loginOther.response.body.$.token}}
+
+### Exclui a série toda → 200 { plan }
+DELETE {{baseUrl}}/scheduling/commitments/{{createWeekly.response.body.$.commitment.id}}?scope=all
+Authorization: Bearer {{login.response.body.$.token}}

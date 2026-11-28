@@ -28,10 +28,42 @@ describe("RegisterUser", () => {
       id: userRepository.users[0].id,
       name: "Ana Souza",
       email: "ana@bora.app",
+      timezone: "America/Sao_Paulo",
     });
     expect(output.user).not.toHaveProperty("password");
 
     validateSpy.mockRestore();
+  });
+
+  test("C0-3: deve gravar o fuso informado no cadastro", async () => {
+    const { userRepository, useCase } = makeSut();
+
+    const output = await useCase.execute({
+      name: "Ana Souza",
+      email: "ana@bora.app",
+      password: "Strong@123",
+      timezone: "America/Manaus",
+    });
+
+    expect(userRepository.users[0].timezone).toBe("America/Manaus");
+    expect(output.user.timezone).toBe("America/Manaus");
+  });
+
+  test("C0-4: sem fuso no cadastro, deve gravar America/Sao_Paulo", async () => {
+    const { userRepository, useCase } = makeSut();
+
+    await useCase.execute({ name: "Ana Souza", email: "ana@bora.app", password: "Strong@123" });
+
+    expect(userRepository.users[0].timezone).toBe("America/Sao_Paulo");
+  });
+
+  test("deve rejeitar fuso invalido sem persistir", async () => {
+    const { userRepository, useCase } = makeSut();
+
+    await expect(
+      useCase.execute({ name: "Ana Souza", email: "ana@bora.app", password: "Strong@123", timezone: "Lua/Base" }),
+    ).rejects.toThrow(ValidationException);
+    expect(userRepository.users).toEqual([]);
   });
 
   test("deve rejeitar senha fraca antes de qualquer efeito colateral", async () => {
@@ -58,11 +90,27 @@ describe("RegisterUser", () => {
     expect(userRepository.users).toHaveLength(1);
   });
 
+  test("MP2: deve cadastrar usuario com nome de uma palavra so", async () => {
+    const { userRepository, useCase } = makeSut();
+
+    const output = await useCase.execute({
+      name: "Arthur",
+      email: "arthur@bora.app",
+      password: "Strong@123",
+    });
+
+    expect(userRepository.users).toHaveLength(1);
+    expect(userRepository.users[0].name).toBe("Arthur");
+    expect(output.user.name).toBe("Arthur");
+  });
+
+  // MP2: o exemplo antigo usava "Ana" (uma palavra), que agora é válido; o caso
+  // inválido passou a ser "A" (abaixo do mínimo de 2 caracteres).
   test("deve propagar erro de validacao da entidade sem persistir", async () => {
     const { userRepository, useCase } = makeSut();
 
     await expect(
-      useCase.execute({ name: "Ana", email: "ana@bora.app", password: "Strong@123" }),
+      useCase.execute({ name: "A", email: "ana@bora.app", password: "Strong@123" }),
     ).rejects.toThrow(ValidationException);
 
     expect(userRepository.users).toEqual([]);

@@ -1,0 +1,206 @@
+import 'package:flutter_test/flutter_test.dart';
+import 'package:oitenta/core/errors/app_errors.dart';
+import 'package:oitenta/features/auth/data/http_auth_repository.dart';
+
+import '../../helpers/fake_api.dart';
+
+const _user = {
+  'id': 'u1',
+  'name': 'Arthur',
+  'email': 'arthur@bora.app',
+  'timezone': 'America/Sao_Paulo',
+};
+
+void main() {
+  late FakeApi api;
+  late HttpAuthRepository repo;
+
+  setUp(() {
+    api = FakeApi();
+    repo = HttpAuthRepository(api.client);
+  });
+
+  test(
+    'loginDemo: POST /auth/demo sem Bearer e devolve token e usuário',
+    () async {
+      api.respond({'token': 'jwt', 'user': _user});
+      final s = await repo.loginDemo();
+      expect(api.last.method, 'POST');
+      expect(api.last.url.path, '/auth/demo');
+      expect(api.last.headers.containsKey('Authorization'), isFalse);
+      expect(s.token, 'jwt');
+      expect(s.user.name, 'Arthur');
+      expect(s.user.timezone, 'America/Sao_Paulo');
+    },
+  );
+
+  test('loginDemo: 404 (seed não rodado) → NotFoundFailure', () async {
+    api.fail(404, 'Usuário demo não encontrado.');
+    await expectLater(repo.loginDemo(), throwsA(isA<NotFoundFailure>()));
+  });
+
+  test('login: POST /auth/login com {email, password}', () async {
+    api.respond({'token': 'jwt', 'user': _user});
+    final s = await repo.login(email: 'arthur@bora.app', password: 'Senha@123');
+    expect(api.last.method, 'POST');
+    expect(api.last.url.path, '/auth/login');
+    expect(api.lastBody, {'email': 'arthur@bora.app', 'password': 'Senha@123'});
+    expect(api.last.headers.containsKey('Authorization'), isFalse);
+    expect(s.user.email, 'arthur@bora.app');
+  });
+
+  test('login: 401 → UnauthorizedFailure sem limpar sessão', () async {
+    api.fail(401, 'Credenciais inválidas.');
+    await expectLater(
+      repo.login(email: 'a@b.com', password: 'x'),
+      throwsA(isA<UnauthorizedFailure>()),
+    );
+    expect(api.unauthorizedCalls, 0);
+  });
+
+  test('register: POST /auth/register com o fuso e devolve o user', () async {
+    api.respond({
+      'user': {..._user, 'name': 'Bia'},
+    }, 201);
+    final u = await repo.register(
+      name: 'Bia',
+      email: 'bia@x.com',
+      password: 'Senha@123',
+      timezone: 'America/Manaus',
+    );
+    expect(api.last.url.path, '/auth/register');
+    expect(api.lastBody, {
+      'name': 'Bia',
+      'email': 'bia@x.com',
+      'password': 'Senha@123',
+      'timezone': 'America/Manaus',
+    });
+    expect(u.name, 'Bia');
+  });
+
+  test(
+    'register sem fuso não manda o campo (o backend usa o padrão, P1)',
+    () async {
+      api.respond({'user': _user}, 201);
+      await repo.register(
+        name: 'Bia',
+        email: 'bia@x.com',
+        password: 'Senha@123',
+      );
+      expect((api.lastBody as Map).containsKey('timezone'), isFalse);
+    },
+  );
+
+  test('register: 409 → ConflictFailure; 422 → ValidationFailure', () async {
+    api.fail(409, 'E-mail já cadastrado.');
+    await expectLater(
+      repo.register(name: 'B', email: 'b@x.com', password: 'Senha@123'),
+      throwsA(isA<ConflictFailure>()),
+    );
+    api.fail(422, 'Dados inválidos.');
+    await expectLater(
+      repo.register(name: 'B', email: 'b@x.com', password: 'fraca'),
+      throwsA(isA<ValidationFailure>()),
+    );
+  });
+
+  test('me: GET /auth/me com Bearer e devolve o usuário', () async {
+    api.respond({'user': _user});
+    final u = await repo.me();
+    expect(api.last.method, 'GET');
+    expect(api.last.url.path, '/auth/me');
+    expect(api.last.headers['Authorization'], 'Bearer tok-123');
+    expect(u.id, 'u1');
+  });
+
+  test('me: 401 → UnauthorizedFailure e avisa a sessão', () async {
+    api.fail(401, 'Token inválido.');
+    await expectLater(repo.me(), throwsA(isA<UnauthorizedFailure>()));
+    expect(api.unauthorizedCalls, 1);
+  });
+
+  group('updateProfile (AT3)', () {
+    test('PATCH /auth/me só com os campos informados', () async {
+      api.respond({
+        'user': {..._user, 'name': 'Arthur Lima'},
+      });
+      final u = await repo.updateProfile(name: 'Arthur Lima');
+      expect(api.last.method, 'PATCH');
+      expect(api.last.url.path, '/auth/me');
+      expect(api.lastBody, {'name': 'Arthur Lima'});
+      expect(api.last.headers['Authorization'], 'Bearer tok-123');
+      expect(u.name, 'Arthur Lima');
+    });
+
+    test('troca de e-mail manda a senha atual', () async {
+      api.respond({
+        'user': {..._user, 'email': 'novo@bora.app'},
+      });
+      await repo.updateProfile(
+        email: 'novo@bora.app',
+        currentPassword: 'Senha@123',
+      );
+      expect(api.lastBody, {
+        'email': 'novo@bora.app',
+        'currentPassword': 'Senha@123',
+      });
+    });
+
+    test(
+      '403 (senha errada) → ApiFailure 403, sem derrubar a sessão',
+      () async {
+        api.fail(403, 'Senha atual incorreta.');
+        await expectLater(
+          repo.updateProfile(email: 'x@bora.app', currentPassword: 'errada'),
+          throwsA(isA<ApiFailure>().having((e) => e.statusCode, 'status', 403)),
+        );
+        expect(api.unauthorizedCalls, 0);
+      },
+    );
+
+    test('409 (e-mail de outra conta) → ConflictFailure', () async {
+      api.fail(409, 'E-mail já cadastrado.');
+      await expectLater(
+        repo.updateProfile(email: 'x@bora.app', currentPassword: 'Senha@123'),
+        throwsA(isA<ConflictFailure>()),
+      );
+    });
+  });
+
+  group('Zona de risco (AT9)', () {
+    test(
+      'changePassword: PATCH /auth/me/password com a atual e a nova',
+      () async {
+        api.handler = (_) => FakeApi.json(null, 204);
+        await repo.changePassword(
+          currentPassword: 'Senha@123',
+          newPassword: 'Nova@4567',
+        );
+        expect(api.last.method, 'PATCH');
+        expect(api.last.url.path, '/auth/me/password');
+        expect(api.lastBody, {
+          'currentPassword': 'Senha@123',
+          'newPassword': 'Nova@4567',
+        });
+      },
+    );
+
+    test('deleteAccount: DELETE /auth/me com a senha no corpo', () async {
+      api.handler = (_) => FakeApi.json(null, 204);
+      await repo.deleteAccount(currentPassword: 'Senha@123');
+      expect(api.last.method, 'DELETE');
+      expect(api.last.url.path, '/auth/me');
+      expect(api.lastBody, {'currentPassword': 'Senha@123'});
+      expect(api.last.headers['Authorization'], 'Bearer tok-123');
+    });
+
+    test('senha errada → ApiFailure 403, sem derrubar a sessão', () async {
+      api.fail(403, 'Senha atual incorreta.');
+      await expectLater(
+        repo.deleteAccount(currentPassword: 'errada'),
+        throwsA(isA<ApiFailure>().having((e) => e.statusCode, 's', 403)),
+      );
+      expect(api.unauthorizedCalls, 0);
+    });
+  });
+}

@@ -1,0 +1,149 @@
+import 'package:http/http.dart' as http;
+
+import '../../features/activation/data/activation_repository.dart';
+import '../../features/activation/data/http_activation_repository.dart';
+import '../../features/activation/data/sample_activation_repository.dart';
+import '../../features/activation/presentation/ramp_session.dart';
+import '../../features/auth/data/auth_repository.dart';
+import '../../features/auth/data/http_auth_repository.dart';
+import '../../features/auth/data/sample_auth_repository.dart';
+import '../../features/auth/data/session_store.dart';
+import '../../features/gamification/data/gamification_repository.dart';
+import '../../features/gamification/data/sample_gamification_repository.dart';
+import '../../features/goals/data/goal_assistant_repository.dart';
+import '../../features/goals/data/goals_repository.dart';
+import '../../features/goals/data/http_single_tasks_repository.dart';
+import '../../features/goals/data/sample_single_tasks_repository.dart';
+import '../../features/goals/data/single_tasks_repository.dart';
+import '../../features/goals/data/http_goal_assistant_repository.dart';
+import '../../features/goals/data/http_goals_repository.dart';
+import '../../features/goals/data/sample_goal_assistant_repository.dart';
+import '../../features/goals/data/sample_goals_repository.dart';
+import '../../features/profile/data/feedback_repository.dart';
+import '../../features/profile/data/sample_feedback_repository.dart';
+import '../../features/scheduling/data/commitments_repository.dart';
+import '../../features/scheduling/data/http_commitments_repository.dart';
+import '../../features/scheduling/data/http_scheduling_repository.dart';
+import '../../features/scheduling/data/sample_commitments_repository.dart';
+import '../../features/scheduling/data/sample_scheduling_repository.dart';
+import '../../features/scheduling/data/scheduling_repository.dart';
+import '../clock/clock.dart';
+import '../config/app_config.dart';
+import '../http/api_client.dart';
+import '../sample/bora_sample_data.dart';
+import '../theme/theme_controller.dart';
+
+/// Raiz de composição: os repositórios e o estado compartilhado do app.
+/// `DATA_SOURCE` (`http` | `sample`) escolhe a implementação.
+class AppDependencies {
+  AppDependencies({
+    required this.auth,
+    required this.scheduling,
+    required this.goals,
+    required this.activation,
+    required this.gamification,
+    required this.clock,
+    GoalAssistantRepository? goalAssistant,
+    SessionStore? session,
+    RampSession? rampSession,
+    ThemeController? theme,
+    FeedbackRepository? feedback,
+    CommitmentsRepository? commitments,
+    SingleTasksRepository? singleTasks,
+    this.showDemo = true,
+  }) : commitments = commitments ?? SampleCommitmentsRepository(),
+       singleTasks = singleTasks ?? SampleSingleTasksRepository(),
+       theme = theme ?? ThemeController(),
+       feedback = feedback ?? SampleFeedbackRepository(),
+       goalAssistant =
+           goalAssistant ?? SampleGoalAssistantRepository(clock: clock),
+       session = session ?? SessionStore(),
+       rampSession = rampSession ?? RampSession();
+
+  /// Lê `DATA_SOURCE` de `--dart-define-from-file=env/<ambiente>.json`.
+  factory AppDependencies.fromConfig() =>
+      AppDependencies.forDataSource(AppConfig.dataSource);
+
+  factory AppDependencies.forDataSource(String source) => switch (source) {
+    'http' => AppDependencies.http(showDemo: AppConfig.showDemo),
+    'sample' => AppDependencies.sample(showDemo: AppConfig.showDemo),
+    _ => throw ArgumentError.value(
+      source,
+      'DATA_SOURCE',
+      'use "http" ou "sample"',
+    ),
+  };
+
+  /// Dados de exemplo do protótipo, com o "hoje" em 6/11/2025.
+  factory AppDependencies.sample({bool showDemo = true}) => AppDependencies(
+    showDemo: showDemo,
+    auth: SampleAuthRepository(),
+    scheduling: SampleSchedulingRepository(),
+    goals: SampleGoalsRepository(),
+    activation: SampleActivationRepository(),
+    gamification: SampleGamificationRepository(),
+    clock: FixedClock(BoraSample.today),
+    goalAssistant: SampleGoalAssistantRepository(
+      clock: FixedClock(BoraSample.today),
+    ),
+  );
+
+  /// Backend real em [baseUrl] (padrão `API_URL`). O token fica só em memória
+  /// na [SessionStore]; um 401 de rota autenticada expira a sessão.
+  /// A gamificação continua fixa (P18).
+  factory AppDependencies.http({
+    String? baseUrl,
+    http.Client? client,
+    bool showDemo = true,
+  }) {
+    final session = SessionStore();
+    final api = ApiClient(
+      baseUrl: baseUrl ?? AppConfig.apiUrl,
+      client: client ?? http.Client(),
+      token: () => session.token,
+      onUnauthorized: session.expire,
+    );
+    return AppDependencies(
+      auth: HttpAuthRepository(api),
+      scheduling: HttpSchedulingRepository(api),
+      goals: HttpGoalsRepository(api),
+      activation: HttpActivationRepository(api),
+      gamification: SampleGamificationRepository(),
+      clock: const SystemClock(),
+      goalAssistant: HttpGoalAssistantRepository(api),
+      session: session,
+      showDemo: showDemo,
+      commitments: HttpCommitmentsRepository(api),
+      singleTasks: HttpSingleTasksRepository(api),
+    );
+  }
+
+  final AuthRepository auth;
+  final SchedulingRepository scheduling;
+  final GoalsRepository goals;
+  final ActivationRepository activation;
+  final GamificationRepository gamification;
+  final Clock clock;
+
+  /// Assistente do novo objetivo (chat): `POST /goals/assistant/draft` no
+  /// modo `http` (IA1) e a fonte de EXEMPLO [SampleGoalAssistantRepository]
+  /// no modo `sample`.
+  final GoalAssistantRepository goalAssistant;
+  final SessionStore session;
+  final RampSession rampSession;
+
+  /// Tema claro/escuro do app (MP7).
+  final ThemeController theme;
+
+  /// Sugestões do Perfil (M29): só exemplo nos dois modos (MP9).
+  final FeedbackRepository feedback;
+
+  /// Compromissos da Semana e do Hoje (§5b, MC1–MC6).
+  final CommitmentsRepository commitments;
+
+  /// Tarefas únicas (MC7–MC11).
+  final SingleTasksRepository singleTasks;
+
+  /// Mostra o botão de demo no login (MP5, `SHOW_DEMO`).
+  final bool showDemo;
+}

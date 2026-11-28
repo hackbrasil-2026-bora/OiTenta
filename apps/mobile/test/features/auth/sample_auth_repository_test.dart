@@ -1,0 +1,55 @@
+import 'package:flutter_test/flutter_test.dart';
+import 'package:oitenta/features/auth/data/sample_auth_repository.dart';
+
+void main() {
+  final repo = SampleAuthRepository();
+
+  test(
+    'loginDemo devolve token e o usuário demo (Arthur) no formato do contrato',
+    () async {
+      final s = await repo.loginDemo();
+      expect(s.token, isNotEmpty);
+      expect(s.user.name, 'Arthur');
+      expect(s.user.timezone, 'America/Sao_Paulo');
+    },
+  );
+
+  test('register usa America/Sao_Paulo quando não recebe fuso (P1)', () async {
+    final u = await repo.register(
+      name: 'Bia',
+      email: 'bia@x.com',
+      password: 'Senha@123',
+    );
+    expect(u.name, 'Bia');
+    expect(u.timezone, 'America/Sao_Paulo');
+  });
+
+  test('login devolve uma sessão com o e-mail informado', () async {
+    final s = await repo.login(email: 'bia@x.com', password: 'Senha@123');
+    expect(s.user.email, 'bia@x.com');
+  });
+
+  test('me devolve o usuário demo', () async {
+    final u = await repo.me();
+    expect(u.name, 'Arthur');
+  });
+
+  test('updateProfile devolve o usuário com o nome e o e-mail novos', () async {
+    final u = await SampleAuthRepository().updateProfile(
+      name: 'Arthur Lima',
+      email: 'novo@bora.app',
+      currentPassword: 'Senha@123',
+    );
+    expect(u.name, 'Arthur Lima');
+    expect(u.email, 'novo@bora.app');
+  });
+
+  test('changePassword e deleteAccount respondem sem erro (exemplo)', () async {
+    final repo = SampleAuthRepository();
+    await repo.changePassword(
+      currentPassword: 'Senha@123',
+      newPassword: 'Nova@4567',
+    );
+    await repo.deleteAccount(currentPassword: 'Senha@123');
+  });
+}

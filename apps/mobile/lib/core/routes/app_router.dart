@@ -1,0 +1,209 @@
+import 'package:flutter/material.dart';
+import 'package:go_router/go_router.dart';
+
+import '../../features/activation/presentation/activation_pages.dart';
+import '../../features/auth/presentation/auth_pages.dart';
+import '../../features/gamification/presentation/garden_pages.dart';
+import '../../features/goals/domain/goal_suggestion.dart';
+import '../../features/goals/presentation/goals_pages.dart';
+import '../../features/goals/presentation/single_tasks_pages.dart';
+import '../../features/legal/legal_screen.dart';
+import '../../features/legal/legal_texts.dart';
+import '../../features/profile/presentation/profile_pages.dart';
+import '../../features/profile/presentation/routine_suggestion_pages.dart';
+import '../../features/scheduling/presentation/commitment_form_pages.dart';
+import '../../features/scheduling/presentation/scheduling_pages.dart';
+import '../di/app_dependencies.dart';
+import '../widgets/app_shell.dart';
+import 'app_routes.dart';
+
+/// Aba ativa pelo caminho (rampa conta como Hoje, como no protótipo).
+AppTab tabFor(String location) {
+  if (location.startsWith(AppRoutes.goals)) return AppTab.goals;
+  if (location.startsWith(AppRoutes.week)) return AppTab.week;
+  if (location.startsWith(AppRoutes.garden)) return AppTab.garden;
+  // O Perfil pertence ao grupo do Jardim, como no protótipo (MP10).
+  if (location.startsWith(AppRoutes.profile)) return AppTab.garden;
+  return AppTab.today;
+}
+
+const _tabRoutes = {
+  AppTab.today: AppRoutes.today,
+  AppTab.goals: AppRoutes.goals,
+  AppTab.week: AppRoutes.week,
+  AppTab.garden: AppRoutes.garden,
+};
+
+/// Rotas do app, todas aqui (regra 4 de `mobile-flutter.md`).
+GoRouter createRouter(
+  AppDependencies deps, {
+  String initialLocation = AppRoutes.login,
+}) {
+  NoTransitionPage<void> page(GoRouterState s, Widget child) =>
+      NoTransitionPage(key: s.pageKey, child: child);
+
+  return GoRouter(
+    initialLocation: initialLocation,
+    // 401 em rota autenticada: o cliente HTTP expira a sessão e o app volta ao login.
+    refreshListenable: deps.session,
+    redirect: (_, s) =>
+        s.matchedLocation != AppRoutes.login && deps.session.consumeExpired()
+        ? AppRoutes.login
+        : null,
+    routes: [
+      GoRoute(
+        path: AppRoutes.login,
+        builder: (_, _) => LoginPage(deps: deps),
+      ),
+      GoRoute(
+        path: AppRoutes.register,
+        builder: (_, _) => RegisterPage(deps: deps),
+      ),
+      // Públicas: abrem do cadastro (antes do login) e do Perfil.
+      GoRoute(
+        path: AppRoutes.terms,
+        builder: (context, _) =>
+            LegalPage(doc: termsOfUse, onBack: () => _back(context)),
+      ),
+      GoRoute(
+        path: AppRoutes.privacy,
+        builder: (context, _) =>
+            LegalPage(doc: privacyPolicy, onBack: () => _back(context)),
+      ),
+      GoRoute(
+        path: AppRoutes.forgotPassword,
+        builder: (_, _) => const ForgotPasswordPage(),
+      ),
+      GoRoute(
+        path: AppRoutes.onboarding,
+        builder: (_, _) => OnboardingPage(deps: deps),
+      ),
+      ShellRoute(
+        builder: (context, state, child) => AppShell(
+          current: tabFor(state.uri.path),
+          onTab: (t) => context.go(_tabRoutes[t]!),
+          child: child,
+        ),
+        routes: [
+          GoRoute(
+            path: AppRoutes.today,
+            pageBuilder: (_, s) => page(s, TodayPage(deps: deps)),
+          ),
+          GoRoute(
+            path: AppRoutes.goals,
+            pageBuilder: (_, s) => page(s, GoalsPage(deps: deps)),
+          ),
+          GoRoute(
+            path: AppRoutes.goalChat,
+            builder: (_, _) => GoalChatPage(deps: deps),
+          ),
+          GoRoute(
+            path: AppRoutes.newGoal,
+            builder: (_, s) => NewGoalPage(
+              deps: deps,
+              suggestion: s.extra is GoalSuggestion
+                  ? s.extra as GoalSuggestion
+                  : null,
+            ),
+          ),
+          GoRoute(
+            path: AppRoutes.manualTask,
+            builder: (_, _) => ManualTaskPage(deps: deps),
+          ),
+          GoRoute(
+            path: '${AppRoutes.trail}/:goalId',
+            builder: (_, s) =>
+                TrailPage(deps: deps, goalId: s.pathParameters['goalId']!),
+          ),
+          GoRoute(
+            path: AppRoutes.week,
+            pageBuilder: (_, s) => page(s, WeekPage(deps: deps)),
+          ),
+          GoRoute(
+            path: AppRoutes.garden,
+            pageBuilder: (_, s) => page(s, GardenPage(deps: deps)),
+          ),
+          GoRoute(
+            path: AppRoutes.commitmentNew,
+            builder: (_, s) => CommitmentFormPage(
+              deps: deps,
+              args: s.extra is CommitmentFormArgs
+                  ? s.extra as CommitmentFormArgs
+                  : const CommitmentFormArgs(),
+            ),
+          ),
+          GoRoute(
+            path: '${AppRoutes.commitmentNew}/:id',
+            builder: (_, s) => CommitmentFormPage(
+              deps: deps,
+              commitmentId: s.pathParameters['id'],
+              args: s.extra is CommitmentFormArgs
+                  ? s.extra as CommitmentFormArgs
+                  : const CommitmentFormArgs(),
+            ),
+          ),
+          GoRoute(
+            path: AppRoutes.singleTasks,
+            builder: (_, _) => SingleTasksPage(deps: deps),
+          ),
+          GoRoute(
+            path: AppRoutes.profile,
+            builder: (_, _) => ProfilePage(deps: deps),
+          ),
+          GoRoute(
+            path: AppRoutes.profileRoutine,
+            builder: (_, _) => RoutinePage(deps: deps),
+          ),
+          GoRoute(
+            path: AppRoutes.profileSuggestion,
+            builder: (_, _) => SuggestionPage(deps: deps),
+          ),
+          GoRoute(
+            path: AppRoutes.profileEdit,
+            builder: (_, _) => EditProfilePage(deps: deps),
+          ),
+          GoRoute(
+            path: AppRoutes.profilePassword,
+            builder: (_, _) => ChangePasswordPage(deps: deps),
+          ),
+          GoRoute(
+            path: AppRoutes.profileDelete,
+            builder: (_, _) => DeleteAccountPage(deps: deps),
+          ),
+          GoRoute(
+            path: AppRoutes.ramp,
+            pageBuilder: (_, s) => page(s, LadderPage(deps: deps)),
+          ),
+          GoRoute(
+            path: AppRoutes.warmup,
+            pageBuilder: (_, s) => page(s, WarmupPage(deps: deps)),
+          ),
+          GoRoute(
+            path: AppRoutes.challenge,
+            pageBuilder: (_, s) => page(s, ChallengePage(deps: deps)),
+          ),
+          GoRoute(
+            path: AppRoutes.micro,
+            pageBuilder: (_, s) => page(s, MicroPage(deps: deps)),
+          ),
+          GoRoute(
+            path: AppRoutes.focus,
+            pageBuilder: (_, s) => page(s, FocusPage(deps: deps)),
+          ),
+          GoRoute(
+            path: AppRoutes.log,
+            pageBuilder: (_, s) => page(s, LogPage(deps: deps)),
+          ),
+          GoRoute(
+            path: AppRoutes.celebration,
+            pageBuilder: (_, s) => page(s, CelebrationPage(deps: deps)),
+          ),
+        ],
+      ),
+    ],
+  );
+}
+
+/// Volta para a tela anterior; sem histórico, vai ao login.
+void _back(BuildContext context) =>
+    context.canPop() ? context.pop() : context.go(AppRoutes.login);

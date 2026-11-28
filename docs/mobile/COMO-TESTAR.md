@@ -1,32 +1,52 @@
 # Como testar o mobile
 
-Hoje o app (`apps/mobile`, Flutter) **ainda é a tela de exemplo do Flutter** (um contador). Nenhuma tela do Bora foi implementada. O que já existe é a configuração para rodar no simulador iOS e no iPhone físico, apontando para o backend de cada ambiente. Comandos testados em 10/11/2026.
+O app (`apps/mobile`, Flutter) tem as telas da fatia do MVP:
+- login (com "Entrar direto como Arthur (demo)") e cadastro, os dois como placeholder;
+- onboarding: grade por período (T02) e limite (T03);
+- Hoje (M01), Objetivos (M02), Semana (M03);
+- rampa: check-in, escada, aquecimento, desafio, micro-passo, foco, registro e celebração (M05 a M12);
+- trilha (M18);
+- novo objetivo, que começa vazio (M15, P20), e tarefa única (M16);
+- Jardim, como placeholder.
+
+**Só o simulador iOS foi testado.** O iPhone físico ficou fora desta fase.
+
+Os comandos rodam **a partir da raiz do repositório**, exceto onde está escrito `cd apps/mobile`. Testados em 10/11/2026.
 
 ## Antes de começar
 
 Você precisa de:
 - um **Mac com Xcode** instalado;
 - o **Flutter** instalado (`flutter --version`);
-- para o iPhone físico: conta de desenvolvedor da Apple configurada no Xcode e o **Modo de Desenvolvedor** ligado no iPhone (Ajustes > Privacidade e Segurança > Modo de Desenvolvedor).
+- para dados reais: o **backend no ar** na porta 4000, conforme `docs/backend/COMO-TESTAR.md`.
 
-Os comandos abaixo são rodados **a partir da raiz do repositório**, exceto onde está escrito `cd apps/mobile`.
+```bash
+cd apps/mobile && flutter pub get
+```
 
 ## Arquivos de ambiente
 
-A URL do backend vem de um arquivo em `apps/mobile/env/`:
+Em `apps/mobile/env/`, cada arquivo traz `API_URL` (o endereço do backend) e `DATA_SOURCE` (de onde vêm os dados):
 
-| Arquivo | Para que serve | URL |
+| Arquivo | Para que serve | `API_URL` |
 |---|---|---|
 | `local-simulator.json` | Simulador iOS no seu Mac | `http://localhost:4000` |
-| `local-iphone.json` | iPhone físico, backend no seu Mac | `http://<IP do seu Mac>:4000` (arquivo seu, fora do git) |
-| `developer.json` | Backend hospedado de desenvolvimento | ainda é exemplo, definido depois da hospedagem |
-| `prod.json` | Backend de produção | ainda é exemplo, definido depois da hospedagem |
+| `local-iphone.json` | iPhone físico (arquivo seu, fora do git; modelo em `local-iphone.example.json`) | `http://<IP do seu Mac>:4000` |
+| `developer.json`, `prod.json` | Backends hospedados | ainda exemplo |
 
-**Importante:** como o app ainda é a tela de exemplo, **trocar de ambiente não muda nada na tela**. A URL é lida em `lib/core/config/app_config.dart`, mas nenhuma tela usa o backend ainda.
+Cada arquivo também traz `SHOW_DEMO` (MP5): `true` mostra o botão "Entrar direto como Arthur (demo)" no login (`local-simulator`, `local-iphone` e `developer`); `false` esconde o botão (`prod`). Os ponta a ponta entram pelo demo, então precisam de um ambiente com `SHOW_DEMO=true`.
 
-## 1. Rodar no simulador iOS
+O `DATA_SOURCE` aceita dois valores:
+- `http` (padrão): usa o backend real;
+- `sample`: usa os dados de exemplo do protótipo, sem backend. Para usá-lo, acrescente `--dart-define=DATA_SOURCE=sample` ao comando.
 
-Abra o simulador e ligue um iPhone (o exemplo usa o iPhone 17; a lista dos seus está em `xcrun simctl list devices available`):
+Duas observações sobre os dados:
+- A gamificação mostra valores fixos nos dois modos (P18). No modo `http`, as tarefas leves do Hoje vêm vazias, porque estão fora do contrato.
+- O token fica **só em memória**: fechar o app desloga.
+
+## 1. Rodar no simulador iOS contra o backend real
+
+Com o backend no ar, abra o simulador e ligue um iPhone. A lista dos que você tem sai de `xcrun simctl list devices available`.
 
 ```bash
 open -a Simulator
@@ -36,63 +56,164 @@ open -a Simulator
 xcrun simctl boot "iPhone 17"
 ```
 
-Rode o app:
-
 ```bash
 cd apps/mobile && flutter run -d "iPhone 17" --dart-define-from-file=env/local-simulator.json
 ```
 
-Resultado esperado: `Xcode build done` (a primeira vez leva cerca de 1 minuto), depois `Flutter run key commands.` e o app abre no simulador com a tela **"Flutter Demo Home Page"**, o texto "You have pushed the button this many times:" e um botão **+** que soma 1 ao contador.
-
-Para sair: aperte `q` no terminal.
-
-## 2. Rodar no iPhone físico
-
-> ⚠️ **No teste de 10/11 este passo falhou** (ver "Problemas comuns"). Os comandos estão aqui porque é o caminho previsto.
-
-Crie o seu arquivo de ambiente a partir do modelo:
+A primeira vez leva cerca de 1 minuto (`Xcode build done`). Para recomeçar do onboarding, zere antes os dados do demo:
 
 ```bash
-cp -n apps/mobile/env/local-iphone.example.json apps/mobile/env/local-iphone.json
+npm --workspace apps/backend run db:reset-demo
 ```
 
-Descubra o IP do seu Mac na rede:
+### Roteiro manual
+
+1. **Entrar direto como Arthur (demo).** Sem grade cadastrada, o app vai para o onboarding.
+2. **Onboarding:** marque os períodos livres (T02), escolha o limite (T03) e conclua. O app chega ao **Hoje**.
+3. **Novo objetivo:** em Objetivos, toque em **Novo objetivo** e, no chat, em **Preencher à mão** (ou siga a seção "Novo objetivo com a IA" abaixo). A tela começa vazia (M15). Preencha título, prazo (cerca de 2 semanas à frente) e 2 etapas, e salve. Aparece o toast "2 etapas no calendário" e o app vai para a **Semana**.
+4. **Hoje:** a etapa aparece como **Próxima** se houver horário livre ainda hoje. Toque em **Vamos começar?**, escolha a energia e o tempo e siga a escada até o **Foco**.
+5. **Registrar:** encerre o foco, escolha **Concluí** e toque em **Registrar** e depois em **Voltar pra Hoje**.
+6. **Plano recalculado:**
+   - no Hoje, a etapa aparece como **Concluída**;
+   - em Objetivos, o objetivo mostra 50%;
+   - a trilha mostra "1 de 2 etapas concluídas".
+
+**Limite conhecido:** no mobile, a rampa só abre pelo Hoje. Se o dia não tiver mais bloco (depois de cerca de 22h45, por exemplo), não dá para iniciar a rampa naquele dia.
+
+
+### Acesso, Perfil e Jardim (rodada de 19/11/2026)
+
+1. **Criar conta:** no login, toque em **Criar conta**. Nome com uma palavra só vale (ex.: "Arthur"). A senha precisa de 8 caracteres ou mais, com maiúscula, minúscula, número e símbolo (ex.: `Senha@123`); a dica fica verde quando vale. Confirme a senha, marque os termos e toque em **Criar conta**: o app cria a conta, entra e vai para o **onboarding**, com o toast "Conta criada!".
+2. **Entrar de verdade:** feche e abra o app (o token fica só em memória). Digite e-mail e senha e toque em **Entrar**. Senha errada mostra "E-mail ou senha inválidos"; com a rotina já salva, o app vai ao **Hoje**.
+3. **Esqueci minha senha:** abre só uma tela provisória com "Voltar pro login" (MP4).
+4. **Perfil:** no Hoje, toque na inicial no canto superior direito. Aparecem o nome, o e-mail e o "Máximo por dia" vindos do backend.
+   - **Modo escuro** troca o tema do app inteiro (volta ao claro ao fechar o app).
+   - **Bloquear apps**, **Lembrete da rampa** e **Idioma** são só visuais (MP8).
+   - **Redefinir minha rotina:** pinte ou despinte células (8h–22h) e toque em **Salvar e recalcular plano**; o plano é recalculado e o "Máximo por dia" do Perfil atualiza. A grade salva **substitui** a anterior (MP11).
+   - **Enviar sugestão:** é só visual (MP9): mostra "Sugestão enviada", mas nada vai ao backend.
+5. **Jardim:** toque no Broto do canto superior esquerdo do Hoje (ou na aba Jardim). Os números são fixos do protótipo (P18); "Trocar por 50" não faz nada (MP13).
+
+### Compromissos e tarefas únicas (rodada de 20/11/2026)
+
+1. **Novo compromisso:** na aba **Semana** (modo Execução), toque em **+ Compromisso** à direita do título do dia. O formulário abre em "Só uma vez" naquele dia; troque para **Toda semana** para escolher os dias. "Até quando?": Sem fim, Fim do semestre (`SEMESTER_END` do `env`) ou Escolher data. Horário de 5 em 5 min, em 24 h. Se o horário bater com uma etapa do plano, aparece "Bate com …"; ao salvar, o plano é recalculado e a etapa muda de lugar.
+2. **Na lista do dia** (Semana e também Hoje, MC6): o compromisso aparece pela hora, com fundo cinza-esverdeado. Tocar abre o sheet:
+   - **Não vai ter nesse dia** → pílula "Não vai ter" e o horário fica livre para etapas; tocar de novo → **Vai ter sim**;
+   - **Editar** → "Só nesse dia" (muda só aquele dia: pílula "Horário alterado", depois **Voltar pro horário normal**), "Desse dia em diante" (divide a série) ou "Todas as semanas";
+   - **Excluir** → os mesmos três escopos (no compromisso único, exclui direto).
+3. **Tarefas únicas:** no Hoje, toque em **Tarefas únicas** (ao lado de "SEU DIA"). Digite, escolha a duração e "Quando?" (Hoje, Amanhã, Sem data, Escolher dia) e **Adicionar tarefa**. A tarefa entra no plano a partir do dia escolhido. Marque a caixa para concluir (vai para Feitas); a lixeira exclui. As tarefas não aparecem em Objetivos.
+
+### Novo objetivo com a IA (M13 → M15)
+
+Desde 12/11/2026, **Novo objetivo** (em Objetivos) abre o **chat** (decisão IA4):
+
+1. Escreva o objetivo (ex.: `Trabalho de Algoritmos — implementar e comparar 3 algoritmos de ordenação, entrega 24/11`) e envie. Depois do "analisando", abre a M15 preenchida com as etapas.
+2. Salve. O objetivo é gravado com `source: "ai"` e a estimativa original de cada etapa.
+3. Para o caminho manual, toque em **Preencher à mão** no chat: abre a M15 vazia, como antes.
+4. Se a IA falhar e o backend estiver com `AI_FALLBACK=none`, a M15 abre vazia (formulário manual, 4f).
+
+No modo `http`, quem responde é o backend (`POST /goals/assistant/draft`): com `AI_PROVIDER=rules` (padrão), o motor de regras; com o Ollama, o modelo local. Com o Ollama, o "analisando" dura de 6 a 12 s com o `qwen2.5:3b` (até 15 s, quando o rascunho cai nas regras); para saber qual motor respondeu, veja o log do backend (`docs/backend/COMO-TESTAR.md`, seção 8b, "Saber qual motor respondeu"). **Para trocar o motor, só o `apps/backend/.env` muda** (ver `docs/backend/COMO-TESTAR.md`, seção 8b) e o backend é reiniciado; o app não muda. No modo `sample`, o rascunho é o fixo do protótipo.
+
+Ponta a ponta do assistente (tarefa 11): com o backend no ar com `AI_PROVIDER=rules AI_FALLBACK=rules` (seção 2, passo 1) e o simulador ligado, zere o demo e rode:
 
 ```bash
-ipconfig getifaddr en0
+npm --workspace apps/backend run db:reset-demo
 ```
-
-Abra `apps/mobile/env/local-iphone.json` e troque `IP-DO-SEU-MAC` pelo número que apareceu (ex.: `http://192.168.1.5:4000`). O iPhone e o Mac precisam estar **na mesma rede Wi-Fi**.
-
-Veja o identificador do seu iPhone (ligado por cabo ou na mesma rede):
 
 ```bash
-flutter devices
+cd apps/mobile && flutter test integration_test/novo_objetivo_ia_test.dart -d <UDID> --dart-define-from-file=env/local-simulator.json
 ```
 
-Rode, trocando `<ID-DO-IPHONE>` pelo identificador da lista:
+Esperado: `All tests passed!` em cerca de 30 s. O `db:reset-demo` é obrigatório antes de cada execução (o teste faz o onboarding do demo).
+
+Para sair, aperte `q` no terminal.
+
+## 2. Testes
+
+**Unitários e de widget** (dados de exemplo):
 
 ```bash
-cd apps/mobile && flutter run -d <ID-DO-IPHONE> --dart-define-from-file=env/local-iphone.json
+cd apps/mobile && flutter analyze && flutter test
 ```
 
-Resultado esperado: o mesmo app de exemplo abre no iPhone. Na primeira vez, o iPhone pode pedir para confiar no desenvolvedor (Ajustes > Geral > VPN e Gerenciamento de Dispositivos).
+Esperado: `No issues found!` e `All tests passed!` (160 testes em 10/11).
+
+**Ponta a ponta no simulador** (`integration_test`, contra o backend real). Percorre login demo → onboarding → objetivo → Semana → Hoje → rampa → foco → registrar → plano recalculado.
+
+1. Compile e suba o backend num terminal separado:
+
+   ```bash
+   npm --workspace apps/backend run prisma:generate && npm run build
+   ```
+
+   ```bash
+   cd apps/backend && AI_PROVIDER=rules AI_FALLBACK=rules node dist/main
+   ```
+
+   As variáveis na frente garantem o motor de regras (determinístico, sem rede, IA6), mesmo que o seu `.env` aponte para o Ollama.
+
+2. Antes de **cada** execução, zere os dados do demo:
+
+   ```bash
+   npm --workspace apps/backend run db:reset-demo
+   ```
+
+3. Ligue o simulador e pegue o UDID dele:
+
+   ```bash
+   xcrun simctl boot "iPhone 17" && open -a Simulator
+   ```
+
+   ```bash
+   xcrun simctl list devices booted
+   ```
+
+4. Rode, trocando `<UDID>` pelo identificador da lista:
+
+   ```bash
+   cd apps/mobile && flutter test integration_test/fluxo_principal_test.dart -d <UDID> --dart-define-from-file=env/local-simulator.json
+   ```
+
+Esperado: `All tests passed!`, em cerca de 45 s mais o build do Xcode na primeira vez.
+
+**Compromissos e tarefas únicas** (`integration_test/compromissos_tarefas_test.dart`): conta nova a cada execução; o onboarding marca só as noites e o teste confere pela API que o compromisso tira a etapa do horário, cancelar/restaurar o dia, dia movido, excluir desse dia em diante e todas, o compromisso único, as tarefas únicas (criar, concluir, desfazer, excluir) e que Objetivos não as mostra. **Rode antes de cerca de 17:30** (precisa de noite livre hoje). Com o backend no ar:
+
+```bash
+cd apps/mobile && flutter test integration_test/compromissos_tarefas_test.dart -d <UDID> --dart-define-from-file=env/local-simulator.json
+```
+
+Esperado: `All tests passed!` em cerca de 55 s.
+
+**Acesso e Perfil** (`integration_test/acesso_perfil_test.dart`): cria uma conta nova a cada execução (não precisa do `db:reset-demo`) e percorre cadastro → onboarding → Perfil → Redefinir rotina (confere o `GET /scheduling/availability`) → modo escuro → sugestão → Jardim → reabrir o app → senha errada → login. Com o backend no ar:
+
+```bash
+cd apps/mobile && flutter test integration_test/acesso_perfil_test.dart -d <UDID> --dart-define-from-file=env/local-simulator.json
+```
+
+Esperado: `All tests passed!` em cerca de 30 s.
+
+**O teste depende do relógio real.** Ele precisa de um bloco no dia atual, então rode antes de cerca de 22h45 e fora da noite de domingo. Fora disso, ele falha com a mensagem "sem bloco hoje".
 
 ## 3. Rodar pelo VS Code
 
-O arquivo `.vscode/launch.json` tem uma opção de Run para cada ambiente. No VS Code, com a extensão **Flutter** instalada, abra a pasta raiz do repositório, vá em **Run and Debug** e escolha:
-
+O `.vscode/launch.json` tem uma opção de Run por ambiente:
 - **Bora mobile · local (simulador)**
 - **Bora mobile · local (iPhone físico)**
 - **Bora mobile · developer (hospedado)**
 - **Bora mobile · prod (hospedado)**
 
-Antes, escolha o aparelho no canto inferior direito do VS Code. Cada opção roda o mesmo comando dos passos 1 e 2, com o arquivo de ambiente correspondente. (Estas opções não foram testadas dentro do VS Code em 10/11; os comandos de terminal equivalentes foram.)
+Escolha o aparelho no canto inferior direito antes de rodar. Essas opções não foram testadas dentro do VS Code; os comandos de terminal equivalentes foram.
+
+## Comparações com o protótipo
+
+As capturas lado a lado (referência × simulador) e as diferenças justificadas estão em `docs/mobile/comparacoes/`.
 
 ## Problemas comuns
 
 | Sintoma | Causa provável | O que fazer |
 |---|---|---|
-| `The developer disk image could not be mounted on this device` (aconteceu no teste com o iPhone conectado **sem fio**) | O Xcode não conseguiu preparar o iPhone para depuração. Causas comuns: primeira conexão sem cabo, iPhone bloqueado, Modo de Desenvolvedor desligado ou Xcode sem suporte à versão do iOS | Ainda em análise; não foi resolvido nesta rodada |
-| `No devices found` | Simulador desligado ou iPhone não reconhecido | Rode `xcrun simctl boot "iPhone 17"` ou reconecte o iPhone |
-| O app no iPhone não alcança o backend | IP errado, redes diferentes ou backend parado | Confira o IP com `ipconfig getifaddr en0` e se o backend está no ar (`docs/backend/COMO-TESTAR.md`) |
+| Depois do demo, vai direto ao Hoje e não ao onboarding | O demo já tem grade gravada | `npm --workspace apps/backend run db:reset-demo` |
+| Tela de erro ao carregar o Hoje | Backend fora do ar | Suba o backend ou use `--dart-define=DATA_SOURCE=sample` |
+| Volta para a tela de login | Sessão expirou (401) ou o app foi fechado (token só em memória) | Entre de novo pelo demo |
+| `No devices found` | Simulador desligado | `xcrun simctl boot "iPhone 17"` |
+| O `integration_test` falha com "sem bloco hoje" | Horário tarde demais para caber um bloco no dia | Rode mais cedo |
+| O app no iPhone físico não alcança o backend | IP errado ou redes diferentes | Confira o IP com `ipconfig getifaddr en0`. Esta fase só testou o simulador |

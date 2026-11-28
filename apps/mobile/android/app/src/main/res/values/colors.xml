@@ -1,0 +1,5 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <!-- priSoft do tema claro; igual a _background no gerador do ícone. -->
+    <color name="ic_launcher_background">#D1FAE5</color>
+</resources>

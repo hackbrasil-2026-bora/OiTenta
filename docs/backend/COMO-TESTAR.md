@@ -1,6 +1,13 @@
 # Como testar o backend
 
-Hoje o backend (`apps/backend`, NestJS) tem só a **autenticação**: cadastro, login, `/auth/me` e `/auth/demo`, com documentação no Swagger. Todos os comandos abaixo são rodados **a partir da raiz do repositório** (a pasta `OiTenta`) e foram testados em 10/11/2026.
+O backend (`apps/backend`, NestJS) tem a fatia do MVP:
+- autenticação (cadastro, login, `/auth/me`, `/auth/demo`);
+- disponibilidade semanal (onboarding);
+- objetivos com etapas;
+- plano do dia e da semana;
+- rampa de ativação e registro de sessão, que recalcula o plano.
+
+O Swagger documenta tudo. Todos os comandos abaixo são rodados **a partir da raiz do repositório** (a pasta `OiTenta`) e foram testados em 10/11/2026.
 
 ## Antes de começar
 
@@ -8,17 +15,11 @@ Você precisa de:
 - **Node.js 24 ou mais novo** (`node -v`);
 - **Docker Desktop aberto** (o banco PostgreSQL roda num container). Confira com `docker info`: se der erro, abra o Docker Desktop e espere ele iniciar.
 
-## 1. Instalar e compilar
+## 1. Instalar
 
 ```bash
 npm install
 ```
-
-```bash
-npm run build
-```
-
-O build termina com `Tasks: 9 successful, 9 total`. Ele é necessário porque o backend usa os módulos de domínio já compilados (`modules/*/dist`).
 
 ## 2. Criar o arquivo de configuração `.env`
 
@@ -27,6 +28,20 @@ cp -n apps/backend/.env.example apps/backend/.env
 ```
 
 O `-n` não sobrescreve um `.env` que já exista. O arquivo copiado já funciona localmente. Se quiser, troque em `apps/backend/.env` os valores de `JWT_SECRET` e `DEMO_PASSWORD`; nunca coloque esse arquivo no git.
+
+## 2b. Gerar o cliente do Prisma e compilar
+
+O cliente do Prisma não vem pronto numa instalação nova; sem ele, o build do backend falha (`Module '"@prisma/client"' has no exported member 'PrismaClient'`).
+
+```bash
+npm --workspace apps/backend run prisma:generate
+```
+
+```bash
+npm run build
+```
+
+O build termina com `Tasks: 9 successful, 9 total`. Ele é necessário porque o backend usa os módulos de domínio já compilados (`modules/*/dist`).
 
 ## 3. Subir o banco
 
@@ -48,7 +63,7 @@ Na primeira vez aparece a migration `..._auth` aplicada. Depois disso: `No pendi
 npm --workspace apps/backend run prisma:generate
 ```
 
-Resultado esperado: `✔ Generated Prisma Client`.
+Resultado esperado: `✔ Generated Prisma Client`. Rode de novo sempre que uma migration nova chegar (o Prisma 7 não regenera o cliente sozinho).
 
 ## 5. Criar o usuário de demonstração (seed)
 
@@ -61,6 +76,58 @@ Nas próximas: `[seed] usuário demo já existe (demo@bora.app), nada a fazer.` 
 
 ## 6. Subir o backend
 
+### 6a. Se o `.env` usa o Ollama: conferir, subir e aquecer
+
+Veja qual motor de IA o seu `.env` usa:
+
+```bash
+grep -E '^AI_(PROVIDER|BASE_URL|MODEL)=' apps/backend/.env
+```
+
+- `AI_PROVIDER="rules"` (ou nenhuma linha `AI_PROVIDER`): **pule para o comando de subir, abaixo**.
+- `AI_PROVIDER="openai-compatible"` com outro endereço em `AI_BASE_URL` (fornecedor hospedado): também pule; não há nada a subir na sua máquina.
+- `AI_PROVIDER="openai-compatible"` com `AI_BASE_URL="http://localhost:11434/v1"` (Ollama): faça antes os três passos abaixo. A instalação do Ollama (uma vez só) está na seção 8b.
+
+1. **O Ollama está no ar?**
+
+   ```bash
+   curl -s http://localhost:11434/api/tags
+   ```
+
+   Esperado: um JSON com `"models":[...]`. Se não responder ("Connection refused" ou saída vazia), suba o serviço e repita o `curl` depois de alguns segundos:
+
+   ```bash
+   brew services start ollama
+   ```
+
+   Se o `brew` responder que o `ollama` não está instalado (`Formula ollama is not installed` ou `No available formula`), pare: falta a instalação da seção 8b.
+
+   **Depois de um `brew services start`, confira o keep-alive**: quando o serviço estava parado, o `start` recria o arquivo do serviço sem o `OLLAMA_KEEP_ALIVE`, e o modelo volta a sair da memória depois de 5 min parado.
+
+   ```bash
+   launchctl print gui/$(id -u)/sh.brew.ollama | grep OLLAMA_KEEP_ALIVE
+   ```
+
+   Esperado: `OLLAMA_KEEP_ALIVE => 24h`. Se não aparecer nada, repita o passo 2 de "Instalar e configurar o Ollama" (seção 8b).
+
+2. **O modelo do `.env` está instalado?**
+
+   ```bash
+   ollama list
+   ```
+
+   O valor de `AI_MODEL` precisa aparecer na coluna `NAME`. Se não aparecer, o modelo não foi baixado: veja "Instalar e configurar o Ollama" na seção 8b.
+
+3. **Aqueça o modelo** (carrega na memória; sem isso, o primeiro rascunho demora mais):
+
+   ```bash
+   MODEL=$(sed -nE 's/^AI_MODEL=["'\'']?([^"'\'' #]+).*/\1/p' apps/backend/.env); curl -s http://localhost:11434/api/generate -d "{\"model\":\"$MODEL\",\"keep_alive\":\"24h\"}"
+   ```
+
+   Esperado: `"done":true` e `"done_reason":"load"` (cerca de 1 s). O comando lê o `AI_MODEL` com ou sem aspas. Se vier `model ... not found`, volte ao passo 2.
+
+Para subir o backend:
+
 ```bash
 npx turbo run dev --filter=@oitenta/backend
 ```
@@ -69,7 +136,7 @@ Espere aparecer `Found 0 errors. Watching for file changes.` O backend fica em *
 
 ## 7. Abrir o Swagger
 
-Abra **http://localhost:4000/docs**. Deve aparecer a página **Bora API** com o grupo **auth** e as rotas `POST /auth/register`, `POST /auth/login`, `GET /auth/me` e `POST /auth/demo`. Nela dá para testar tudo pelo botão **Try it out**. Para a rota `/auth/me`, clique em **Authorize** (cadeado no topo) e cole o token do login.
+Abra **http://localhost:4000/docs**. Deve aparecer a página **Bora API** com as rotas de `auth`, `scheduling` (`/scheduling/availability`, `/scheduling/plan/day`, `/scheduling/plan/week`), `goals` (`/goals`, `/goals/{goalId}`) e `activation` (`/activation/ramp`, `/activation/sessions`). Nela dá para testar tudo pelo botão **Try it out**. Para as rotas protegidas, clique em **Authorize** (cadeado no topo) e cole o token do login.
 
 O contrato em JSON fica em http://localhost:4000/docs/openapi.json.
 
@@ -81,7 +148,7 @@ O contrato em JSON fica em http://localhost:4000/docs/openapi.json.
 curl -s -X POST http://localhost:4000/auth/register -H "Content-Type: application/json" -d '{"name":"Ana Souza","email":"ana.teste@bora.app","password":"Senha@123"}'
 ```
 
-Esperado: `{"user":{"id":"...","name":"Ana Souza","email":"ana.teste@bora.app"}}` (status 201). Se rodar de novo com o mesmo e-mail: `"statusCode":409,"error":"ConflictError","message":"E-mail já cadastrado."`.
+Esperado: `{"user":{"id":"...","name":"Ana Souza","email":"ana.teste@bora.app","timezone":"America/Sao_Paulo"}}` (status 201). Para outro fuso, inclua `"timezone":"America/Manaus"` no corpo (sem ele, vale `America/Sao_Paulo`). Se rodar de novo com o mesmo e-mail: `"statusCode":409,"error":"ConflictError","message":"E-mail já cadastrado."`.
 O nome precisa ter nome e sobrenome, e a senha precisa ter maiúscula, minúscula, número e símbolo; senão a resposta é 422.
 
 **Login:**
@@ -118,7 +185,236 @@ curl -s -X POST http://localhost:4000/auth/demo
 
 Esperado: `{"token":"eyJ...","user":{"name":"Usuária Demo","email":"demo@bora.app",...}}`. Se aparecer 404, rode o seed (passo 5).
 
+### Fluxo completo como demo (onboarding → objetivo → plano → rampa → registro)
+
+Antes, zere os dados do demo, para começar do onboarding. O comando apaga a grade, os objetivos, os blocos e as sessões do demo, e mantém o usuário:
+
+```bash
+npm --workspace apps/backend run db:reset-demo
+```
+
+Esperado: `[reset-demo] dados do usuário demo apagados (demo@bora.app).`
+
+```bash
+TOKEN=$(curl -s -X POST http://localhost:4000/auth/demo | node -pe 'JSON.parse(require("fs").readFileSync(0)).token')
+```
+
+**Disponibilidade:** de segunda a domingo, das 8h às 23h, com limite de 3h por dia (weekday 0 = segunda … 6 = domingo; minutos desde a meia-noite):
+
+```bash
+curl -s -X PUT http://localhost:4000/scheduling/availability -H "Authorization: Bearer $TOKEN" -H "Content-Type: application/json" -d '{"windows":[{"weekday":0,"startMinute":480,"endMinute":1380},{"weekday":1,"startMinute":480,"endMinute":1380},{"weekday":2,"startMinute":480,"endMinute":1380},{"weekday":3,"startMinute":480,"endMinute":1380},{"weekday":4,"startMinute":480,"endMinute":1380},{"weekday":5,"startMinute":480,"endMinute":1380},{"weekday":6,"startMinute":480,"endMinute":1380}],"dailyLimitMinutes":180}'
+```
+
+Esperado: `{"availability":{...},"plan":{"totalMinutes":0,"days":0,"goals":[]}}`.
+
+**Objetivo com 2 etapas:** troque o prazo por uma data cerca de 2 semanas à frente.
+
+```bash
+curl -s -X POST http://localhost:4000/goals -H "Authorization: Bearer $TOKEN" -H "Content-Type: application/json" -d '{"title":"Trabalho de Algoritmos","deadline":"2026-11-24","kind":"goal","steps":[{"title":"Ler o enunciado","estimatedMinutes":30,"microSteps":[]},{"title":"Escrever o resumo","estimatedMinutes":60,"microSteps":[]}]}'
+```
+
+Esperado: status 201, com `goal.id`, `goal.steps[].id` e `plan.goals[0].feasible: true`. Guarde os ids:
+
+```bash
+GOAL=$(curl -s http://localhost:4000/goals -H "Authorization: Bearer $TOKEN" | node -pe 'JSON.parse(require("fs").readFileSync(0)).goals[0].id')
+```
+
+```bash
+STEP=$(curl -s http://localhost:4000/goals/$GOAL -H "Authorization: Bearer $TOKEN" | node -pe 'JSON.parse(require("fs").readFileSync(0)).steps[0].id')
+```
+
+**Plano** (troque as datas por hoje e pela segunda-feira desta semana):
+
+```bash
+curl -s "http://localhost:4000/scheduling/plan/day?date=2026-11-10" -H "Authorization: Bearer $TOKEN"
+```
+
+```bash
+curl -s "http://localhost:4000/scheduling/plan/week?start=2026-11-09" -H "Authorization: Bearer $TOKEN"
+```
+
+Esperado: `{date, blocks[], usedMinutes, limitMinutes}` no dia e `{days[7]}` na semana. Cada bloco traz `goalTitle` e `stepTitle`. Uma semana que não começa na segunda dá 422.
+
+**Rampa:**
+
+```bash
+curl -s "http://localhost:4000/activation/ramp?goalId=$GOAL&stepId=$STEP&energy=high" -H "Authorization: Bearer $TOKEN"
+```
+
+Esperado: 5 degraus (`warmup`, `challenge`, `micro`, `focus`, `log`) e `"suggested":"micro"` (P14).
+
+**Registrar a sessão:** sem `blockId`, que é opcional. Troque as datas por instantes recentes.
+
+```bash
+curl -s -X POST http://localhost:4000/activation/sessions -H "Authorization: Bearer $TOKEN" -H "Content-Type: application/json" -d "{\"goalId\":\"$GOAL\",\"stepId\":\"$STEP\",\"energy\":\"high\",\"startedAt\":\"2026-11-10T22:00:00.000Z\",\"endedAt\":\"2026-11-10T22:25:00.000Z\",\"focusedMinutes\":25,\"outcome\":\"done\"}"
+```
+
+Esperado: status 201, `step.progressPct: 100` e o `plan` recalculado. No `GET /goals/$GOAL`, a primeira etapa aparece como `done`, e a segunda continua com `nextBlock` quando tem bloco futuro.
+
 Também dá para rodar tudo isso no VS Code com a extensão **REST Client**: abra `apps/backend/src/modules/auth/auth.integration.http` e clique em **Send Request** acima de cada requisição, de cima para baixo.
+
+### Compromissos e tarefas únicas (20/11/2026)
+
+No Swagger (`/docs`, seção **scheduling** e **goals**) ou no `apps/backend/src/modules/scheduling/scheduling.integration.http` / `apps/backend/src/orchestrators/orchestrators.integration.http`, com o token do demo:
+
+- `POST /scheduling/commitments` com `{ "title": "Aula de violão", "category": "pessoal", "startDate": "<hoje>", "startMinute": 1140, "endMinute": 1200, "recurrence": { "weekdays": [1] } }` → 201 com `commitment` e `plan`;
+- `GET /scheduling/commitments/occurrences?from=<hoje>&to=<hoje+13>` → as ocorrências com `status`;
+- `PUT /scheduling/commitments/<id>/occurrences/<data>` com `{ "status": "cancelled" }` → o dia fica livre; `DELETE` na mesma rota desfaz;
+- `PATCH /scheduling/commitments/<id>` com `{ "scope": "following", "fromDate": "<data>", "startMinute": 1200, "endMinute": 1260 }` → divide a série;
+- `DELETE /scheduling/commitments/<id>?scope=all` → apaga;
+- `POST /goals` com `{ "title": "Pagar a conta", "kind": "single", "plannedDate": "<amanhã>", "steps": [{ "title": "Pagar a conta", "estimatedMinutes": 15, "microSteps": [] }] }` → o bloco cai a partir de amanhã;
+- `GET /goals?kind=single`, `PATCH /goals/<id>/done` com `{ "done": true }`, `DELETE /goals/<id>`.
+
+Toda mutação devolve o `plan` recalculado. O contrato completo está em `docs/4-contrato-api.md` §5b e §3 ("Tarefas únicas"). O `db:reset-demo` também apaga os compromissos do demo.
+
+## 8b. Assistente do novo objetivo (IA)
+
+**Guia completo da IA, inclusive como ligá-la no backend hospedado (Render) com o Groq:** `docs/backend/CONFIGURAR-IA.md`.
+
+O `POST /goals/assistant/draft` transforma um texto livre num rascunho de objetivo com etapas (decisões IA1–IA7, contrato em `docs/4-contrato-api.md` §3). **Não grava nada**; quem grava é o `POST /goals`. O motor é escolhido no `apps/backend/.env`:
+
+| Variável | Valores | Padrão |
+|---|---|---|
+| `AI_PROVIDER` | `rules` (motor de regras, sem rede) ou `openai-compatible` (Ollama, Groq, OpenRouter...) | `rules` |
+| `AI_BASE_URL`, `AI_MODEL` | endereço e modelo do fornecedor | obrigatórios com `openai-compatible` |
+| `AI_API_KEY` | chave do fornecedor (segredo; só no `.env`) | vazio (o Ollama não pede) |
+| `AI_TIMEOUT_MS` | orçamento total do rascunho, em ms | `15000` |
+| `AI_FALLBACK` | `rules` (a IA falhou ou demorou → rascunho do motor de regras) ou `none` (503 → o app abre o formulário manual) | `rules` (provisório até 13/11, IA6) |
+| `AI_LOG_CONTENT` | `true` põe o texto do usuário e a resposta no log (só desenvolvimento) | `false` |
+| `AI_REASONING_EFFORT` | `none`, `low`, `medium` ou `high`: esforço de raciocínio, só para modelos que raciocinam (ex.: `openai/gpt-oss-120b` no Groq). `low` gasta menos tokens da cota gratuita | vazio (o campo não vai ao fornecedor) |
+
+Valor desconhecido (ex.: `AI_PROVIDER=fake`) ou `openai-compatible` sem `AI_BASE_URL`/`AI_MODEL` → o backend **não sobe** e diz o que falta (sem mostrar a chave).
+
+**Se o seu `.env` é anterior a 12/11/2026**, ele não tem as variáveis `AI_*` (o `cp -n` do passo 2 não sobrescreve). Sem elas, vale o padrão `rules`. Para tê-las no arquivo, copie o bloco "Assistente do novo objetivo" do `apps/backend/.env.example` para o fim do `apps/backend/.env`.
+
+**Trocar o motor:** edite o `apps/backend/.env` e **reinicie o backend** (`Ctrl + C` e o passo 6 de novo). O `.env` só é lido na subida.
+
+### Testar no Swagger
+
+1. Rode `curl -s -X POST http://localhost:4000/auth/demo` e copie o `token`.
+2. Em http://localhost:4000/docs, clique em **Authorize** e cole o token.
+3. Abra **POST /goals/assistant/draft** → **Try it out**. O corpo de exemplo já traz o texto de referência; clique em **Execute**.
+4. Esperado com `AI_PROVIDER=rules`: 200, `draft.title` "Trabalho de Algoritmos", `draft.deadline` no próximo 24/11, `category` `assignment`, 5 etapas que somam 300 min (`totalMinutes`) e `engine` `rules`.
+5. Troque o texto por `Estudar para a prova de Cálculo` (sem data): `deadline` vem `null` e `missingFields` vem `["deadline"]`. Com `"   "`: 422.
+
+### Testar pelo terminal
+
+```bash
+TOKEN=$(curl -s -X POST http://localhost:4000/auth/demo | node -pe 'JSON.parse(require("fs").readFileSync(0)).token')
+```
+
+```bash
+curl -s -X POST http://localhost:4000/goals/assistant/draft -H "Authorization: Bearer $TOKEN" -H "Content-Type: application/json" -d '{"text":"Trabalho de Algoritmos — implementar e comparar 3 algoritmos de ordenação, entrega 24/11"}'
+```
+
+Esperado: `{"draft":{"title":"Trabalho de Algoritmos","deadline":"2026-11-24",...},"engine":"rules"}`.
+
+### Testar com o Ollama (IA local, nada sai da sua máquina)
+
+Testado em 16/11/2026 num Mac com Apple M4 Pro e 48 GB de RAM, Ollama 0.40.16 instalado pelo Homebrew.
+
+#### Instalar e configurar o Ollama (uma vez)
+
+1. **Instale e deixe o serviço subindo sozinho** (a cada login, sem terminal aberto):
+
+   ```bash
+   brew install ollama
+   ```
+
+   ```bash
+   brew services start ollama
+   ```
+
+2. **Mantenha o modelo carregado por 24 h.** Sem isso, o Ollama tira o modelo da memória depois de 5 min parado, e o próximo rascunho fica mais lento. Acrescente a variável ao serviço e recarregue-o:
+
+   ```bash
+   /usr/libexec/PlistBuddy -c "Add :EnvironmentVariables:OLLAMA_KEEP_ALIVE string 24h" ~/Library/LaunchAgents/sh.brew.ollama.plist
+   ```
+
+   Se responder `Entry Already Exists`, a variável já está no arquivo: troque `Add` por `Set` no mesmo comando (ou siga para o próximo).
+
+   ```bash
+   launchctl bootout gui/$(id -u)/sh.brew.ollama; launchctl bootstrap gui/$(id -u) ~/Library/LaunchAgents/sh.brew.ollama.plist
+   ```
+
+   Se o `bootstrap` responder `Bootstrap failed: 5: Input/output error`, espere 1 s e rode de novo só o `launchctl bootstrap ...`.
+
+   Confira com `launchctl print gui/$(id -u)/sh.brew.ollama | grep OLLAMA_KEEP_ALIVE` (esperado: `OLLAMA_KEEP_ALIVE => 24h`) e, depois de um rascunho, com `ollama ps` (coluna `UNTIL`: `24 hours from now`). **Atenção:** `brew services start ollama` (com o serviço parado, por exemplo depois de um `brew services stop`), `brew services restart ollama` e `brew upgrade ollama` recriam esse arquivo sem a variável; depois deles, repita os dois comandos.
+
+3. **Baixe os modelos.** Qual usar está em aberto no `afazeres.md` ([DECIDIR] "Modelo local do Ollama"). Enquanto isso, o `.env` do Mac de desenvolvimento usa o `qwen2.5:3b`, **provisório**: é o único dos dois que cabe nos 15 s do orçamento. O `qwen2.5:7b` escreve etapas melhores, mas passa dos 15 s.
+
+   ```bash
+   ollama pull qwen2.5:3b
+   ```
+
+   ```bash
+   ollama pull qwen2.5:7b
+   ```
+
+   O primeiro tem 1,9 GB e o segundo, 4,7 GB. Números em `docs/8-avaliacao-ia.md`:
+
+   | Modelo | Rascunho com o modelo carregado | Primeiro rascunho (modelo frio) | Respostas do LLM no `ai:eval` (orçamento de 15 s) |
+   |---|---|---|---|
+   | `qwen2.5:3b` | 5,6–12,2 s | 9,7 s | 7 de 10 (3 caem nas regras por tempo; no texto 2, por repetir etapas sem parar) |
+   | `qwen2.5:7b` | 12,1–21,1 s | 21,9 s | 0 de 10 (todas passam de 15 s; com 120 s, 10 de 10) |
+
+#### Usar o Ollama no backend
+
+1. **Configure o `apps/backend/.env`**:
+
+   ```
+   AI_PROVIDER="openai-compatible"
+   AI_BASE_URL="http://localhost:11434/v1"
+   AI_MODEL="qwen2.5:3b"
+   AI_API_KEY=""
+   ```
+
+   `qwen2.5:3b` é o provisório do item acima; para o 7b, troque o `AI_MODEL`.
+
+   Mantenha `AI_FALLBACK="rules"` e `AI_TIMEOUT_MS="15000"`. Não ponha chave: o Ollama não pede.
+
+2. **Confira, suba e aqueça o Ollama** (passo 6a) e **reinicie o backend** (passo 6). O `.env` só é lido na subida.
+
+3. **Repita o `curl` do rascunho** (acima). Com o `qwen2.5:3b`, ele leva de 6 a 12 s (até 15 s, quando cai nas regras).
+
+#### Saber qual motor respondeu
+
+- **Na resposta:** `"engine":"llm"` (o modelo respondeu) ou `"engine":"rules"` (motor de regras).
+- **No terminal do backend** (sem a chave e sem o texto do usuário):
+  - o LLM respondeu: duas linhas `outcome=ok`, uma por chamada:
+
+    ```
+    assistant op=parseGoal provider=openai-compatible model=qwen2.5:3b prompt=parse-goal@v1 ms=2660 outcome=ok tokens_in=429 tokens_out=54
+    assistant op=suggestSteps provider=openai-compatible model=qwen2.5:3b prompt=suggest-steps@v1 ms=5750 outcome=ok tokens_in=434 tokens_out=215
+    ```
+
+  - o LLM falhou e a reserva respondeu: `assistant op=draft ... outcome=assistant.timeout fallback=rules` (ou `assistant.unavailable`, `assistant.invalid-output`), e a linha da chamada mostra o motivo (`outcome=timeout`, `network` (Ollama parado), `http_404` (modelo não instalado), `invalid_json`, `invalid_output` ou `error`). Isso é a reserva funcionando, não um erro;
+  - com `AI_PROVIDER="rules"`: nenhuma linha `assistant`.
+- Para ver o texto e a resposta do modelo no log, acrescente `AI_LOG_CONTENT="true"` (só na sua máquina).
+
+#### Comparar os motores
+
+Com os 10 textos de referência (não grava nada):
+
+```bash
+npm --workspace apps/backend run ai:eval
+```
+
+Ele usa o motor do `.env`. Para rodar outro motor sem editar o arquivo, ponha as variáveis na frente do comando (elas têm prioridade sobre o `.env`):
+
+```bash
+AI_PROVIDER=rules AI_MODEL= AI_BASE_URL= npm --workspace apps/backend run ai:eval
+```
+
+```bash
+AI_PROVIDER=openai-compatible AI_BASE_URL=http://localhost:11434/v1 AI_MODEL=qwen2.5:7b AI_API_KEY= npm --workspace apps/backend run ai:eval
+```
+
+Resultados de 12/11 e 16/11/2026 em `docs/8-avaliacao-ia.md`.
+
+### Voltar para o motor de regras
+
+No `apps/backend/.env`, ponha `AI_PROVIDER="rules"` (ou apague as linhas `AI_*`) e reinicie o backend. As linhas `AI_BASE_URL` e `AI_MODEL` podem ficar: o motor de regras as ignora. O Ollama pode continuar no ar. Os testes automáticos (unitários, integração, Playwright e `integration_test`) usam sempre o motor de regras, sem rede.
 
 ## 9. Rodar os testes
 
@@ -126,13 +422,21 @@ Também dá para rodar tudo isso no VS Code com a extensão **REST Client**: abr
 npm run test --workspace @oitenta/auth
 ```
 
-Esperado: `Tests: 25 passed, 25 total` e a linha `All files` com 100 em todas as colunas.
+Esperado: nenhum teste falhando e a linha `All files` com 100 em todas as colunas. O mesmo vale para `@oitenta/goals`, `@oitenta/scheduling` e `@oitenta/activation`.
 
 ```bash
 npm run test --workspaces --if-present
 ```
 
 Roda os testes de todos os pacotes; nenhum deve falhar.
+
+**Testes de integração do backend** (sobem a aplicação e usam o banco local; o Postgres precisa estar no ar, passo 3):
+
+```bash
+npm --workspace apps/backend run test:e2e
+```
+
+Esperado: `Test Suites: 9 passed` e `Tests: 120 passed` (número de 10/11), sem falhas. Os testes criam usuários próprios e não mexem no demo. O script liga a opção `--experimental-vm-modules` do Node, necessária para o Jest carregar o `@nestjs/config` (que é só ESM).
 
 ## 10. Desligar
 
@@ -151,5 +455,13 @@ Os dados do banco continuam guardados para a próxima vez.
 | `failed to connect to the docker API` | Docker Desktop fechado | Abra o Docker Desktop e espere iniciar |
 | `JWT_SECRET não definido no .env.` ao subir | Falta o `.env` | Rode o passo 2 |
 | `Cannot find module '@oitenta/auth'` | Módulos não compilados | Rode `npm run build` |
+| `has no exported member 'PrismaClient'` no build | Cliente do Prisma não gerado | Rode `npm --workspace apps/backend run prisma:generate` |
 | `Port 4000 is in use` | Outro backend já está rodando | Feche o outro terminal ou encerre o processo com `kill $(lsof -ti tcp:4000)` |
 | `/auth/demo` responde 404 | Seed não rodado | Rode o passo 5 |
+| `POST /goals` ou `GET /scheduling/plan/day` responde 404 "Disponibilidade não encontrada." | Usuário sem onboarding (P12) | Faça o `PUT /scheduling/availability` antes |
+| Erro 500 logo depois de uma migration nova | Cliente do Prisma desatualizado | Rode `prisma:generate` e `npm run build` de novo |
+| O backend não sobe e diz `AI_PROVIDER inválido` ou `exige AI_BASE_URL e AI_MODEL` | Variável `AI_*` errada ou faltando | Corrija o `apps/backend/.env` (seção 8b) |
+| O rascunho sempre volta com `"engine":"rules"` com o Ollama | Modelo inexistente, Ollama fora do ar ou resposta lenta/inválida | Veja o `outcome=` no log do backend e confira `ollama list` (seção 8b) |
+| `curl http://localhost:11434/api/tags` não responde | Serviço do Ollama parado | `brew services start ollama` e confira o keep-alive (passo 6a) |
+| Com o Ollama, um texto leva 15 s e volta `"engine":"rules"` com `outcome=timeout` | Modelo frio, modelo grande demais para 15 s (`qwen2.5:7b`) ou o `qwen2.5:3b` repetindo etapas sem parar | Aqueça o modelo (passo 6a). Se repetir sempre no mesmo texto, é o limite conhecido do `qwen2.5:3b` (`docs/8-avaliacao-ia.md`) |
+| `ollama ps` mostra `UNTIL` em 5 minutos, e não em 24 horas | O `OLLAMA_KEEP_ALIVE` saiu do serviço (`brew services start` com o serviço parado, `brew services restart` ou `brew upgrade`) | Repita o passo 2 de "Instalar e configurar o Ollama" (seção 8b) |

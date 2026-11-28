@@ -9,10 +9,10 @@
 <x-dc>
 <helmet>
 <link rel="preconnect" href="https://fonts.googleapis.com">
-<link href="https://fonts.googleapis.com/css2?family=Fredoka:wght@500;600;700&family=Nunito:wght@400;600;700;800&display=swap" rel="stylesheet">
-<link rel="stylesheet" href="https://unpkg.com/@phosphor-icons/web@2.1.1/src/regular/style.css">
-<link rel="stylesheet" href="https://unpkg.com/@phosphor-icons/web@2.1.1/src/bold/style.css">
-<link rel="stylesheet" href="https://unpkg.com/@phosphor-icons/web@2.1.1/src/fill/style.css">
+<link href="https://fonts.googleapis.com/css2?family=Fredoka:wght@500;600;700&amp;family=Nunito:wght@400;600;700;800&amp;display=swap" rel="stylesheet">
+<link rel="stylesheet" href="./vendor/phosphor/regular/style.css">
+<link rel="stylesheet" href="./vendor/phosphor/bold/style.css">
+<link rel="stylesheet" href="./vendor/phosphor/fill/style.css">
 <script src="./bora-data.js"></script>
 <style>
 body { margin: 0; background: #EAF5F0; font-family: 'Nunito', sans-serif; color: #0E1F1A; -webkit-font-smoothing: antialiased; }
@@ -471,11 +471,17 @@ button, input, textarea { font-family: inherit; }
             <div style="display: flex; align-items: center; gap: 6px;"><div style="width: 8px; height: 8px; border-radius: 999px; background: {{ l.color }};"></div><div style="font: 600 12px/16px 'Nunito', sans-serif; color: var(--tx2);">{{ l.name }}</div></div>
           </sc-for>
         </div>
-        <div style="margin-top: 24px; font: 800 12px/16px 'Nunito', sans-serif; letter-spacing: .06em; text-transform: uppercase; color: var(--tx2);">{{ dayLabel }}</div>
+        <div style="margin-top: 20px; display: flex; align-items: center; justify-content: space-between; gap: 8px; min-height: 36px;">
+          <div style="font: 800 12px/16px 'Nunito', sans-serif; letter-spacing: .06em; text-transform: uppercase; color: var(--tx2); min-width: 0;">{{ dayLabel }}</div>
+          <sc-if value="{{ calExec }}" hint-placeholder-val="{{ true }}">
+            <button onClick="{{ cpAddDia }}" style="flex-shrink: 0; height: 36px; padding: 0 12px; display: flex; align-items: center; gap: 6px; border: 0; border-radius: 999px; background: transparent; color: var(--blue); font: 800 14px/1 'Nunito', sans-serif; cursor: pointer;" style-hover="background: var(--blueSoft);" style-active="background: var(--blueSoft);"><i class="ph-bold ph-plus" style="font-size: 16px;"></i>Compromisso</button>
+          </sc-if>
+        </div>
 
         <sc-if value="{{ calExec }}" hint-placeholder-val="{{ true }}">
           <div style="margin-top: 12px; display: flex; flex-direction: column; gap: 12px;">
             <sc-for list="{{ dayList }}" as="e" hint-placeholder-count="2">
+              <sc-if value="{{ e.isEt }}" hint-placeholder-val="{{ true }}">
               <div style="display: grid; grid-template-columns: 40px minmax(0, 1fr); column-gap: 10px;">
                 <div style="padding-top: 16px; font: 700 13px/16px 'Nunito', sans-serif; color: var(--tx2); font-variant-numeric: tabular-nums; text-align: center;">{{ e.time }}</div>
                 <div style="display: flex; flex-direction: column; gap: 8px; padding: 14px 16px; background: var(--surface); border: {{ e.border }}; border-radius: 16px; box-shadow: var(--shadow);">
@@ -490,6 +496,27 @@ button, input, textarea { font-family: inherit; }
                   <div style="display: flex; align-items: center; gap: 4px; font: 700 13px/16px 'Nunito', sans-serif; color: var(--tx2);"><i class="ph ph-clock" style="font-size: 16px;"></i>{{ e.dur }}</div>
                 </div>
               </div>
+              </sc-if>
+              <sc-if value="{{ e.isCp }}" hint-placeholder-val="{{ false }}">
+              <div style="display: grid; grid-template-columns: 40px minmax(0, 1fr); column-gap: 10px;">
+                <div style="padding-top: 14px; font: 700 13px/16px 'Nunito', sans-serif; color: var(--tx2); font-variant-numeric: tabular-nums; text-align: center;">{{ e.time }}</div>
+                <button onClick="{{ e.open }}" aria-label="Opções de {{ e.title }}" style="display: flex; align-items: center; gap: 12px; width: 100%; padding: 12px 10px 12px 12px; background: {{ e.bg }}; border: {{ e.border }}; border-radius: 16px; cursor: pointer; text-align: left;">
+                  <div style="width: 36px; height: 36px; border-radius: 12px; background: var(--surface); border: 1px solid var(--border); display: flex; align-items: center; justify-content: center; flex-shrink: 0;"><i class="{{ e.cpIcon }}" style="font-size: 20px; color: var(--tx2);"></i></div>
+                  <div style="flex: 1; min-width: 0; display: flex; flex-direction: column; gap: 2px;">
+                    <div style="display: flex; align-items: center; gap: 4px; min-width: 0; font: 700 12px/16px 'Nunito', sans-serif; color: var(--tx2);">
+                      <sc-if value="{{ e.isRep }}" hint-placeholder-val="{{ true }}"><i class="ph ph-repeat" style="font-size: 14px; flex-shrink: 0;"></i></sc-if>
+                      <div style="white-space: nowrap; overflow: hidden; text-overflow: ellipsis;">Compromisso · {{ e.cpRep }}</div>
+                    </div>
+                    <div style="font: 600 16px/22px 'Fredoka', sans-serif; color: {{ e.titleColor }}; text-decoration: {{ e.deco }}; text-wrap: pretty;">{{ e.title }}</div>
+                    <div style="display: flex; align-items: center; flex-wrap: wrap; gap: 4px 8px;">
+                      <div style="font: 700 13px/16px 'Nunito', sans-serif; color: var(--tx2); font-variant-numeric: tabular-nums;">{{ e.cpHora }}</div>
+                      <sc-if value="{{ e.hasPill }}" hint-placeholder-val="{{ false }}"><div style="font: 800 12px/16px 'Nunito', sans-serif; padding: 3px 9px; border-radius: 999px; background: {{ e.pillBg }}; color: {{ e.pillColor }}; flex-shrink: 0;">{{ e.pill }}</div></sc-if>
+                    </div>
+                  </div>
+                  <i class="ph-bold ph-caret-right" style="font-size: 16px; color: var(--tx2); flex-shrink: 0;"></i>
+                </button>
+              </div>
+              </sc-if>
             </sc-for>
           </div>
         </sc-if>
@@ -1030,6 +1057,263 @@ button, input, textarea { font-family: inherit; }
       </div>
     </sc-if>
 
+    <!-- LOGIN -->
+    <sc-if value="{{ is.login }}" hint-placeholder-val="{{ false }}">
+      <div style="position: absolute; top: 47px; left: 0; right: 0; bottom: 0; overflow-y: auto; scrollbar-width: none; padding: 20px 20px 40px; box-sizing: border-box; display: flex; flex-direction: column;">
+        <div style="display: flex; justify-content: center; margin-top: 16px;">{{ brotoLogin }}</div>
+        <div style="margin-top: 12px; font: 600 26px/32px 'Fredoka', sans-serif; color: var(--tx); text-align: center;">Que bom te ver!</div>
+        <div style="margin-top: 2px; font: 400 16px/24px 'Nunito', sans-serif; color: var(--tx2); text-align: center; text-wrap: pretty;">Entra aí pra continuar de onde parou.</div>
+        <div style="margin-top: 24px; font: 800 12px/16px 'Nunito', sans-serif; letter-spacing: .06em; text-transform: uppercase; color: var(--tx2);">E-mail</div>
+        <input value="{{ auEmail }}" onChange="{{ onAuEmail }}" placeholder="seu@email.com" type="email" style="flex-shrink: 0; margin-top: 8px; width: 100%; height: 52px; box-sizing: border-box; padding: 0 14px; border-radius: 12px; border: 2px solid var(--border); background: var(--surface); color: var(--tx); font: 600 15px/20px 'Nunito', sans-serif; outline: none;" style-focus="border-color: var(--blue);">
+        <div style="margin-top: 20px; font: 800 12px/16px 'Nunito', sans-serif; letter-spacing: .06em; text-transform: uppercase; color: var(--tx2);">Senha</div>
+        <div style="position: relative; flex-shrink: 0; margin-top: 8px;">
+          <input type="{{ auPassType }}" value="{{ auSenha }}" onChange="{{ onAuSenha }}" placeholder="Sua senha" style="width: 100%; height: 52px; box-sizing: border-box; padding: 0 52px 0 14px; border-radius: 12px; border: 2px solid var(--border); background: var(--surface); color: var(--tx); font: 600 15px/20px 'Nunito', sans-serif; outline: none;" style-focus="border-color: var(--blue);">
+          <button onClick="{{ auTogglePass }}" aria-label="{{ auEyeLabel }}" style="position: absolute; right: 4px; top: 4px; width: 44px; height: 44px; border: 0; border-radius: 999px; background: transparent; display: flex; align-items: center; justify-content: center; cursor: pointer; padding: 0;"><i class="{{ auEyeIcon }}" style="font-size: 20px; color: var(--tx2);"></i></button>
+        </div>
+        <button onClick="{{ goEsqueci }}" style="margin-top: 6px; margin-right: -14px; align-self: flex-end; font-size: 14px; height: 44px; padding: 0 14px; border: 0; border-radius: 999px; background: transparent; color: var(--blue); font: 800 16px/1 'Nunito', sans-serif; cursor: pointer;" style-hover="background: var(--blueSoft);">Esqueci minha senha</button>
+        <button onClick="{{ auEntrar }}" style="margin-top: 24px; display: flex; align-items: center; justify-content: center; width: 100%; height: 52px; padding: 0 24px; border: 0; border-radius: 999px; background: {{ auLoginBtn.bg }}; color: {{ auLoginBtn.color }}; font: 800 16px/1 'Nunito', sans-serif; box-shadow: {{ auLoginBtn.shadow }}; cursor: {{ auLoginBtn.cursor }}; transition: transform .08s, box-shadow .08s; flex-shrink: 0;" style-active="transform: translateY(3px); box-shadow: none;">Entrar</button>
+        <div style="margin-top: 20px; display: flex; align-items: center; gap: 12px;">
+          <div style="flex: 1; height: 1px; background: var(--border);"></div>
+          <div style="font: 600 12px/16px 'Nunito', sans-serif; color: var(--tx2);">ou</div>
+          <div style="flex: 1; height: 1px; background: var(--border);"></div>
+        </div>
+        <button onClick="{{ auGoogle }}" style="margin-top: 20px; width: 100%; height: 52px; flex-shrink: 0; display: flex; align-items: center; justify-content: center; gap: 10px; border: 2px solid var(--border); border-radius: 999px; background: var(--surface); color: var(--tx); font: 800 16px/1 'Nunito', sans-serif; box-shadow: 0 3px 0 var(--border); cursor: pointer; transition: transform .08s, box-shadow .08s;" style-active="transform: translateY(3px); box-shadow: none; background: var(--s2);"><i class="ph-bold ph-google-logo" style="font-size: 20px;"></i>Entrar com Google</button>
+        <div style="flex: 1; min-height: 24px;"></div>
+        <div style="display: flex; align-items: center; justify-content: center; gap: 0;">
+          <div style="font: 600 14px/20px 'Nunito', sans-serif; color: var(--tx2);">Ainda não tem conta?</div>
+          <button onClick="{{ goCadastro }}" style="font-size: 14px; padding: 0 10px; height: 44px; padding: 0 14px; border: 0; border-radius: 999px; background: transparent; color: var(--blue); font: 800 16px/1 'Nunito', sans-serif; cursor: pointer;" style-hover="background: var(--blueSoft);">Criar conta</button>
+        </div>
+      </div>
+    </sc-if>
+
+    <!-- CRIAR CONTA -->
+    <sc-if value="{{ is.cadastro }}" hint-placeholder-val="{{ false }}">
+      <div style="position: absolute; top: 95px; left: 0; right: 0; bottom: 0; overflow-y: auto; scrollbar-width: none; padding: 20px 20px 40px; box-sizing: border-box; display: flex; flex-direction: column;">
+        <div style="font: 600 26px/32px 'Fredoka', sans-serif; color: var(--tx);">Criar sua conta</div>
+        <div style="margin-top: 2px; font: 600 14px/20px 'Nunito', sans-serif; color: var(--tx2); text-wrap: pretty;">Leva menos de 1 minuto. Depois eu te ajudo a montar o plano.</div>
+        <div style="margin-top: 20px; font: 800 12px/16px 'Nunito', sans-serif; letter-spacing: .06em; text-transform: uppercase; color: var(--tx2);">Como quer ser chamado?</div>
+        <input value="{{ cdNome }}" onChange="{{ onCdNome }}" placeholder="Ex.: Arthur" style="flex-shrink: 0; margin-top: 8px; width: 100%; height: 52px; box-sizing: border-box; padding: 0 14px; border-radius: 12px; border: 2px solid var(--border); background: var(--surface); color: var(--tx); font: 600 15px/20px 'Nunito', sans-serif; outline: none;" style-focus="border-color: var(--blue);">
+        <div style="margin-top: 20px; font: 800 12px/16px 'Nunito', sans-serif; letter-spacing: .06em; text-transform: uppercase; color: var(--tx2);">E-mail</div>
+        <input value="{{ cdEmail }}" onChange="{{ onCdEmail }}" placeholder="seu@email.com" type="email" style="flex-shrink: 0; margin-top: 8px; width: 100%; height: 52px; box-sizing: border-box; padding: 0 14px; border-radius: 12px; border: 2px solid var(--border); background: var(--surface); color: var(--tx); font: 600 15px/20px 'Nunito', sans-serif; outline: none;" style-focus="border-color: var(--blue);">
+        <div style="margin-top: 20px; font: 800 12px/16px 'Nunito', sans-serif; letter-spacing: .06em; text-transform: uppercase; color: var(--tx2);">Senha</div>
+        <div style="position: relative; flex-shrink: 0; margin-top: 8px;">
+          <input type="{{ auPassType }}" value="{{ cdSenha }}" onChange="{{ onCdSenha }}" placeholder="Crie uma senha" style="width: 100%; height: 52px; box-sizing: border-box; padding: 0 52px 0 14px; border-radius: 12px; border: 2px solid var(--border); background: var(--surface); color: var(--tx); font: 600 15px/20px 'Nunito', sans-serif; outline: none;" style-focus="border-color: var(--blue);">
+          <button onClick="{{ auTogglePass }}" aria-label="{{ auEyeLabel }}" style="position: absolute; right: 4px; top: 4px; width: 44px; height: 44px; border: 0; border-radius: 999px; background: transparent; display: flex; align-items: center; justify-content: center; cursor: pointer; padding: 0;"><i class="{{ auEyeIcon }}" style="font-size: 20px; color: var(--tx2);"></i></button>
+        </div>
+        <div style="margin-top: 8px; display: flex; align-items: center; gap: 6px;">
+          <i class="{{ cdSenhaIcon }}" style="font-size: 16px; color: {{ cdSenhaColor }};"></i>
+          <div style="font: 600 12px/16px 'Nunito', sans-serif; color: var(--tx2);">Mínimo de 6 caracteres</div>
+        </div>
+        <div style="margin-top: 20px; font: 800 12px/16px 'Nunito', sans-serif; letter-spacing: .06em; text-transform: uppercase; color: var(--tx2);">Confirme sua senha</div>
+        <div style="position: relative; flex-shrink: 0; margin-top: 8px;">
+          <input type="{{ auPassType }}" value="{{ cdSenha2 }}" onChange="{{ onCdSenha2 }}" placeholder="Digite a senha de novo" style="width: 100%; height: 52px; box-sizing: border-box; padding: 0 52px 0 14px; border-radius: 12px; border: 2px solid var(--border); background: var(--surface); color: var(--tx); font: 600 15px/20px 'Nunito', sans-serif; outline: none;" style-focus="border-color: var(--blue);">
+          <button onClick="{{ auTogglePass }}" aria-label="{{ auEyeLabel }}" style="position: absolute; right: 4px; top: 4px; width: 44px; height: 44px; border: 0; border-radius: 999px; background: transparent; display: flex; align-items: center; justify-content: center; cursor: pointer; padding: 0;"><i class="{{ auEyeIcon }}" style="font-size: 20px; color: var(--tx2);"></i></button>
+        </div>
+        <sc-if value="{{ cdConfShow }}" hint-placeholder-val="{{ false }}">
+          <div style="margin-top: 8px; display: flex; align-items: center; gap: 6px;">
+            <i class="{{ cdConfIcon }}" style="font-size: 16px; color: {{ cdConfColor }};"></i>
+            <div style="font: 600 12px/16px 'Nunito', sans-serif; color: var(--tx2);">{{ cdConfTxt }}</div>
+          </div>
+        </sc-if>
+        <button onClick="{{ cdToggleTermos }}" style="margin-top: 20px; display: flex; align-items: flex-start; gap: 12px; padding: 0; border: 0; background: transparent; cursor: pointer; text-align: left;">
+          <div style="width: 24px; height: 24px; border-radius: 8px; border: 2px solid {{ cdCb.border }}; background: {{ cdCb.bg }}; box-sizing: border-box; display: flex; align-items: center; justify-content: center; flex-shrink: 0; margin-top: -2px;"><sc-if value="{{ auTermos }}" hint-placeholder-val="{{ false }}"><i class="ph-bold ph-check" style="font-size: 14px; color: var(--priTx);"></i></sc-if></div>
+          <div style="font: 600 14px/20px 'Nunito', sans-serif; color: var(--tx); text-wrap: pretty;">Li e aceito os <span style="color: var(--blue); font-weight: 800;">Termos de uso</span> e a <span style="color: var(--blue); font-weight: 800;">Política de privacidade</span></div>
+        </button>
+        <button onClick="{{ cdCriar }}" style="margin-top: 24px; display: flex; align-items: center; justify-content: center; width: 100%; height: 52px; padding: 0 24px; border: 0; border-radius: 999px; background: {{ cdBtn.bg }}; color: {{ cdBtn.color }}; font: 800 16px/1 'Nunito', sans-serif; box-shadow: {{ cdBtn.shadow }}; cursor: {{ cdBtn.cursor }}; transition: transform .08s, box-shadow .08s; flex-shrink: 0;" style-active="transform: translateY(3px); box-shadow: none;">Criar conta</button>
+        <div style="margin-top: 12px; display: flex; align-items: center; justify-content: center;">
+          <div style="font: 600 14px/20px 'Nunito', sans-serif; color: var(--tx2);">Já tem conta?</div>
+          <button onClick="{{ goLogin }}" style="font-size: 14px; padding: 0 10px; height: 44px; padding: 0 14px; border: 0; border-radius: 999px; background: transparent; color: var(--blue); font: 800 16px/1 'Nunito', sans-serif; cursor: pointer;" style-hover="background: var(--blueSoft);">Entrar</button>
+        </div>
+      </div>
+    </sc-if>
+
+    <!-- ESQUECI MINHA SENHA -->
+    <sc-if value="{{ is.esqueci }}" hint-placeholder-val="{{ false }}">
+      <div style="position: absolute; top: 95px; left: 0; right: 0; bottom: 0; overflow-y: auto; scrollbar-width: none; padding: 20px 20px 40px; box-sizing: border-box; display: flex; flex-direction: column;">
+        <sc-if value="{{ esqForm }}" hint-placeholder-val="{{ true }}">
+          <div style="font: 600 26px/32px 'Fredoka', sans-serif; color: var(--tx);">Esqueceu a senha?</div>
+          <div style="margin-top: 2px; font: 600 14px/20px 'Nunito', sans-serif; color: var(--tx2); text-wrap: pretty;">Acontece. Me passa seu e-mail que eu mando um link pra você criar uma nova.</div>
+          <div style="margin-top: 24px; font: 800 12px/16px 'Nunito', sans-serif; letter-spacing: .06em; text-transform: uppercase; color: var(--tx2);">E-mail</div>
+          <input value="{{ auEmail }}" onChange="{{ onAuEmail }}" placeholder="seu@email.com" type="email" style="flex-shrink: 0; margin-top: 8px; width: 100%; height: 52px; box-sizing: border-box; padding: 0 14px; border-radius: 12px; border: 2px solid var(--border); background: var(--surface); color: var(--tx); font: 600 15px/20px 'Nunito', sans-serif; outline: none;" style-focus="border-color: var(--blue);">
+          <button onClick="{{ esqEnviar }}" style="margin-top: 24px; display: flex; align-items: center; justify-content: center; width: 100%; height: 52px; padding: 0 24px; border: 0; border-radius: 999px; background: {{ esqBtn.bg }}; color: {{ esqBtn.color }}; font: 800 16px/1 'Nunito', sans-serif; box-shadow: {{ esqBtn.shadow }}; cursor: {{ esqBtn.cursor }}; transition: transform .08s, box-shadow .08s; flex-shrink: 0;" style-active="transform: translateY(3px); box-shadow: none;">Enviar link</button>
+          <button onClick="{{ goLogin }}" style="margin-top: 8px; align-self: center; height: 44px; padding: 0 14px; border: 0; border-radius: 999px; background: transparent; color: var(--blue); font: 800 16px/1 'Nunito', sans-serif; cursor: pointer;" style-hover="background: var(--blueSoft);">Voltar pro login</button>
+        </sc-if>
+        <sc-if value="{{ esqCodigo }}" hint-placeholder-val="{{ false }}">
+          <div style="font: 600 26px/32px 'Fredoka', sans-serif; color: var(--tx);">Confere seu e-mail</div>
+          <div style="margin-top: 2px; font: 600 14px/20px 'Nunito', sans-serif; color: var(--tx2); text-wrap: pretty;">{{ esqMsg }}</div>
+          <div style="margin-top: 24px; font: 800 12px/16px 'Nunito', sans-serif; letter-spacing: .06em; text-transform: uppercase; color: var(--tx2);">Código de 6 dígitos</div>
+          <div style="position: relative; flex-shrink: 0; margin-top: 8px; display: grid; grid-template-columns: repeat(6, minmax(0, 1fr)); gap: 8px;">
+            <sc-for list="{{ codBoxes }}" as="cb" hint-placeholder-count="6">
+              <div style="height: 56px; border-radius: 12px; border: 2px solid {{ cb.border }}; background: var(--surface); box-sizing: border-box; display: flex; align-items: center; justify-content: center; font: 600 24px/1 'Fredoka', sans-serif; color: var(--tx);">{{ cb.d }}</div>
+            </sc-for>
+            <input value="{{ esqCod }}" onChange="{{ onEsqCod }}" inputmode="numeric" autocomplete="one-time-code" maxlength="6" aria-label="Código de 6 dígitos" style="position: absolute; inset: 0; width: 100%; height: 100%; opacity: 0; border: 0; cursor: text; font-size: 16px;">
+          </div>
+          <sc-if value="{{ codErrShow }}" hint-placeholder-val="{{ true }}">
+            <div style="margin-top: 8px; display: flex; align-items: center; gap: 6px;">
+              <i class="{{ codErrIcon }}" style="font-size: 16px; color: {{ codErrColor }};"></i>
+              <div style="font: 600 12px/16px 'Nunito', sans-serif; color: var(--tx2);">{{ codErrTxt }}</div>
+            </div>
+          </sc-if>
+          <button onClick="{{ esqVerificar }}" style="margin-top: 24px; display: flex; align-items: center; justify-content: center; width: 100%; height: 52px; padding: 0 24px; border: 0; border-radius: 999px; background: {{ codBtn.bg }}; color: {{ codBtn.color }}; font: 800 16px/1 'Nunito', sans-serif; box-shadow: {{ codBtn.shadow }}; cursor: {{ codBtn.cursor }}; transition: transform .08s, box-shadow .08s; flex-shrink: 0;" style-active="transform: translateY(3px); box-shadow: none;">Verificar código</button>
+          <div style="margin-top: 12px; display: flex; align-items: center; justify-content: center;">
+            <div style="font: 600 14px/20px 'Nunito', sans-serif; color: var(--tx2);">Não chegou?</div>
+            <button onClick="{{ esqReenviar }}" style="font-size: 14px; padding: 0 10px; height: 44px; padding: 0 14px; border: 0; border-radius: 999px; background: transparent; color: var(--blue); font: 800 16px/1 'Nunito', sans-serif; cursor: pointer;" style-hover="background: var(--blueSoft);">Reenviar código</button>
+          </div>
+          <button onClick="{{ esqTrocarEmail }}" style="align-self: center; font-size: 14px; height: 44px; padding: 0 14px; border: 0; border-radius: 999px; background: transparent; color: var(--blue); font: 800 16px/1 'Nunito', sans-serif; cursor: pointer;" style-hover="background: var(--blueSoft);">Trocar e-mail</button>
+        </sc-if>
+        <sc-if value="{{ esqNova }}" hint-placeholder-val="{{ false }}">
+          <div style="font: 600 26px/32px 'Fredoka', sans-serif; color: var(--tx);">Crie uma nova senha</div>
+          <div style="margin-top: 2px; font: 600 14px/20px 'Nunito', sans-serif; color: var(--tx2); text-wrap: pretty;">Código confirmado. Agora escolhe uma senha nova, diferente da anterior.</div>
+          <div style="margin-top: 24px; font: 800 12px/16px 'Nunito', sans-serif; letter-spacing: .06em; text-transform: uppercase; color: var(--tx2);">Nova senha</div>
+          <div style="position: relative; flex-shrink: 0; margin-top: 8px;">
+            <input type="{{ auPassType }}" value="{{ nsSenha }}" onChange="{{ onNsSenha }}" placeholder="Crie uma senha" style="width: 100%; height: 52px; box-sizing: border-box; padding: 0 52px 0 14px; border-radius: 12px; border: 2px solid var(--border); background: var(--surface); color: var(--tx); font: 600 15px/20px 'Nunito', sans-serif; outline: none;" style-focus="border-color: var(--blue);">
+            <button onClick="{{ auTogglePass }}" aria-label="{{ auEyeLabel }}" style="position: absolute; right: 4px; top: 4px; width: 44px; height: 44px; border: 0; border-radius: 999px; background: transparent; display: flex; align-items: center; justify-content: center; cursor: pointer; padding: 0;"><i class="{{ auEyeIcon }}" style="font-size: 20px; color: var(--tx2);"></i></button>
+          </div>
+          <div style="margin-top: 8px; display: flex; align-items: center; gap: 6px;">
+            <i class="{{ nsSenhaIcon }}" style="font-size: 16px; color: {{ nsSenhaColor }};"></i>
+            <div style="font: 600 12px/16px 'Nunito', sans-serif; color: var(--tx2);">Mínimo de 6 caracteres</div>
+          </div>
+          <div style="margin-top: 20px; font: 800 12px/16px 'Nunito', sans-serif; letter-spacing: .06em; text-transform: uppercase; color: var(--tx2);">Confirme a nova senha</div>
+          <div style="position: relative; flex-shrink: 0; margin-top: 8px;">
+            <input type="{{ auPassType }}" value="{{ nsSenha2 }}" onChange="{{ onNsSenha2 }}" placeholder="Digite a senha de novo" style="width: 100%; height: 52px; box-sizing: border-box; padding: 0 52px 0 14px; border-radius: 12px; border: 2px solid var(--border); background: var(--surface); color: var(--tx); font: 600 15px/20px 'Nunito', sans-serif; outline: none;" style-focus="border-color: var(--blue);">
+            <button onClick="{{ auTogglePass }}" aria-label="{{ auEyeLabel }}" style="position: absolute; right: 4px; top: 4px; width: 44px; height: 44px; border: 0; border-radius: 999px; background: transparent; display: flex; align-items: center; justify-content: center; cursor: pointer; padding: 0;"><i class="{{ auEyeIcon }}" style="font-size: 20px; color: var(--tx2);"></i></button>
+          </div>
+          <sc-if value="{{ nsConfShow }}" hint-placeholder-val="{{ true }}">
+            <div style="margin-top: 8px; display: flex; align-items: center; gap: 6px;">
+              <i class="{{ nsConfIcon }}" style="font-size: 16px; color: {{ nsConfColor }};"></i>
+              <div style="font: 600 12px/16px 'Nunito', sans-serif; color: var(--tx2);">{{ nsConfTxt }}</div>
+            </div>
+          </sc-if>
+          <button onClick="{{ nsSalvar }}" style="margin-top: 24px; display: flex; align-items: center; justify-content: center; width: 100%; height: 52px; padding: 0 24px; border: 0; border-radius: 999px; background: {{ nsBtn.bg }}; color: {{ nsBtn.color }}; font: 800 16px/1 'Nunito', sans-serif; box-shadow: {{ nsBtn.shadow }}; cursor: {{ nsBtn.cursor }}; transition: transform .08s, box-shadow .08s; flex-shrink: 0;" style-active="transform: translateY(3px); box-shadow: none;">Salvar nova senha</button>
+        </sc-if>
+      </div>
+    </sc-if>
+
+    <sc-if value="{{ authScreen }}" hint-placeholder-val="{{ false }}">
+      <div style="position: absolute; left: 50%; bottom: 8px; width: 134px; height: 5px; margin-left: -67px; border-radius: 999px; background: var(--tx); z-index: 6;"></div>
+    </sc-if>
+
+    <!-- TAREFAS ÚNICAS -->
+    <sc-if value="{{ is.tarefasU }}" hint-placeholder-val="{{ false }}">
+      <div style="position: absolute; top: 95px; left: 0; right: 0; bottom: 0; overflow-y: auto; scrollbar-width: none; padding: 20px 20px 128px; box-sizing: border-box; display: flex; flex-direction: column;">
+        <div style="font: 600 26px/32px 'Fredoka', sans-serif; color: var(--tx);">Tarefas únicas</div>
+        <div style="margin-top: 2px; font: 600 14px/20px 'Nunito', sans-serif; color: var(--tx2); text-wrap: pretty;">Coisas rápidas que não precisam virar objetivo. Eu encaixo nos seus horários livres.</div>
+        <div style="flex-shrink: 0; margin-top: 16px; display: flex; gap: 8px;">
+          <input value="{{ tuText }}" onChange="{{ onTuText }}" placeholder="Ex.: Arrumar o guarda-roupa" style="flex: 1; min-width: 0; height: 52px; box-sizing: border-box; padding: 0 14px; border-radius: 12px; border: 2px solid var(--border); background: var(--surface); color: var(--tx); font: 600 15px/20px 'Nunito', sans-serif; outline: none;" style-focus="border-color: var(--blue);">
+          <button onClick="{{ tuAdd }}" aria-label="Adicionar tarefa" style="width: 52px; height: 52px; flex-shrink: 0; border: 0; border-radius: 999px; background: {{ tuBtn.bg }}; color: {{ tuBtn.color }}; box-shadow: {{ tuBtn.shadow }}; cursor: {{ tuBtn.cursor }}; display: flex; align-items: center; justify-content: center; padding: 0;" style-active="transform: translateY(3px); box-shadow: none;"><i class="ph-bold ph-plus" style="font-size: 22px;"></i></button>
+        </div>
+        <sc-if value="{{ tuOpen }}" hint-placeholder-val="{{ false }}">
+          <div style="margin-top: 12px; padding: 4px 16px 16px; background: var(--surface); border: 1px solid var(--border); border-radius: 16px; box-shadow: var(--shadow); display: flex; flex-direction: column;">
+            <div style="margin-top: 12px; font: 800 12px/16px 'Nunito', sans-serif; letter-spacing: .06em; text-transform: uppercase; color: var(--tx2);">Quanto tempo leva?</div>
+            <div style="flex-shrink: 0; margin-top: 8px; display: flex; flex-wrap: wrap; gap: 8px;">
+          <sc-for list="{{ tuDurs }}" as="td" hint-placeholder-count="4"><button onClick="{{ td.pick }}" style="flex-shrink: 0; height: 36px; padding: 0 12px; display: flex; align-items: center; gap: 6px; border-radius: 999px; border: 2px solid {{ td.border }}; background: {{ td.bg }}; color: var(--tx); font: 800 13px/1 'Nunito', sans-serif; cursor: pointer; white-space: nowrap;"><i class="{{ td.icon }}" style="font-size: 16px; color: var(--pri); display: {{ td.iconD }};"></i>{{ td.label }}</button></sc-for>
+        </div>
+            <div style="margin-top: 16px; font: 800 12px/16px 'Nunito', sans-serif; letter-spacing: .06em; text-transform: uppercase; color: var(--tx2);">Quando?</div>
+            <div style="flex-shrink: 0; margin-top: 8px; display: flex; flex-wrap: wrap; gap: 8px;">
+          <sc-for list="{{ tuQuandos }}" as="tq" hint-placeholder-count="4"><button onClick="{{ tq.pick }}" style="flex-shrink: 0; height: 36px; padding: 0 12px; display: flex; align-items: center; gap: 6px; border-radius: 999px; border: 2px solid {{ tq.border }}; background: {{ tq.bg }}; color: var(--tx); font: 800 13px/1 'Nunito', sans-serif; cursor: pointer; white-space: nowrap;"><i class="{{ tq.icon }}" style="font-size: 16px; color: var(--pri); display: {{ tq.iconD }};"></i>{{ tq.label }}</button></sc-for>
+        </div>
+            <button onClick="{{ tuAdd }}" style="margin-top: 20px; display: flex; align-items: center; justify-content: center; width: 100%; height: 52px; padding: 0 24px; border: 0; border-radius: 999px; background: {{ tuBtn.bg }}; color: {{ tuBtn.color }}; font: 800 16px/1 'Nunito', sans-serif; box-shadow: {{ tuBtn.shadow }}; cursor: {{ tuBtn.cursor }}; transition: transform .08s, box-shadow .08s; flex-shrink: 0;" style-active="transform: translateY(3px); box-shadow: none;">Adicionar tarefa</button>
+          </div>
+        </sc-if>
+        <sc-for list="{{ tuGroups }}" as="g" hint-placeholder-count="3">
+          <div style="margin-top: 24px; display: flex; align-items: baseline; justify-content: space-between;">
+            <div style="font: 800 12px/16px 'Nunito', sans-serif; letter-spacing: .06em; text-transform: uppercase; color: var(--tx2);">{{ g.title }}</div>
+            <div style="font: 600 12px/16px 'Nunito', sans-serif; color: var(--tx2);">{{ g.count }}</div>
+          </div>
+          <div style="margin-top: 8px; display: flex; flex-direction: column; gap: 8px;">
+            <sc-for list="{{ g.items }}" as="it" hint-placeholder-count="2">
+              <div style="display: flex; align-items: center; gap: 12px; padding: 8px 8px 8px 6px; background: var(--surface); border: 1px solid var(--border); border-radius: 16px; box-shadow: var(--shadow);">
+                <button onClick="{{ it.toggle }}" aria-label="{{ it.aria }}" style="width: 44px; height: 44px; flex-shrink: 0; border: 0; background: transparent; padding: 0; display: flex; align-items: center; justify-content: center; cursor: pointer;">
+                  <div style="width: 24px; height: 24px; border-radius: 8px; border: 2px solid {{ it.cbBorder }}; background: {{ it.cbBg }}; box-sizing: border-box; display: flex; align-items: center; justify-content: center;"><sc-if value="{{ it.done }}" hint-placeholder-val="{{ false }}"><i class="ph-bold ph-check" style="font-size: 14px; color: var(--priTx);"></i></sc-if></div>
+                </button>
+                <div style="flex: 1; min-width: 0; display: flex; flex-direction: column; gap: 2px;">
+                  <div style="font: 800 15px/20px 'Nunito', sans-serif; color: {{ it.color }}; text-decoration: {{ it.deco }};">{{ it.t }}</div>
+                  <div style="font: 600 12px/16px 'Nunito', sans-serif; color: var(--tx2);">{{ it.sub }}</div>
+                </div>
+                <button onClick="{{ it.del }}" aria-label="Excluir tarefa" style="width: 44px; height: 44px; flex-shrink: 0; border: 0; border-radius: 999px; background: transparent; color: var(--tx2); display: flex; align-items: center; justify-content: center; cursor: pointer; padding: 0;" style-hover="background: var(--s2);"><i class="ph ph-trash" style="font-size: 18px;"></i></button>
+              </div>
+            </sc-for>
+          </div>
+        </sc-for>
+      </div>
+    </sc-if>
+
+    <!-- NOVO COMPROMISSO -->
+    <sc-if value="{{ is.compNovo }}" hint-placeholder-val="{{ false }}">
+      <div style="position: absolute; top: 95px; left: 0; right: 0; bottom: 0; overflow-y: auto; scrollbar-width: none; padding: 20px 20px 128px; box-sizing: border-box; display: flex; flex-direction: column;">
+        <div style="font: 600 26px/32px 'Fredoka', sans-serif; color: var(--tx);">{{ cpTitulo }}</div>
+        <div style="margin-top: 2px; font: 600 14px/20px 'Nunito', sans-serif; color: var(--tx2); text-wrap: pretty;">{{ cpSub }}</div>
+        <sc-if value="{{ cpSoNome }}" hint-placeholder-val="{{ false }}">
+          <div style="margin-top: 16px; display: flex; align-items: center; gap: 10px; padding: 12px 14px; background: var(--s2); border-radius: 16px;"><i class="ph ph-repeat" style="font-size: 18px; color: var(--tx2);"></i><div style="font: 800 15px/20px 'Nunito', sans-serif; color: var(--tx);">{{ cpNomeFixo }}</div></div>
+        </sc-if>
+        <sc-if value="{{ cpShowNome }}" hint-placeholder-val="{{ true }}">
+        <div style="margin-top: 20px; font: 800 12px/16px 'Nunito', sans-serif; letter-spacing: .06em; text-transform: uppercase; color: var(--tx2);">Nome</div>
+        <input value="{{ cpNome }}" onChange="{{ onCpNome }}" placeholder="Ex.: Aula de Banco de Dados" style="flex-shrink: 0; margin-top: 8px; width: 100%; height: 52px; box-sizing: border-box; padding: 0 14px; border-radius: 12px; border: 2px solid var(--border); background: var(--surface); color: var(--tx); font: 600 15px/20px 'Nunito', sans-serif; outline: none;" style-focus="border-color: var(--blue);">
+        <div style="margin-top: 20px; font: 800 12px/16px 'Nunito', sans-serif; letter-spacing: .06em; text-transform: uppercase; color: var(--tx2);">Tipo</div>
+        <div style="flex-shrink: 0; margin-top: 8px; display: flex; flex-wrap: wrap; gap: 8px;">
+          <sc-for list="{{ cpTipos }}" as="ct" hint-placeholder-count="4"><button onClick="{{ ct.pick }}" style="flex-shrink: 0; height: 36px; padding: 0 12px; display: flex; align-items: center; gap: 6px; border-radius: 999px; border: 2px solid {{ ct.border }}; background: {{ ct.bg }}; color: var(--tx); font: 800 13px/1 'Nunito', sans-serif; cursor: pointer; white-space: nowrap;"><i class="{{ ct.icon }}" style="font-size: 16px; color: var(--pri); display: {{ ct.iconD }};"></i>{{ ct.label }}</button></sc-for>
+        </div>
+        </sc-if>
+        <sc-if value="{{ cpShowRep }}" hint-placeholder-val="{{ true }}">
+        <div style="margin-top: 20px; font: 800 12px/16px 'Nunito', sans-serif; letter-spacing: .06em; text-transform: uppercase; color: var(--tx2);">Repete?</div>
+        <div style="flex-shrink: 0; margin-top: 8px; display: flex; flex-direction: column; gap: 10px;">
+          <sc-for list="{{ cpReps }}" as="o" hint-placeholder-count="2">
+            <button onClick="{{ o.pick }}" style="display: flex; align-items: center; gap: 12px; width: 100%; padding: 10px 14px 10px 10px; border-radius: 16px; border: 2px solid {{ o.border }}; background: {{ o.bg }}; cursor: pointer; text-align: left;">
+              <div style="width: 44px; height: 44px; border-radius: 12px; background: var(--s2); display: flex; align-items: center; justify-content: center; flex-shrink: 0;"><i class="{{ o.icon }}" style="font-size: 22px; color: var(--pri);"></i></div>
+              <div style="display: flex; flex-direction: column; flex: 1; min-width: 0;">
+                <div style="font: 800 15px/20px 'Nunito', sans-serif; color: var(--tx);">{{ o.name }}</div>
+                <div style="font: 600 12px/16px 'Nunito', sans-serif; color: var(--tx2);">{{ o.desc }}</div>
+              </div>
+              <sc-if value="{{ o.sel }}" hint-placeholder-val="{{ false }}"><i class="ph-fill ph-check-circle" style="font-size: 22px; color: var(--pri);"></i></sc-if>
+            </button>
+          </sc-for>
+        </div>
+        </sc-if>
+        <sc-if value="{{ cpSemanal }}" hint-placeholder-val="{{ true }}">
+          <div style="margin-top: 16px; font: 800 12px/16px 'Nunito', sans-serif; letter-spacing: .06em; text-transform: uppercase; color: var(--tx2);">Dias da semana</div>
+          <div style="flex-shrink: 0; margin-top: 8px; display: grid; grid-template-columns: repeat(7, minmax(0, 1fr)); gap: 6px;">
+            <sc-for list="{{ cpDias }}" as="cd" hint-placeholder-count="7"><button onClick="{{ cd.pick }}" aria-label="{{ cd.full }}" style="height: 44px; border-radius: 999px; border: 2px solid {{ cd.border }}; background: {{ cd.bg }}; color: {{ cd.color }}; font: 800 14px/1 'Nunito', sans-serif; cursor: pointer; padding: 0;">{{ cd.w }}</button></sc-for>
+          </div>
+          <div style="margin-top: 16px; font: 800 12px/16px 'Nunito', sans-serif; letter-spacing: .06em; text-transform: uppercase; color: var(--tx2);">Até quando?</div>
+          <div style="flex-shrink: 0; margin-top: 8px; display: flex; flex-wrap: wrap; gap: 8px;">
+            <sc-for list="{{ cpAtes }}" as="ca" hint-placeholder-count="3"><button onClick="{{ ca.pick }}" style="flex-shrink: 0; height: 36px; padding: 0 12px; display: flex; align-items: center; gap: 6px; border-radius: 999px; border: 2px solid {{ ca.border }}; background: {{ ca.bg }}; color: var(--tx); font: 800 13px/1 'Nunito', sans-serif; cursor: pointer; white-space: nowrap;"><i class="{{ ca.icon }}" style="font-size: 16px; color: var(--blue); display: {{ ca.iconD }};"></i>{{ ca.label }}</button></sc-for>
+          </div>
+          <div style="margin-top: 8px; font: 600 12px/16px 'Nunito', sans-serif; color: var(--tx2); text-wrap: pretty;">{{ cpAteTxt }}</div>
+        </sc-if>
+        <sc-if value="{{ cpUnico }}" hint-placeholder-val="{{ false }}">
+          <div style="margin-top: 16px; font: 800 12px/16px 'Nunito', sans-serif; letter-spacing: .06em; text-transform: uppercase; color: var(--tx2);">Data</div>
+          <button onClick="{{ openCpData }}" style="flex-shrink: 0; margin-top: 8px; width: 100%; height: 52px; box-sizing: border-box; padding: 0 6px 0 14px; display: flex; align-items: center; gap: 10px; border-radius: 12px; border: 2px solid var(--border); background: var(--surface); cursor: pointer; text-align: left;">
+            <i class="ph ph-calendar-blank" style="font-size: 20px; color: var(--blue); flex-shrink: 0;"></i>
+            <div style="flex: 1; min-width: 0; font: 600 15px/20px 'Nunito', sans-serif; color: {{ cpDataColor }};">{{ cpDataTxt }}</div>
+            <i class="ph-bold ph-caret-down" style="font-size: 16px; color: var(--tx2); margin-right: 8px;"></i>
+          </button>
+        </sc-if>
+        <div style="margin-top: 16px; font: 800 12px/16px 'Nunito', sans-serif; letter-spacing: .06em; text-transform: uppercase; color: var(--tx2);">Horário</div>
+        <div style="flex-shrink: 0; margin-top: 8px; display: flex; align-items: center; gap: 10px;">
+          <input type="time" value="{{ cpIni }}" onChange="{{ onCpIni }}" aria-label="Início" style="flex: 1; min-width: 0; height: 52px; box-sizing: border-box; padding: 0 14px; border-radius: 12px; border: 2px solid var(--border); background: var(--surface); color: var(--tx); font: 600 15px/20px 'Nunito', sans-serif; outline: none; font: 600 18px/1 'Fredoka', sans-serif;" style-focus="border-color: var(--blue);">
+          <div style="font: 600 14px/20px 'Nunito', sans-serif; color: var(--tx2);">até</div>
+          <input type="time" value="{{ cpFim }}" onChange="{{ onCpFim }}" aria-label="Fim" style="flex: 1; min-width: 0; height: 52px; box-sizing: border-box; padding: 0 14px; border-radius: 12px; border: 2px solid var(--border); background: var(--surface); color: var(--tx); font: 600 15px/20px 'Nunito', sans-serif; outline: none; font: 600 18px/1 'Fredoka', sans-serif;" style-focus="border-color: var(--blue);">
+        </div>
+        <sc-if value="{{ cpHoraErr }}" hint-placeholder-val="{{ false }}">
+          <div style="margin-top: 8px; display: flex; align-items: center; gap: 6px;"><i class="ph ph-info" style="font-size: 16px; color: var(--blue);"></i><div style="font: 600 12px/16px 'Nunito', sans-serif; color: var(--tx2);">O fim precisa ser depois do início</div></div>
+        </sc-if>
+        <sc-if value="{{ cpConflito }}" hint-placeholder-val="{{ false }}">
+          <div style="margin-top: 16px; display: flex; align-items: flex-start; gap: 12px; padding: 14px; background: var(--blueSoft); border-radius: 16px;">
+            <i class="ph-fill ph-arrows-clockwise" style="font-size: 22px; color: var(--blue); flex-shrink: 0;"></i>
+            <div style="display: flex; flex-direction: column; gap: 2px;">
+              <div style="font: 800 15px/20px 'Nunito', sans-serif; color: var(--tx);">{{ cpConfTitle }}</div>
+              <div style="font: 600 12px/16px 'Nunito', sans-serif; color: var(--tx2); text-wrap: pretty;">Sem estresse: quando você salvar, eu mudo essa etapa pra outro horário livre.</div>
+            </div>
+          </div>
+        </sc-if>
+        <button onClick="{{ cpSalvar }}" style="margin-top: 28px; display: flex; align-items: center; justify-content: center; width: 100%; height: 52px; padding: 0 24px; border: 0; border-radius: 999px; background: {{ cpBtn.bg }}; color: {{ cpBtn.color }}; font: 800 16px/1 'Nunito', sans-serif; box-shadow: {{ cpBtn.shadow }}; cursor: {{ cpBtn.cursor }}; transition: transform .08s, box-shadow .08s; flex-shrink: 0;" style-active="transform: translateY(3px); box-shadow: none;">{{ cpSalvarTxt }}</button>
+        <button onClick="{{ cpCancelar }}" style="margin-top: 8px; align-self: center; height: 44px; padding: 0 14px; border: 0; border-radius: 999px; background: transparent; color: var(--blue); font: 800 16px/1 'Nunito', sans-serif; cursor: pointer;" style-hover="background: var(--blueSoft);">Cancelar</button>
+        <sc-if value="{{ cpPodeExcluir }}" hint-placeholder-val="{{ false }}">
+          <button onClick="{{ cpExcluir }}" style="margin-top: 4px; align-self: center; height: 44px; padding: 0 14px; display: flex; align-items: center; gap: 6px; border: 0; border-radius: 999px; background: transparent; color: var(--danger); font: 800 16px/1 'Nunito', sans-serif; cursor: pointer;" style-hover="background: var(--s2);"><i class="ph-bold ph-trash" style="font-size: 16px;"></i>Excluir compromisso</button>
+        </sc-if>
+      </div>
+    </sc-if>
+
     <!-- /SCREENS -->
 
     <!-- HEADER: status + barra superior -->
@@ -1043,7 +1327,7 @@ button, input, textarea { font-family: inherit; }
         </div>
       </div>
       <div style="position: absolute; top: 55px; left: 20px; right: 20px; height: 40px; display: flex; align-items: center; gap: 10px;">
-        <sc-if value="{{ top.broto }}" hint-placeholder-val="{{ true }}"><div style="width: 40px; height: 40px; flex-shrink: 0;">{{ brotoTop }}</div></sc-if>
+        <sc-if value="{{ top.broto }}" hint-placeholder-val="{{ true }}"><button onClick="{{ goJardim }}" aria-label="Abrir Jardim" style="width: 44px; height: 44px; margin: -2px; padding: 2px; flex-shrink: 0; border: 0; border-radius: 999px; background: transparent; cursor: pointer;" style-active="transform: scale(.94);"><div style="width: 40px; height: 40px;">{{ brotoTop }}</div></button></sc-if>
         <sc-if value="{{ top.nav }}" hint-placeholder-val="{{ false }}">
           <button onClick="{{ goBack }}" aria-label="{{ top.navLabel }}" style="width: 44px; height: 44px; margin: -2px -2px -2px -2px; border-radius: 999px; border: 1px solid var(--border); background: var(--surface); display: flex; align-items: center; justify-content: center; cursor: pointer; padding: 0; flex-shrink: 0;" style-active="background: var(--s2);"><i class="{{ top.navIcon }}" style="font-size: 20px; color: var(--tx);"></i></button>
         </sc-if>
@@ -1094,6 +1378,7 @@ button, input, textarea { font-family: inherit; }
     </sc-if>
 
     <!-- TAB BAR -->
+    <sc-if value="{{ showTabs }}" hint-placeholder-val="{{ true }}">
     <div style="position: absolute; left: 0; right: 0; bottom: 0; z-index: 6; background: var(--surface); border-top: 1px solid var(--border); padding: 8px 8px 30px; display: flex;">
       <sc-for list="{{ tabs }}" as="tb" hint-placeholder-count="4">
         <button onClick="{{ tb.go }}" style="flex: 1; display: flex; flex-direction: column; align-items: center; gap: 4px; cursor: pointer; background: transparent; border: 0; padding: 0;">
@@ -1103,6 +1388,7 @@ button, input, textarea { font-family: inherit; }
       </sc-for>
       <div style="position: absolute; left: 50%; bottom: 8px; width: 134px; height: 5px; margin-left: -67px; border-radius: 999px; background: var(--tx);"></div>
     </div>
+    </sc-if>
 
     <!-- SHEETS -->
 
@@ -1157,6 +1443,63 @@ button, input, textarea { font-family: inherit; }
           </sc-for>
         </div>
         <button onClick="{{ trGo }}" style="margin-top: 8px; display: flex; align-items: center; justify-content: center; width: 100%; height: 48px; padding: 0 24px; border: 0; border-radius: 999px; background: {{ trBtn.bg }}; color: {{ trBtn.color }}; font: 800 16px/1 'Nunito', sans-serif; box-shadow: {{ trBtn.shadow }}; cursor: {{ trBtn.cursor }}; transition: transform .08s, box-shadow .08s; flex-shrink: 0;" style-active="transform: translateY(3px); box-shadow: none;">Trocar degrau</button>
+      </div>
+    </sc-if>
+
+    <sc-if value="{{ sheetCpOcc }}" hint-placeholder-val="{{ false }}">
+      <div onClick="{{ closeSheet }}" style="position: absolute; inset: 0; z-index: 20; background: rgba(14,31,26,.4); animation: boraFade .2s both;"></div>
+      <div style="position: absolute; left: 0; right: 0; bottom: 0; z-index: 21; background: var(--surface); border-radius: 24px 24px 0 0; border: 1px solid var(--border); border-bottom: 0; box-shadow: var(--sheetShadow); padding: 10px 20px 34px; display: flex; flex-direction: column; gap: 12px; animation: boraSheet .28s cubic-bezier(.2,.8,.2,1) both;">
+        <div style="width: 40px; height: 5px; border-radius: 999px; background: var(--border); align-self: center;"></div>
+        <div style="display: flex; align-items: center; gap: 12px;">
+          <div style="width: 44px; height: 44px; border-radius: 12px; background: var(--s2); display: flex; align-items: center; justify-content: center; flex-shrink: 0;"><i class="{{ ocIcon }}" style="font-size: 22px; color: var(--pri);"></i></div>
+          <div style="flex: 1; min-width: 0; display: flex; flex-direction: column; gap: 2px;">
+            <div style="font: 600 18px/24px 'Fredoka', sans-serif; color: var(--tx);">{{ ocNome }}</div>
+            <div style="font: 600 13px/16px 'Nunito', sans-serif; color: var(--tx2);">{{ ocQuando }}</div>
+          </div>
+        </div>
+        <div style="display: flex; flex-wrap: wrap; gap: 6px;">
+          <div style="display: flex; align-items: center; gap: 4px; height: 28px; padding: 0 10px; border-radius: 999px; background: var(--s2); font: 700 13px/1 'Nunito', sans-serif; color: var(--tx);"><i class="ph ph-repeat" style="font-size: 14px; color: var(--tx2);"></i>{{ ocRepTxt }}</div>
+          <sc-if value="{{ ocHasStatus }}" hint-placeholder-val="{{ false }}"><div style="display: flex; align-items: center; height: 28px; padding: 0 10px; border-radius: 999px; background: var(--blueSoft); font: 700 13px/1 'Nunito', sans-serif; color: var(--blue);">{{ ocStatus }}</div></sc-if>
+        </div>
+        <sc-if value="{{ ocMenu }}" hint-placeholder-val="{{ true }}">
+          <div style="display: flex; flex-direction: column; gap: 8px;">
+            <sc-for list="{{ ocAcoes }}" as="o" hint-placeholder-count="3">
+              <button onClick="{{ o.pick }}" style="display: flex; align-items: center; gap: 12px; width: 100%; padding: 8px 14px 8px 8px; border-radius: 16px; border: 2px solid var(--border); background: var(--surface); cursor: pointer; text-align: left;" style-active="background: var(--s2);">
+                <div style="width: 40px; height: 40px; border-radius: 12px; background: var(--s2); display: flex; align-items: center; justify-content: center; flex-shrink: 0;"><i class="{{ o.icon }}" style="font-size: 20px; color: {{ o.iconColor }};"></i></div>
+                <div style="display: flex; flex-direction: column; flex: 1; min-width: 0;">
+                  <div style="font: 800 15px/20px 'Nunito', sans-serif; color: var(--tx);">{{ o.name }}</div>
+                  <div style="font: 600 12px/16px 'Nunito', sans-serif; color: var(--tx2);">{{ o.desc }}</div>
+                </div>
+                <i class="ph-bold ph-caret-right" style="font-size: 16px; color: var(--tx2);"></i>
+              </button>
+            </sc-for>
+          </div>
+        </sc-if>
+        <sc-if value="{{ ocCancelada }}" hint-placeholder-val="{{ false }}">
+          <div style="font: 600 14px/20px 'Nunito', sans-serif; color: var(--tx2); text-wrap: pretty;">Liberei esse horário só nesse dia. As outras semanas continuam iguais.</div>
+          <button onClick="{{ ocVaiTer }}" style="display: flex; align-items: center; justify-content: center; width: 100%; height: 48px; border: 0; border-radius: 999px; background: var(--pri); color: var(--priTx); font: 800 16px/1 'Nunito', sans-serif; box-shadow: 0 3px 0 var(--lip); cursor: pointer; transition: transform .08s, box-shadow .08s;" style-active="transform: translateY(3px); box-shadow: none;">Vai ter sim</button>
+        </sc-if>
+        <sc-if value="{{ ocEscopo }}" hint-placeholder-val="{{ false }}">
+          <div style="font: 800 13px/16px 'Nunito', sans-serif; color: var(--tx);">{{ ocEscTitulo }}</div>
+          <div style="display: flex; flex-direction: column; gap: 8px;">
+            <sc-for list="{{ ocEscopos }}" as="o" hint-placeholder-count="3">
+              <button onClick="{{ o.pick }}" style="display: flex; align-items: center; gap: 10px; width: 100%; min-height: 56px; padding: 8px 14px 8px 16px; border-radius: 16px; border: 2px solid {{ o.border }}; background: {{ o.bg }}; cursor: pointer; text-align: left;">
+                <div style="display: flex; flex-direction: column; flex: 1; min-width: 0;">
+                  <div style="font: 800 15px/20px 'Nunito', sans-serif; color: var(--tx);">{{ o.name }}</div>
+                  <div style="font: 600 12px/16px 'Nunito', sans-serif; color: var(--tx2);">{{ o.desc }}</div>
+                </div>
+                <sc-if value="{{ o.sel }}" hint-placeholder-val="{{ false }}"><i class="ph-fill ph-check-circle" style="font-size: 22px; color: var(--pri);"></i></sc-if>
+              </button>
+            </sc-for>
+          </div>
+          <sc-if value="{{ ocIsEditar }}" hint-placeholder-val="{{ true }}">
+            <button onClick="{{ ocContinuar }}" style="display: flex; align-items: center; justify-content: center; width: 100%; height: 48px; border: 0; border-radius: 999px; background: var(--pri); color: var(--priTx); font: 800 16px/1 'Nunito', sans-serif; box-shadow: 0 3px 0 var(--lip); cursor: pointer; transition: transform .08s, box-shadow .08s;" style-active="transform: translateY(3px); box-shadow: none;">Continuar</button>
+          </sc-if>
+          <sc-if value="{{ ocIsExcluir }}" hint-placeholder-val="{{ false }}">
+            <button onClick="{{ ocContinuar }}" style="display: flex; align-items: center; justify-content: center; gap: 8px; width: 100%; height: 48px; border: 2px solid var(--border); border-radius: 999px; background: var(--surface); color: var(--danger); font: 800 16px/1 'Nunito', sans-serif; box-shadow: 0 3px 0 var(--border); cursor: pointer; transition: transform .08s, box-shadow .08s;" style-active="transform: translateY(3px); box-shadow: none; background: var(--s2);"><i class="ph-bold ph-trash" style="font-size: 18px;"></i>Excluir</button>
+          </sc-if>
+          <button onClick="{{ ocVoltar }}" style="align-self: center; height: 44px; padding: 0 14px; border: 0; border-radius: 999px; background: transparent; color: var(--blue); font: 800 16px/1 'Nunito', sans-serif; cursor: pointer;" style-hover="background: var(--blueSoft);">Voltar</button>
+        </sc-if>
       </div>
     </sc-if>
 
@@ -1266,7 +1609,7 @@ class Component extends DCLogic {
 
   initial() {
     return {
-      screen: 'hoje', sheet: null, theme: 'light',
+      screen: 'login', sheet: null, theme: 'light', auEmail: 'arthur.lima@ufmg.br', auSenha: '', auShow: false, esqStep: 'form', esqCod: '', nsSenha: '', nsSenha2: '', auTermos: false, tuText: '', tuDur: '30 min', tuQuando: 'hoje', tuDia: null, tuList: null, cpList: null, cpForm: null, cdNome: '', cdEmail: '', cdSenha: '', cdSenha2: '',
       energia: null, tempo: null, ciE: null, ciT: null,
       gotas: 340, streak: 6, regado: false, xp: 410, nivel: 7,
       leves: {}, folga: 2,
@@ -1567,6 +1910,10 @@ class Component extends DCLogic {
     if (k === 'mes') return this.go('semana', { calExp: true, calModo: 'exec' });
     if (k === 'prazos') return this.go('semana', { calExp: true, calModo: 'prazos', dia: 20 });
     if (k === 'idioma') return this.go('perfil', { sheet: 'idioma' });
+    if (k === 'esqueci' || k === 'esqueciOk' || k === 'esqNova') return this.go('esqueci', { esqStep: k === 'esqueciOk' ? 'codigo' : k === 'esqNova' ? 'nova' : 'form', esqCod: '', nsSenha: '', nsSenha2: '', auShow: false });
+    if (k === 'login' || k === 'cadastro') return this.go(k, { auShow: false });
+    if (k === 'compNovo') return this.go('compNovo', { cpForm: this.cpBlank() });
+    if (k === 'cpOcc') return this.go('semana', { calExp: false, calModo: 'exec', dia: 11, sheet: 'cpOcc', cpOcc: { id: 'violao', okey: 20251011, step: 'menu' } });
     if (k === 'trilha') { this.setState({ novo: true }); return this.openTrilha(4); }
     if (k === 'ajuda') return this.go('ajuda', { focoStarted: true, focoTotal: s.focoStarted ? s.focoTotal : 1500, focoLeft: s.focoStarted ? s.focoLeft : 900, ajudaMin: s.focoStarted ? Math.max(1, Math.round((s.focoTotal - s.focoLeft) / 60)) : 10 });
     this.go(k);
@@ -1598,18 +1945,197 @@ class Component extends DCLogic {
     const shift = (n) => { const x = new Date(dp.y, dp.m + n, 1); self.setState({ dp: Object.assign({}, dp, { y: x.getFullYear(), m: x.getMonth() }) }); };
     const meses = D.MESES.map((nm, i) => { const dis = dp.qy === 2025 && i < 10, a = dp.qy === dp.y && i === dp.m; return { label: nm.slice(0, 3), bg: a ? 'var(--priSoft)' : 'var(--surface)', border: a ? 'var(--pri)' : 'var(--border)', opacity: dis ? '.35' : '1', pick: () => { if (!dis) self.setState({ dp: Object.assign({}, dp, { y: dp.qy, m: i, quick: false }) }); } }; });
     return Object.assign(out, {
-      dpTitle: dp.target === 'mPrazo' ? 'Prazo' : 'Dia para fazer', dpMes: `${D.MESES[dp.m]} ${dp.y}`, dpWeeks: weeks, dpWd: ['S', 'T', 'Q', 'Q', 'S', 'S', 'D'].map(w => ({ w })),
+      dpTitle: ({ mPrazo: 'Prazo', tuDia: 'Quando fazer', cpData: 'Data do compromisso', cpAte: 'Repete até' })[dp.target] || 'Dia para fazer', dpMes: `${D.MESES[dp.m]} ${dp.y}`, dpWeeks: weeks, dpWd: ['S', 'T', 'Q', 'Q', 'S', 'S', 'D'].map(w => ({ w })),
       dpGrid: !dp.quick, dpQuick: dp.quick, dpQy: dp.qy, dpMeses: meses, dpCaret: dp.quick ? 'ph-bold ph-caret-up' : 'ph-bold ph-caret-down',
       dpToggleQuick: () => self.setState({ dp: Object.assign({}, dp, { quick: !dp.quick, qy: dp.y }) }),
       dpQyPrev: () => { if (dp.qy > 2025) self.setState({ dp: Object.assign({}, dp, { qy: dp.qy - 1 }) }); }, dpQyNext: () => self.setState({ dp: Object.assign({}, dp, { qy: dp.qy + 1 }) }),
       dpPrev: () => { if (canPrev) shift(-1); }, dpNext: () => shift(1), dpPrevOpacity: canPrev ? '1' : '.3',
       dpSelTxt: dp.sel ? D.fmtData(dp.sel) : 'Nenhuma data escolhida', dpBtn: btn(!!dp.sel), dpIsPrazo: dp.target === 'mPrazo',
-      dpConfirm: () => { if (dp.sel) self.setState({ [dp.target]: dp.sel, sheet: null }); },
+      dpConfirm: () => { if (!dp.sel) return; if (dp.target === 'cpAte') self.setState(st => ({ cpForm: Object.assign({}, st.cpForm || self.cpBlank(), { ate: dp.sel, ateModo: 'data' }), sheet: null })); else if (dp.target === 'cpData') self.setState(st => ({ cpForm: Object.assign({}, st.cpForm || self.cpBlank(), { data: dp.sel }), sheet: null })); else self.setState({ [dp.target]: dp.sel, sheet: null }); },
       dpSemPrazo: () => self.setState({ mPrazo: null, sheet: null }),
     });
   }
+  cpBlank() { return { nome: '', tipo: 'aula', rep: 'semana', dias: [1], data: null, ini: '19:00', fim: '21:00', ate: null, ateModo: 'sem', editId: null, escopo: null, okey: null, odate: null, from: 'semana' }; }
+  // Compromissos: série (regra semanal tipo RRULE) + exceções por ocorrência, como no Google Agenda
+  cpKey(dt) { return dt.y * 10000 + dt.m * 100 + dt.d; }
+  cpDate(k) { return { y: Math.floor(k / 10000), m: Math.floor(k / 100) % 100, d: k % 100 }; }
+  cpShift(dt, n) { const x = new Date(dt.y, dt.m, dt.d + n); return { y: x.getFullYear(), m: x.getMonth(), d: x.getDate() }; }
+  cpIcon(tipo) { return 'ph ph-' + ({ aula: 'graduation-cap', trabalho: 'briefcase', saude: 'barbell', pessoal: 'user' }[tipo] || 'user'); }
+  cpRepTxt(x) {
+    if (x.rep !== 'semana') return 'Só uma vez';
+    const F = ['segunda', 'terça', 'quarta', 'quinta', 'sexta', 'sábado', 'domingo'], S = ['seg', 'ter', 'qua', 'qui', 'sex', 'sáb', 'dom'];
+    const ds = (x.dias || []).slice().sort();
+    if (ds.length === 1) return (ds[0] >= 5 ? 'Todo ' : 'Toda ') + F[ds[0]];
+    const a = ds.map(i => S[i]); return 'Toda ' + a.slice(0, -1).join(', ') + ' e ' + a[a.length - 1];
+  }
+  cpDefaults() {
+    const T = this.D().TODAY, desde = { y: T.y, m: T.m, d: T.d }, at = (n) => this.cpShift(desde, n);
+    return [
+      { id: 'ed', n: 'Aula de Estruturas de Dados', tipo: 'aula', rep: 'semana', dias: [0, 2], ini: '08:00', fim: '09:40', desde, ate: { y: 2025, m: 11, d: 12 }, exc: {} },
+      { id: 'est', n: 'Estágio na Lumen Tech', tipo: 'trabalho', rep: 'semana', dias: [0, 2, 4], ini: '13:00', fim: '15:30', desde, ate: null, exc: { [this.cpKey(at(6))]: { tipo: 'modificada', data: at(6), ini: '14:00', fim: '17:00' } } },
+      { id: 'violao', n: 'Aula de violão', tipo: 'pessoal', rep: 'semana', dias: [1], ini: '19:00', fim: '20:00', desde, ate: null, exc: {} },
+      { id: 'acad', n: 'Academia', tipo: 'saude', rep: 'semana', dias: [0, 2, 4], ini: '06:30', fim: '07:30', desde, ate: null, exc: { [this.cpKey(at(1))]: { tipo: 'cancelada' } } },
+      { id: 'dent', n: 'Consulta no dentista', tipo: 'pessoal', rep: 'unico', dias: [], data: at(5), ini: '08:00', fim: '09:00', exc: {} },
+    ];
+  }
+  // Expande as séries num dia (o que o back-end faria na leitura): regra + exceções canceladas/modificadas
+  cpOccs(list, dt) {
+    const k = this.cpKey(dt), wd = (new Date(dt.y, dt.m, dt.d).getDay() + 6) % 7, out = [];
+    list.forEach(x => {
+      const exc = x.exc || {};
+      if (x.rep === 'unico') { if (x.data && this.cpKey(x.data) === k) out.push({ x, okey: k, ini: x.ini, fim: x.fim, st: 'normal' }); }
+      else if ((x.dias || []).includes(wd) && (!x.desde || k >= this.cpKey(x.desde)) && (!x.ate || k <= this.cpKey(x.ate))) {
+        const e = exc[k];
+        if (!e) out.push({ x, okey: k, ini: x.ini, fim: x.fim, st: 'normal' });
+        else if (e.tipo === 'cancelada') out.push({ x, okey: k, ini: x.ini, fim: x.fim, st: 'cancelada' });
+        else if (this.cpKey(e.data) === k) out.push({ x, okey: k, ini: e.ini, fim: e.fim, st: 'modificada' });
+      }
+      Object.keys(exc).forEach(ok => { const e = exc[ok]; if (e.tipo === 'modificada' && +ok !== k && this.cpKey(e.data) === k) out.push({ x, okey: +ok, ini: e.ini, fim: e.fim, st: 'modificada' }); });
+    });
+    return out.sort((a, b) => (a.ini < b.ini ? -1 : 1));
+  }
+  cpEdit(x, escopo, okey, from) {
+    const odate = okey ? this.cpDate(okey) : null, e = okey && (x.exc || {})[okey], mod = e && e.tipo === 'modificada', so = escopo === 'so';
+    const ateModo = !x.ate ? 'sem' : (x.ate.y === 2025 && x.ate.m === 11 && x.ate.d === 12 ? 'semestre' : 'data');
+    this.go('compNovo', { cpForm: { nome: x.n, tipo: x.tipo, rep: so ? 'unico' : x.rep, dias: (x.dias || []).slice(), data: so ? (mod ? e.data : odate) : (x.data || null), ini: mod ? e.ini : x.ini, fim: mod ? e.fim : x.fim,
+      ate: x.ate || null, ateModo, editId: x.id, escopo: escopo || 'todas', okey: okey || null, odate, from: from || 'semana' } });
+  }
+  uniVals(D, s, btn) {
+    const self = this, T = D.TODAY;
+    const add = (n) => { const x = new Date(T.y, T.m, T.d + n); return { y: x.getFullYear(), m: x.getMonth(), d: x.getDate() }; };
+    const diff = (o) => Math.round((new Date(o.y, o.m, o.d) - new Date(T.y, T.m, T.d)) / 864e5);
+    const chip = (on) => ({ bg: on ? 'var(--priSoft)' : 'var(--surface)', border: on ? 'var(--pri)' : 'var(--border)' });
+    const opt = (on) => ({ bg: on ? 'var(--priSoft)' : 'var(--surface)', border: on ? 'var(--pri)' : 'var(--border)', sel: on });
+    const WD = ['Seg', 'Ter', 'Qua', 'Qui', 'Sex', 'Sáb', 'Dom'], WF = ['Segunda', 'Terça', 'Quarta', 'Quinta', 'Sexta', 'Sábado', 'Domingo'];
+    const joinE = (a) => a.length < 2 ? a.join('') : a.slice(0, -1).join(', ') + ' e ' + a[a.length - 1];
+    // Tarefas únicas
+    const tl = s.tuList || [
+      { id: 'luz', t: 'Pagar a conta de luz', dur: '15 min', when: add(0), done: false },
+      { id: 'ru', t: 'Renovar a carteirinha do RU', dur: '15 min', when: add(0), done: true },
+      { id: 'note', t: 'Levar o notebook na assistência', dur: '30 min', when: add(2), done: false },
+      { id: 'livro', t: 'Devolver livro na biblioteca', dur: '15 min', when: add(3), done: false },
+      { id: 'guarda', t: 'Arrumar o guarda-roupa', dur: '1h', when: add(5), done: false },
+      { id: 'presente', t: 'Comprar presente da Júlia', dur: '30 min', when: null, done: false },
+    ];
+    const whenTxt = (w) => !w ? 'Sem data' : diff(w) === 0 ? 'Hoje' : diff(w) === 1 ? 'Amanhã' : D.fmtData(w);
+    const setTl = (fn) => self.setState(st => ({ tuList: fn((st.tuList || tl).slice()) }));
+    const itemOf = (x) => ({ t: x.t, sub: x.dur + ' · ' + whenTxt(x.when), done: x.done, aria: x.done ? 'Desmarcar' : 'Marcar como feita',
+      cbBg: x.done ? 'var(--pri)' : 'var(--surface)', cbBorder: x.done ? 'var(--pri)' : 'var(--border)', color: x.done ? 'var(--tx2)' : 'var(--tx)', deco: x.done ? 'line-through' : 'none',
+      toggle: () => { setTl(a => a.map(y => y.id === x.id ? Object.assign({}, y, { done: !y.done }) : y)); if (!x.done) self.toast({ icon: 'ph-bold ph-check', title: 'Feito!', sub: 'Uma coisa a menos na cabeça.' }, 2000); },
+      del: () => setTl(a => a.filter(y => y.id !== x.id)) });
+    const open = tl.filter(x => !x.done), byDate = (a, b) => diff(a.when) - diff(b.when);
+    const tuGroups = [
+      ['Hoje', open.filter(x => x.when && diff(x.when) <= 0)],
+      ['Próximos dias', open.filter(x => x.when && diff(x.when) > 0).sort(byDate)],
+      ['Sem data', open.filter(x => !x.when)],
+      ['Feitas', tl.filter(x => x.done)],
+    ].filter(g => g[1].length).map(([title, a]) => ({ title, count: a.length === 1 ? '1 tarefa' : a.length + ' tarefas', items: a.map(itemOf) }));
+    const tuOk = s.tuText.trim().length >= 2 && (s.tuQuando !== 'dia' || !!s.tuDia);
+    const tuWhen = { hoje: add(0), amanha: add(1), sem: null, dia: s.tuDia }[s.tuQuando];
+    // Compromissos
+    const TIPOS = [['aula', 'Aula', 'graduation-cap'], ['trabalho', 'Trabalho', 'briefcase'], ['saude', 'Saúde', 'barbell'], ['pessoal', 'Pessoal', 'user']];
+    const icOf = (k) => 'ph ph-' + (TIPOS.find(t => t[0] === k) || TIPOS[3])[2];
+    const cl = s.cpList || self.cpDefaults();
+    const ddmm = (dt) => String(dt.d).padStart(2, '0') + '/' + String(dt.m + 1).padStart(2, '0');
+    const excN = (x) => Object.keys(x.exc || {}).length;
+    const cpItem = (x) => ({ n: x.n, icon: icOf(x.tipo), sub: (x.rep === 'semana' ? joinE(x.dias.slice().sort().map(i => WD[i])) : D.fmtData(x.data)) + ' · ' + x.ini + '–' + x.fim
+        + (x.rep === 'semana' && x.ate ? ' · até ' + ddmm(x.ate) : '') + (excN(x) ? ' · ' + excN(x) + (excN(x) === 1 ? ' dia diferente' : ' dias diferentes') : ''),
+      edit: () => self.cpEdit(x, 'todas', null, 'semana'),
+      del: () => self.setState(st => ({ cpList: (st.cpList || cl).filter(y => y.id !== x.id) })) });
+    const cpGroups = [['Toda semana', cl.filter(x => x.rep === 'semana')], ['Só uma vez', cl.filter(x => x.rep === 'unico')]].filter(g => g[1].length).map(([title, a]) => ({ title, items: a.map(cpItem) }));
+    const fm = s.cpForm || self.cpBlank();
+    const setF = (o) => self.setState(st => ({ cpForm: Object.assign({}, st.cpForm || self.cpBlank(), o) }));
+    const slot = { wd: 3, date: { y: 2025, m: 10, d: 20 }, ini: '20:00', fim: '21:30', t: 'Implementar Merge Sort' };
+    const overlap = fm.ini < slot.fim && fm.fim > slot.ini;
+    const conflito = overlap && (fm.rep === 'semana' ? fm.dias.includes(slot.wd) : !!fm.data && diff(fm.data) === diff(slot.date));
+    const horaOk = !!fm.ini && !!fm.fim && fm.ini < fm.fim;
+    const cpOk = fm.nome.trim().length >= 2 && horaOk && (fm.rep === 'semana' ? fm.dias.length > 0 && (fm.ateModo !== 'data' || !!fm.ate) : !!fm.data);
+    const SEMESTRE = { y: 2025, m: 11, d: 12 };
+    const esc = fm.editId ? (fm.escopo || 'todas') : null;
+    const cpSubTxt = !esc ? 'Me conta quando você tá ocupado pra eu não marcar etapa por cima.'
+      : esc === 'so' ? `Mudando só ${D.fmtData(fm.odate)}. As outras semanas continuam iguais.`
+      : esc === 'seguintes' ? `Vale a partir de ${D.fmtData(fm.odate)}. Antes disso fica como era.`
+      : fm.rep === 'semana' ? 'Vale pra todas as semanas.' : 'Me conta o que mudou.';
+    const ateTxt = fm.ateModo === 'semestre' ? 'Para de repetir depois de 12/12, no fim do semestre.' : fm.ateModo === 'data' && fm.ate ? `Para de repetir depois de ${D.fmtData(fm.ate)}.` : fm.ateModo === 'data' ? 'Escolha o último dia.' : 'Repete até você mudar ou excluir.';
+    // Ocorrência tocada no calendário
+    const oc = s.sheet === 'cpOcc' ? s.cpOcc : null, ox = oc && cl.find(y => y.id === oc.id);
+    const ocE = ox && (ox.exc || {})[oc.okey], ocD = ox && self.cpDate(oc.okey), ocRec = !!ox && ox.rep === 'semana';
+    const setOc = (o) => self.setState(st => ({ cpOcc: Object.assign({}, st.cpOcc, o) }));
+    const upd = (id, f) => (st) => ({ cpList: (st.cpList || cl).map(y => y.id === id ? f(y) : y) });
+    const setExc = (val) => self.setState(Object.assign(upd(ox.id, y => { const ex = Object.assign({}, y.exc || {}); if (val) ex[oc.okey] = val; else delete ex[oc.okey]; return Object.assign({}, y, { exc: ex }); })(s), { sheet: null }));
+    const delSerie = () => self.setState(st => ({ cpList: (st.cpList || cl).filter(y => y.id !== ox.id), sheet: null }));
+    const pularDia = () => { setExc({ tipo: 'cancelada' }); self.toast({ icon: 'ph-bold ph-calendar-x', title: 'Horário liberado', sub: 'Só nesse dia. Posso encaixar etapas aí.' }, 2400); };
+    return {
+      tuText: s.tuText, onTuText: (e) => self.setState({ tuText: e.target.value }), tuOpen: s.tuText.trim().length > 0, tuBtn: btn(tuOk), tuGroups,
+      tuDurs: ['15 min', '30 min', '1h', '2h'].map(l => Object.assign(chip(s.tuDur === l), { label: l, icon: '', iconD: 'none', pick: () => self.setState({ tuDur: l }) })),
+      tuQuandos: [['hoje', 'Hoje'], ['amanha', 'Amanhã'], ['sem', 'Sem data'], ['dia', s.tuDia && s.tuQuando === 'dia' ? D.fmtData(s.tuDia) : 'Escolher dia']].map(([k, l]) => Object.assign(chip(s.tuQuando === k), { label: l, icon: k === 'dia' ? 'ph ph-calendar-blank' : '', iconD: k === 'dia' ? 'block' : 'none',
+        pick: () => { self.setState({ tuQuando: k }); if (k === 'dia') self.openDp('tuDia'); } })),
+      tuAdd: () => { if (!tuOk) return; const t = s.tuText.trim(); setTl(a => [{ id: 'u' + Date.now(), t, dur: s.tuDur, when: tuWhen, done: false }].concat(a)); self.setState({ tuText: '', tuQuando: 'hoje', tuDia: null, tuDur: '30 min' }); self.toast({ icon: 'ph-bold ph-calendar-check', title: 'Tarefa anotada', sub: tuWhen ? 'Encaixei num horário livre de ' + whenTxt(tuWhen).toLowerCase() + '.' : 'Eu encaixo quando sobrar um tempinho.' }, 2400); },
+      cpGroups, goCompNovo: () => self.go('compNovo', { cpForm: self.cpBlank() }),
+      cpNome: fm.nome, onCpNome: (e) => setF({ nome: e.target.value }),
+      cpTipos: TIPOS.map(([k, l, ic]) => Object.assign(chip(fm.tipo === k), { label: l, icon: 'ph ph-' + ic, iconD: 'block', pick: () => setF({ tipo: k }) })),
+      cpReps: [['semana', 'Toda semana', 'Aulas, estágio, treino', 'ph ph-repeat'], ['unico', 'Só uma vez', 'Consulta, reunião, viagem', 'ph ph-calendar-dot']].map(([k, name, desc, icon]) => Object.assign(opt(fm.rep === k), { name, desc, icon, pick: () => setF({ rep: k }) })),
+      cpSemanal: fm.rep === 'semana', cpUnico: fm.rep === 'unico',
+      cpDias: ['S', 'T', 'Q', 'Q', 'S', 'S', 'D'].map((w, i) => { const on = fm.dias.includes(i); return { w, full: WF[i], bg: on ? 'var(--pri)' : 'var(--surface)', border: on ? 'var(--pri)' : 'var(--border)', color: on ? 'var(--priTx)' : 'var(--tx)', pick: () => setF({ dias: on ? fm.dias.filter(d => d !== i) : fm.dias.concat(i) }) }; }),
+      cpDataTxt: fm.data ? D.fmtData(fm.data) : 'Escolher data', cpDataColor: fm.data ? 'var(--tx)' : 'var(--tx2)',
+      openCpData: () => self.openDp('cpData'),
+      cpIni: fm.ini, cpFim: fm.fim, onCpIni: (e) => setF({ ini: e.target.value }), onCpFim: (e) => setF({ fim: e.target.value }), cpHoraErr: !!fm.ini && !!fm.fim && !horaOk,
+      cpConflito: conflito && horaOk, cpConfTitle: `Bate com "${slot.t}" (${D.fmtData(slot.date)} · 20h)`,
+      cpBtn: btn(cpOk),
+      cpTitulo: fm.editId ? 'Editar compromisso' : 'Novo compromisso', cpSub: cpSubTxt,
+      cpShowNome: esc !== 'so', cpShowRep: !esc || esc === 'todas', cpSoNome: esc === 'so', cpNomeFixo: fm.nome,
+      cpAtes: [['sem', 'Sem fim'], ['semestre', 'Fim do semestre'], ['data', fm.ateModo === 'data' && fm.ate ? 'Até ' + ddmm(fm.ate) : 'Escolher data']].map(([k, l]) => Object.assign(chip(fm.ateModo === k), { label: l, icon: k === 'data' ? 'ph ph-calendar-blank' : '', iconD: k === 'data' ? 'block' : 'none',
+        pick: () => { if (k === 'sem') setF({ ateModo: 'sem', ate: null }); else if (k === 'semestre') setF({ ateModo: 'semestre', ate: SEMESTRE }); else { setF({ ateModo: 'data' }); self.openDp('cpAte'); } } })),
+      cpAteTxt: ateTxt,
+      cpSalvarTxt: !esc ? 'Salvar compromisso' : esc === 'so' ? 'Salvar só nesse dia' : 'Salvar alterações',
+      cpPodeExcluir: esc === 'todas',
+      cpExcluir: () => { self.go(fm.from || 'semana', { cpList: cl.filter(y => y.id !== fm.editId), cpForm: null }); self.toast({ icon: 'ph-bold ph-trash', title: 'Compromisso excluído', sub: 'Liberei esses horários pro seu plano.' }, 2400); },
+      cpSalvar: () => { if (!cpOk) return;
+        const base = { n: fm.nome.trim(), tipo: fm.tipo, rep: fm.rep, dias: fm.dias, data: fm.rep === 'unico' ? fm.data : null, ini: fm.ini, fim: fm.fim, ate: fm.rep === 'semana' ? fm.ate : null };
+        let next, tt;
+        if (!esc) { next = cl.concat(Object.assign({ id: 'c' + Date.now(), desde: { y: D.TODAY.y, m: D.TODAY.m, d: D.TODAY.d }, exc: {} }, base)); tt = { icon: 'ph-bold ph-calendar-check', title: 'Compromisso salvo', sub: 'Não vou marcar etapas nesse horário.' }; }
+        else if (esc === 'so') { next = cl.map(y => y.id !== fm.editId ? y : Object.assign({}, y, { exc: Object.assign({}, y.exc || {}, { [fm.okey]: { tipo: 'modificada', data: fm.data, ini: fm.ini, fim: fm.fim } }) })); tt = { icon: 'ph-bold ph-calendar-check', title: 'Só esse dia mudou', sub: 'As outras semanas continuam iguais.' }; }
+        else if (esc === 'seguintes') {
+          const old = cl.find(y => y.id === fm.editId), keep = {}, move = {}, prev = self.cpShift(fm.odate, -1);
+          Object.keys(old.exc || {}).forEach(k => { (+k < fm.okey ? keep : move)[k] = old.exc[k]; });
+          const vivo = !old.desde || self.cpKey(prev) >= self.cpKey(old.desde);
+          next = cl.filter(y => y.id !== old.id || vivo).map(y => y.id !== old.id ? y : Object.assign({}, y, { ate: prev, exc: keep }))
+            .concat(Object.assign({ id: 'c' + Date.now(), desde: fm.odate, exc: move, origem: old.id }, base));
+          tt = { icon: 'ph-bold ph-calendar-check', title: 'Mudança salva', sub: `Vale a partir de ${ddmm(fm.odate)}.` };
+        } else { next = cl.map(y => y.id !== fm.editId ? y : Object.assign({}, y, base)); tt = { icon: 'ph-bold ph-calendar-check', title: 'Compromisso atualizado', sub: fm.rep === 'semana' ? 'Vale pra todas as semanas.' : 'Recalculei seu plano em volta dele.' }; }
+        self.go(fm.from || 'semana', { cpList: next, cpForm: null });
+        self.toast(conflito ? { icon: 'ph-bold ph-arrows-clockwise', title: 'Plano recalculado', sub: `Mudei "${slot.t}" pra outro horário.` } : tt, 2600); },
+      cpCancelar: () => self.go(fm.from || 'semana', { cpForm: null }),
+      // Sheet da ocorrência
+      sheetCpOcc: !!ox, ocNome: ox ? ox.n : '', ocIcon: ox ? icOf(ox.tipo) : '', ocRepTxt: ox ? self.cpRepTxt(ox) : '',
+      ocQuando: !ox ? '' : (ocE && ocE.tipo === 'modificada' ? `${D.fmtData(ocE.data)} · ${ocE.ini}–${ocE.fim}` : `${D.fmtData(ocD)} · ${ox.ini}–${ox.fim}`),
+      ocStatus: !ocE ? '' : ocE.tipo === 'cancelada' ? 'Não vai ter nesse dia' : `Horário alterado · normal é ${ox.ini}–${ox.fim}`, ocHasStatus: !!ocE,
+      ocMenu: !!ox && oc.step !== 'escopo' && !(ocE && ocE.tipo === 'cancelada'), ocCancelada: !!ocE && ocE.tipo === 'cancelada', ocEscopo: !!ox && oc.step === 'escopo',
+      ocVaiTer: () => { setExc(null); self.toast({ icon: 'ph-bold ph-arrow-counter-clockwise', title: 'Voltou pra agenda', sub: 'Esse dia segue o horário de sempre.' }, 2000); },
+      ocAcoes: !ox ? [] : [
+        ['editar', 'Editar', ocRec ? 'Horário, nome ou dias' : 'Data, horário ou nome', 'ph ph-pencil-simple'],
+        ocRec && !ocE ? ['pular', 'Não vai ter nesse dia', 'Libero esse horário só dessa vez', 'ph ph-calendar-x'] : null,
+        ocE && ocE.tipo === 'modificada' ? ['restaurar', 'Voltar pro horário normal', `${ox.ini}–${ox.fim}, como nas outras semanas`, 'ph ph-arrow-counter-clockwise'] : null,
+        ['excluir', 'Excluir', ocRec ? 'Tirar da agenda: um dia, daqui pra frente ou tudo' : 'Tirar da sua agenda', 'ph ph-trash'],
+      ].filter(Boolean).map(([k, name, desc, icon]) => ({ name, desc, icon, iconColor: k === 'excluir' ? 'var(--danger)' : 'var(--pri)', pick: () => {
+        if (k === 'pular') return pularDia();
+        if (k === 'restaurar') { setExc(null); return self.toast({ icon: 'ph-bold ph-arrow-counter-clockwise', title: 'Horário normal de volta', sub: `${ox.ini}–${ox.fim} nesse dia.` }, 2000); }
+        if (!ocRec) { if (k === 'editar') return self.cpEdit(ox, 'todas', null, 'semana'); delSerie(); return self.toast({ icon: 'ph-bold ph-trash', title: 'Compromisso excluído', sub: 'Liberei esse horário pro seu plano.' }, 2400); }
+        setOc({ step: 'escopo', acao: k, esc: 'so' }); } })),
+      ocEscTitulo: oc && oc.acao === 'excluir' ? 'Excluir qual?' : 'Editar qual?',
+      ocEscopos: !ox ? [] : [['so', 'Só nesse dia', D.fmtData(ocD)], ['seguintes', 'Desse dia em diante', `A partir de ${ddmm(ocD)}. Antes fica como era.`], ['todas', 'Todas as semanas', 'A série inteira']].map(([k, name, desc]) => Object.assign(opt(oc.esc === k), { name, desc, pick: () => setOc({ esc: k }) })),
+      ocIsExcluir: !!oc && oc.acao === 'excluir', ocIsEditar: !!oc && oc.acao !== 'excluir',
+      ocVoltar: () => setOc({ step: 'menu' }),
+      ocContinuar: () => { if (!ox) return; if (oc.acao !== 'excluir') return self.cpEdit(ox, oc.esc, oc.okey, 'semana');
+        if (oc.esc === 'so') return pularDia();
+        if (oc.esc === 'todas') { delSerie(); return self.toast({ icon: 'ph-bold ph-trash', title: 'Compromisso excluído', sub: 'Liberei esses horários pro seu plano.' }, 2400); }
+        const prev = self.cpShift(ocD, -1), vivo = !ox.desde || self.cpKey(prev) >= self.cpKey(ox.desde);
+        self.setState(st => ({ sheet: null, cpList: (st.cpList || cl).filter(y => y.id !== ox.id || vivo).map(y => { if (y.id !== ox.id) return y; const ex = {}; Object.keys(y.exc || {}).forEach(k => { if (+k < oc.okey) ex[k] = y.exc[k]; }); return Object.assign({}, y, { ate: prev, exc: ex }); }) }));
+        self.toast({ icon: 'ph-bold ph-trash', title: 'Encerrado', sub: `O último foi em ${ddmm(prev)}.` }, 2400); },
+    };
+  }
   openDp(target) {
-    const D = this.D(), cur = this.state[target], base = cur || D.TODAY;
+    const D = this.D(), cur = target === 'cpData' ? (this.state.cpForm || {}).data : target === 'cpAte' ? (this.state.cpForm || {}).ate : this.state[target], base = cur || D.TODAY;
     this.setState({ sheet: 'datepick', dp: { target, y: base.y, m: base.m, sel: cur || null, quick: false, qy: base.y } });
   }
 
@@ -1750,20 +2276,22 @@ class Component extends DCLogic {
     const sw = (on) => ({ bg: on ? 'var(--pri)' : 'var(--s2)', border: on ? 'var(--pri)' : 'var(--border)', left: on ? '22px' : '2px' });
 
     const screens = ['hoje', 'objetivos', 'semana', 'jardim', 'perfil', 'tarefas', 'rampa', 'aquecer', 'desafio', 'micro', 'foco', 'registro', 'celebra', 'pausa', 'mini', 'novo', 'analisando', 'revisar', 'inviavel', 'manual', 'rotina', 'sugestao', 'trilha', 'ajuda'];
+    screens.push('login', 'cadastro', 'esqueci', 'tarefasU', 'compNovo');
     const is = {}; screens.forEach(k => is[k] = sc === k);
-    const LABELS = { hoje: '01 Hoje', objetivos: 'Objetivos', semana: 'Semana / Calendário', jardim: 'Jardim', perfil: 'Perfil', tarefas: 'Tarefas leves', rampa: 'Rampa – escada', aquecer: 'Rampa – aquecimento', desafio: 'Rampa – desafio mental', micro: 'Rampa – micro-passo', foco: 'Sessão de foco', registro: 'Registro de progresso', celebra: 'Celebração', pausa: 'Pausa', mini: 'Mini-degrau', novo: 'Novo objetivo', analisando: 'IA analisando', revisar: 'Revisar plano', inviavel: 'Plano inviável', manual: 'Preencher à mão', rotina: 'Redefinir rotina', sugestao: 'Enviar sugestão', trilha: 'Trilha do objetivo', ajuda: 'Pedir ajuda' };
+    const authScreen = ['login', 'cadastro', 'esqueci'].includes(sc);
+    const LABELS = { hoje: '01 Hoje', objetivos: 'Objetivos', semana: 'Semana / Calendário', jardim: 'Jardim', perfil: 'Perfil', tarefas: 'Tarefas leves', rampa: 'Rampa – escada', aquecer: 'Rampa – aquecimento', desafio: 'Rampa – desafio mental', micro: 'Rampa – micro-passo', foco: 'Sessão de foco', registro: 'Registro de progresso', celebra: 'Celebração', pausa: 'Pausa', mini: 'Mini-degrau', novo: 'Novo objetivo', analisando: 'IA analisando', revisar: 'Revisar plano', inviavel: 'Plano inviável', manual: 'Preencher à mão', rotina: 'Redefinir rotina', sugestao: 'Enviar sugestão', trilha: 'Trilha do objetivo', ajuda: 'Pedir ajuda', login: 'Login', cadastro: 'Criar conta', esqueci: 'Esqueci minha senha', tarefasU: 'Tarefas únicas', compromissos: 'Compromissos', compNovo: 'Novo compromisso' };
 
     const rampScreens = ['rampa', 'aquecer', 'desafio', 'micro', 'foco', 'registro', 'celebra', 'pausa', 'mini', 'ajuda'];
-    const BACK = { tarefas: 'hoje', perfil: 'jardim', novo: 'objetivos', inviavel: 'novo', manual: 'novo', rotina: 'perfil', sugestao: 'perfil', trilha: 'objetivos' };
+    const BACK = { tarefas: 'hoje', perfil: 'jardim', novo: 'objetivos', inviavel: 'novo', manual: 'novo', rotina: 'perfil', sugestao: 'perfil', trilha: 'objetivos', cadastro: 'login', esqueci: 'login', tarefasU: 'hoje', compNovo: 'semana' };
     const isClose = rampScreens.includes(sc), isBack = sc in BACK;
     const top = { broto: sc === 'hoje', bar: sc === 'hoje', nav: isClose || isBack, navIcon: isClose ? 'ph-bold ph-x' : 'ph-bold ph-arrow-left', navLabel: isClose ? 'Fechar' : 'Voltar', manual: sc === 'novo' };
     top.perfil = sc === 'jardim' || sc === 'hoje';
     top.broto = top.bar = sc === 'hoje' || sc === 'jardim';
     const headerH = (sc === 'hoje' || sc === 'jardim' || isClose || isBack) ? '95px' : '47px';
 
-    const groupOf = { objetivos: 'objetivos', novo: 'objetivos', inviavel: 'objetivos', manual: 'objetivos', trilha: 'objetivos', semana: 'semana', jardim: 'jardim', perfil: 'jardim', rotina: 'jardim', sugestao: 'jardim' };
+    const groupOf = { objetivos: 'objetivos', novo: 'objetivos', inviavel: 'objetivos', manual: 'objetivos', trilha: 'objetivos', semana: 'semana', jardim: 'jardim', perfil: 'jardim', rotina: 'jardim', sugestao: 'jardim', compNovo: 'semana' };
     const grp = groupOf[sc] || 'hoje';
-    const tabs = [['hoje', 'Hoje', 'sun'], ['objetivos', 'Objetivos', 'flag-banner'], ['semana', 'Semana', 'calendar-blank'], ['jardim', 'Jardim', 'plant']].map(([k, label, ic]) => {
+    const tabs = [['hoje', 'Hoje', 'sun'], ['objetivos', 'Objetivos', 'flag-banner'], ['semana', 'Semana', 'calendar-blank'], ['jardim', 'Jardim', 'leaf']].map(([k, label, ic]) => {
       const a = grp === k;
       return { label, icon: (a ? 'ph-fill ph-' : 'ph ph-') + ic, pillBg: a ? 'var(--priSoft)' : 'transparent', iconColor: a ? 'var(--pri)' : 'var(--tx2)', labelColor: a ? 'var(--tx)' : 'var(--tx2)', weight: a ? '800' : '600', go: () => self.go(k) };
     });
@@ -1793,12 +2321,14 @@ class Component extends DCLogic {
         h('div', { style: { font: "600 12px/16px 'Nunito', sans-serif", opacity: .8 } }, t.sub))) : null;
 
     const navGroups = [
+      ['Acesso', [['Login', 'login'], ['Criar conta', 'cadastro'], ['Esqueci a senha', 'esqueci'], ['Código', 'esqueciOk'], ['Nova senha', 'esqNova']]],
       ['Abas', [['Hoje', 'hoje'], ['Objetivos', 'objetivos'], ['Semana', 'semana'], ['Jardim', 'jardim']]],
       ['Fluxo 1 · Rampa', [['Check-in', 'checkin'], ['Escada', 'rampa'], ['Aquecimento', 'aquecer'], ['Desafio mental', 'desafio'], ['Micro-passo', 'micro'], ['Foco', 'foco'], ['Registro', 'registro'], ['Celebração', 'celebra']]],
       ['Fluxo 2 · Novo objetivo', [['Chat vazio', 'novo'], ['Chat · analisando', 'analisando'], ['Chat · resposta', 'revisar'], ['Preencher à mão', 'manual'], ['Plano inviável', 'inviavel'], ['Trilha · Algoritmos', 'trilha']]],
       ['Calendário', [['Semana', 'semana'], ['Mês', 'mes'], ['Prazos', 'prazos']]],
       ['Fluxo 3 · Apoio', [['Tarefas leves', 'tarefas'], ['Pausa', 'pausa'], ['Mini-degrau', 'mini'], ['Pedir ajuda', 'ajuda'], ['Perfil', 'perfil'], ['Redefinir rotina', 'rotina'], ['Idioma', 'idioma'], ['Enviar sugestão', 'sugestao']]],
-    ].map(([title, items]) => ({ title, items: items.map(([label, k]) => { const a = k === 'checkin' ? s.sheet === 'checkin' : (sc === k && s.sheet !== 'checkin'); return { label, bg: a ? '#D1FAE5' : '#FFFFFF', border: a ? '#047857' : '#D5E6DF', go: () => self.jump(k) }; }) }));
+      ['Novas telas', [['Tarefas únicas', 'tarefasU'], ['Novo compromisso', 'compNovo'], ['Compromisso no calendário', 'cpOcc']]],
+    ].map(([title, items]) => ({ title, items: items.map(([label, k]) => { const a = k === 'checkin' ? s.sheet === 'checkin' : k === 'cpOcc' ? s.sheet === 'cpOcc' : (sc === k && s.sheet !== 'checkin'); return { label, bg: a ? '#D1FAE5' : '#FFFFFF', border: a ? '#047857' : '#D5E6DF', go: () => self.jump(k) }; }) }));
     const themeSeg = [['Claro', 'light'], ['Escuro', 'dark']].map(([label, k]) => { const a = s.theme === k; return { label, bg: a ? '#FFFFFF' : 'transparent', border: a ? '#D5E6DF' : 'transparent', color: a ? '#0E1F1A' : '#4A5D57', go: () => self.setState({ theme: k }) }; });
 
     // Rampa
@@ -1886,7 +2416,14 @@ class Component extends DCLogic {
     const weekRange = wStart < 1 ? `${realDay(wStart)} de outubro a ${wStart + 6} de novembro` : `${wStart} a ${Math.min(30, wStart + 6)} de novembro`;
     const prazoList = deadlines.filter(x => x.day === s.dia).map(x => { const pc = pctOf[x.o] || 0; return { title: x.t, obj: D.OBJ[x.o].name, color: D.OBJ[x.o].color, ink: D.OBJ[x.o].ink, pct: pc + '% concluído', barW: pc + '%' }; });
     const pillOf = { done: ['Concluída', 'var(--priSoft)', 'var(--pri)'], moved: ['Reagendada', 'var(--s2)', 'var(--tx2)'], resched: ['Reagendada', 'var(--s2)', 'var(--tx2)'], new: ['Novo', 'var(--blueSoft)', 'var(--blue)'] };
-    const dayList = (days[s.dia] || []).map(b => { const pl = pillOf[b.st]; return { time: D.fmtH(b.s), obj: D.OBJ[b.o].name, color: D.OBJ[b.o].color, title: b.t, dur: D.fmtDur(b.d), hasPill: !!pl, pill: pl ? pl[0] : '', pillBg: pl ? pl[1] : '', pillColor: pl ? pl[2] : '', titleColor: (b.st === 'done' || b.st === 'moved') ? 'var(--tx2)' : 'var(--tx)', border: b.st === 'moved' ? '1px dashed var(--border)' : '1px solid var(--border)' }; });
+    const etList = (days[s.dia] || []).map(b => { const pl = pillOf[b.st]; return { isEt: true, isCp: false, sk: b.s, time: D.fmtH(b.s), obj: D.OBJ[b.o].name, color: D.OBJ[b.o].color, title: b.t, dur: D.fmtDur(b.d), hasPill: !!pl, pill: pl ? pl[0] : '', pillBg: pl ? pl[1] : '', pillColor: pl ? pl[2] : '', titleColor: (b.st === 'done' || b.st === 'moved') ? 'var(--tx2)' : 'var(--tx)', border: b.st === 'moved' ? '1px dashed var(--border)' : '1px solid var(--border)' }; });
+    const cpPill = { cancelada: ['Não vai ter', 'var(--s2)', 'var(--tx2)'], modificada: ['Horário alterado', 'var(--blueSoft)', 'var(--blue)'] };
+    const cpHr = (t) => { const [a, b] = t.split(':').map(Number); return a + b / 60; };
+    const cpDia = prazos ? [] : this.cpOccs(s.cpList || this.cpDefaults(), { y: 2025, m: 10, d: s.dia }).map(o => { const pl = cpPill[o.st], off = o.st === 'cancelada';
+      return { isEt: false, isCp: true, sk: cpHr(o.ini), time: o.ini.replace(/^0/, ''), title: o.x.n, cpIcon: this.cpIcon(o.x.tipo), cpRep: this.cpRepTxt(o.x), cpHora: `${o.ini}–${o.fim}`, isRep: o.x.rep === 'semana',
+        hasPill: !!pl, pill: pl ? pl[0] : '', pillBg: pl ? pl[1] : '', pillColor: pl ? pl[2] : '', titleColor: off ? 'var(--tx2)' : 'var(--tx)', deco: off ? 'line-through' : 'none', border: off ? '1px dashed var(--border)' : '1px solid var(--border)', bg: off ? 'transparent' : 'var(--s2)',
+        open: () => self.setState({ sheet: 'cpOcc', cpOcc: { id: o.x.id, okey: o.okey, step: 'menu' } }) }; });
+    const dayList = etList.concat(cpDia).sort((a, b) => a.sk - b.sk);
     const legendKeys = prazos ? Array.from(new Set(deadlines.map(x => x.o))) : [1, 2, 3].concat(s.novo ? [4] : []).concat(s.manualTasks.length ? [0] : []);
     const legend = legendKeys.map(o => ({ name: D.OBJ[o].name, color: D.OBJ[o].color }));
 
@@ -1938,7 +2475,50 @@ class Component extends DCLogic {
       ...this.extraVals({ D, s, h, btn, opt, sw }),
       ...this.dpVals({ D, s, btn }),
       ...this.trilhaVals({ D, s }),
-      theme: s.theme, screenLabel: LABELS[sc] || sc, is, headerBg, top, goBack, goPerfil: () => self.go('perfil'),
+      theme: s.theme, screenLabel: LABELS[sc] || sc, is, headerBg, top, goBack, goPerfil: () => self.go('perfil'), goJardim: () => { if (sc !== 'jardim') self.go('jardim'); },
+      ...self.uniVals(D, s, btn),
+      ...(() => {
+        const okMail = (m) => /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(m.trim());
+        const loginOk = okMail(s.auEmail) && s.auSenha.length >= 6, senhaOk = s.cdSenha.length >= 6;
+        const confOk = senhaOk && s.cdSenha2 === s.cdSenha;
+        const nsOk = s.nsSenha.length >= 6 && s.nsSenha2 === s.nsSenha;
+        const cdOk = s.cdNome.trim().length >= 2 && okMail(s.cdEmail) && confOk && s.auTermos;
+        const entrar = (title, sub) => { self.go('hoje', { auSenha: '', auShow: false }); self.toast({ icon: 'ph-bold ph-hand-waving', title, sub }, 2600); };
+        const val = (k) => (e) => self.setState({ [k]: e.target.value });
+        return {
+          authScreen, showTabs: !authScreen,
+          brotoLogin: sc === 'login' ? D.Broto(h, 'animado', 112) : null, 
+          auEmail: s.auEmail, auSenha: s.auSenha, onAuEmail: val('auEmail'), onAuSenha: val('auSenha'),
+          auPassType: s.auShow ? 'text' : 'password', auEyeIcon: s.auShow ? 'ph ph-eye-slash' : 'ph ph-eye', auEyeLabel: s.auShow ? 'Esconder senha' : 'Mostrar senha',
+          auTogglePass: () => self.setState({ auShow: !s.auShow }),
+          auLoginBtn: btn(loginOk), auEntrar: () => { if (loginOk) entrar('Oi de novo, Arthur!', 'Seu plano tá do jeitinho que você deixou.'); },
+          auGoogle: () => entrar('Oi de novo, Arthur!', 'Entrou com a conta Google.'),
+          goEsqueci: () => self.go('esqueci', { esqStep: 'form', esqCod: '' }), goCadastro: () => self.go('cadastro', { auShow: false }), goLogin: () => self.go('login', { auShow: false, esqStep: 'form' }),
+          cdNome: s.cdNome, cdEmail: s.cdEmail, cdSenha: s.cdSenha, cdSenha2: s.cdSenha2,
+          cdConfShow: s.cdSenha2.length > 0, cdConfIcon: confOk ? 'ph-fill ph-check-circle' : 'ph ph-info', cdConfColor: confOk ? 'var(--pri)' : 'var(--blue)', cdConfTxt: confOk ? 'As senhas batem' : 'As senhas ainda não estão iguais',
+          onCdNome: val('cdNome'), onCdEmail: val('cdEmail'), onCdSenha: val('cdSenha'), onCdSenha2: val('cdSenha2'),
+          cdSenhaIcon: senhaOk ? 'ph-fill ph-check-circle' : 'ph ph-circle', cdSenhaColor: senhaOk ? 'var(--pri)' : 'var(--tx2)',
+          auTermos: s.auTermos, cdCb: { bg: s.auTermos ? 'var(--pri)' : 'var(--surface)', border: s.auTermos ? 'var(--pri)' : 'var(--border)' },
+          cdToggleTermos: () => self.setState({ auTermos: !s.auTermos }),
+          cdBtn: btn(cdOk), cdCriar: () => { if (cdOk) entrar('Conta criada!', `Bem-vindo ao Bora, ${s.cdNome.trim().split(' ')[0]}.`); },
+          esqForm: s.esqStep === 'form', esqCodigo: s.esqStep === 'codigo', esqNova: s.esqStep === 'nova', esqBtn: btn(okMail(s.auEmail)),
+          esqEnviar: () => { if (okMail(s.auEmail)) self.setState({ esqStep: 'codigo', esqCod: '', esqErr: false }); },
+          esqMsg: `Mandei um código de 6 dígitos pra ${s.auEmail.trim()}. Ele vale por 10 minutos.`,
+          esqCod: s.esqCod, onEsqCod: (e) => self.setState({ esqCod: e.target.value.replace(/\D/g, '').slice(0, 6), esqErr: false }),
+          codBoxes: [0, 1, 2, 3, 4, 5].map(i => ({ d: s.esqCod[i] || '', border: s.esqErr ? 'var(--blue)' : i === s.esqCod.length ? 'var(--blue)' : s.esqCod[i] ? 'var(--pri)' : 'var(--border)' })),
+          codErrShow: s.esqErr || s.esqCod.length === 0, codErrIcon: s.esqErr ? 'ph ph-info' : 'ph ph-lightbulb', codErrColor: 'var(--blue)',
+          codErrTxt: s.esqErr ? 'Esse código não bateu. Confere o e-mail e tenta de novo.' : 'Pra demo, use 482915.',
+          codBtn: btn(s.esqCod.length === 6),
+          esqVerificar: () => { if (s.esqCod.length !== 6) return; if (s.esqCod === '482915') self.setState({ esqStep: 'nova', nsSenha: '', nsSenha2: '', auShow: false }); else self.setState({ esqErr: true }); },
+          esqTrocarEmail: () => self.setState({ esqStep: 'form', esqCod: '', esqErr: false }),
+          esqReenviar: () => { self.setState({ esqCod: '', esqErr: false }); self.toast({ icon: 'ph-bold ph-paper-plane-tilt', title: 'Código reenviado', sub: 'Confere de novo daqui a pouco.' }, 2200); },
+          nsSenha: s.nsSenha, nsSenha2: s.nsSenha2, onNsSenha: val('nsSenha'), onNsSenha2: val('nsSenha2'),
+          nsSenhaIcon: s.nsSenha.length >= 6 ? 'ph-fill ph-check-circle' : 'ph ph-circle', nsSenhaColor: s.nsSenha.length >= 6 ? 'var(--pri)' : 'var(--tx2)',
+          nsConfShow: s.nsSenha2.length > 0, nsConfIcon: nsOk ? 'ph-fill ph-check-circle' : 'ph ph-info', nsConfColor: nsOk ? 'var(--pri)' : 'var(--blue)', nsConfTxt: nsOk ? 'As senhas batem' : 'As senhas ainda não estão iguais',
+          nsBtn: btn(nsOk),
+          nsSalvar: () => { if (!nsOk) return; self.go('login', { esqStep: 'form', esqCod: '', nsSenha: '', nsSenha2: '', auSenha: '', auShow: false }); self.toast({ icon: 'ph-bold ph-lock-key', title: 'Senha redefinida!', sub: 'Agora é só entrar com a nova senha.' }, 2600); },
+        };
+      })(),
       brotoTop: D.Broto(h, mood, 40),
       bar: { streak: s.streak, gotas: s.gotas, nivel: s.nivel, xpW: Math.min(100, s.xp / need * 100) + '%' },
       tabs, toastEl, navGroups, themeSeg, speedTxt: this.props.velocidade ?? '1 min = 5 s',
@@ -2019,6 +2599,7 @@ class Component extends DCLogic {
 
       // Semana
       weekDays, monthWeeks, dayList, prazoList, legend, dayLabel: D.dayLabel(s.dia),
+      cpAddDia: () => self.go('compNovo', { cpForm: Object.assign(self.cpBlank(), { rep: 'unico', data: { y: 2025, m: 10, d: s.dia }, dias: [D.dow(s.dia)], from: 'semana' }) }),
       calExp: s.calExp, calCol: !s.calExp, calTitle: s.calExp ? 'Novembro' : 'Semana',
       semanaSub: s.calExp ? 'Arraste pra cima pra voltar à semana' : (weekRange + (s.novo ? ' · plano recalculado' : '')),
       calExec: !prazos, calPrazos: prazos, execEmpty: !prazos && dayList.length === 0, prazosEmpty: prazos && prazoList.length === 0,

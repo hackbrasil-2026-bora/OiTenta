@@ -1,4 +1,7 @@
 {
   "ENV_NAME": "local-iphone",
-  "API_URL": "http://IP-DO-SEU-MAC:4000"
+  "API_URL": "http://IP-DO-SEU-MAC:4000",
+  "DATA_SOURCE": "http",
+  "SHOW_DEMO": true,
+  "SEMESTER_END": "2026-12-12"
 }
