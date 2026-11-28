@@ -718,3 +718,6 @@ Dependências técnicas indispensáveis para as aprovadas funcionarem (ex.: `@vi
 
 ### AT10 — Trilha do Hack Brasil: Saúde & bem-estar
 - **Decisão (28/11/2026):** o projeto concorre na trilha **Saúde & bem-estar**. O problema é contado como o ciclo de travar, se culpar e travar de novo (sobrecarga, ansiedade, culpa), e o impacto como bem-estar na rotina: limite diário de foco, replanejamento sem culpa, aquecimentos de autocuidado na rampa e, no futuro, bloqueio voluntário de distrações. O Bora não se apresenta como ferramenta clínica. README, `docs/9-pitch-e-descricao.md` e a descrição da submissão seguem esse ângulo. **Status:** definitiva.
+
+### AT11 — Landing responsiva; título e ícone da aba
+- **Decisão (28/11/2026):** só a landing fica responsiva (opção 3 do [DECIDIR] "Web em telas estreitas"); o app logado mantém a largura mínima de 1200 px. A partir de 1280 px (xl) a landing é o layout do protótipo; abaixo, as colunas empilham, a navegação do topo some (fica Entrar e Começar grátis), a ilustração do celular encolhe e os degraus da rampa rolam para o lado, centralizando o degrau atual. A aba do navegador mostra "bora" e o Broto (o ícone do app iOS). **Larguras sem design.** **Status:** provisória até o design.
