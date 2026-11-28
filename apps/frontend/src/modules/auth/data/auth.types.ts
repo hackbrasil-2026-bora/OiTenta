@@ -37,3 +37,14 @@ export interface UpdateProfileInput {
   email?: string;
   currentPassword?: string;
 }
+
+/** PATCH /auth/me/password (AT9). */
+export interface ChangePasswordInput {
+  currentPassword: string;
+  newPassword: string;
+}
+
+/** DELETE /auth/me (AT9): confirma com a senha atual. */
+export interface DeleteAccountInput {
+  currentPassword: string;
+}

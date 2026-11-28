@@ -160,6 +160,24 @@ export class ExampleBackend {
     return u;
   }
 
+  /** PATCH /auth/me/password (AT9): 403 com a senha atual errada, 422 com a nova fraca. */
+  changePassword(currentPassword: string, newPassword: string) {
+    const u = this.currentUser();
+    if (currentPassword !== u.password) throw new ApiError(403, "ForbiddenError", "Senha atual incorreta.");
+    const strong = newPassword.length >= 8 && /[A-Z]/.test(newPassword) && /[a-z]/.test(newPassword) && /\d/.test(newPassword) && /[^A-Za-z0-9]/.test(newPassword);
+    if (!strong) throw unprocessable(["user.password"]);
+    u.password = newPassword;
+  }
+
+  /** DELETE /auth/me (AT9): apaga a conta e todos os dados dela; a demo não pode ser apagada (403). */
+  deleteAccount(currentPassword: string) {
+    const u = this.currentUser();
+    if (currentPassword !== u.password) throw new ApiError(403, "ForbiddenError", "Senha atual incorreta.");
+    if (u.id === DEMO_USER.id) throw new ApiError(403, "ForbiddenError", "A conta demo não pode ser apagada.");
+    this.users = this.users.filter((x) => x.id !== u.id);
+    this.sessionUserId = null;
+  }
+
   // ---------- plano ----------
   minutesOf(b: ExampleBlock) {
     return Math.round((new Date(b.end).getTime() - new Date(b.start).getTime()) / 60_000);

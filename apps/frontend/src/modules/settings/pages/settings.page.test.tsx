@@ -173,13 +173,30 @@ describe("W26 Configurações", () => {
     });
   });
 
-  it("Idioma (AT7): escolher marca a opção e guarda", async () => {
+  it("Idioma (AT7): a lista abre ao clicar, escolher fecha e guarda", async () => {
     await open();
-    const english = screen.getByRole("button", { name: "English" });
-    expect(screen.getByRole("button", { name: "Português (Brasil)" }).getAttribute("aria-pressed")).toBe("true");
-    fireEvent.click(english);
-    await waitFor(() => expect(english.getAttribute("aria-pressed")).toBe("true"));
+    const trigger = screen.getByRole("button", { name: "Idioma: Português (Brasil)" });
+    expect(trigger.getAttribute("aria-expanded")).toBe("false");
+    expect(screen.queryByRole("listbox", { name: "Idioma" })).toBeNull();
+
+    fireEvent.click(trigger);
+    const list = screen.getByRole("listbox", { name: "Idioma" });
+    const options = within(list).getAllByRole("option");
+    expect(options.map((o) => o.textContent)).toEqual(["Português (Brasil)", "English", "Español"]);
+    expect(within(list).getByRole("option", { name: "Português (Brasil)" }).getAttribute("aria-selected")).toBe("true");
+
+    fireEvent.click(within(list).getByRole("option", { name: "English" }));
+    await waitFor(() => expect(screen.queryByRole("listbox", { name: "Idioma" })).toBeNull());
+    expect(screen.getByRole("button", { name: "Idioma: English" })).toBeTruthy();
     expect((await settingsRepository.getPreferences()).language).toBe("en");
+  });
+
+  it("Idioma: Esc fecha a lista sem mudar", async () => {
+    await open();
+    fireEvent.click(screen.getByRole("button", { name: "Idioma: Português (Brasil)" }));
+    fireEvent.keyDown(screen.getByRole("listbox", { name: "Idioma" }), { key: "Escape" });
+    expect(screen.queryByRole("listbox", { name: "Idioma" })).toBeNull();
+    expect((await settingsRepository.getPreferences()).language).toBe("pt");
   });
 
   it("Enviar sugestão (AT6): Enviar só com texto e mostra a confirmação", async () => {
@@ -193,5 +210,56 @@ describe("W26 Configurações", () => {
     expect(await screen.findByText("Sugestão enviada. Valeu! A gente lê tudo.")).toBeTruthy();
     expect(send).toHaveBeenCalledWith("Queria mudar a cor");
     expect((screen.getByLabelText("O que podemos melhorar?") as HTMLTextAreaElement).value).toBe("");
+  });
+
+  describe("Zona de risco (AT9)", () => {
+    it("trocar senha: só com a atual, a nova forte e a confirmação igual", async () => {
+      const change = vi.spyOn(authRepository, "changePassword");
+      await open();
+      const salvar = screen.getByRole("button", { name: "Trocar senha" }) as HTMLButtonElement;
+      expect(salvar.disabled).toBe(true);
+      fireEvent.change(screen.getByLabelText("Senha atual da conta"), { target: { value: "bora1234" } });
+      fireEvent.change(screen.getByLabelText("Senha nova"), { target: { value: "Nova@4567" } });
+      fireEvent.change(screen.getByLabelText("Confirme a senha nova"), { target: { value: "Outra@4567" } });
+      expect(screen.getByText("As senhas não batem.")).toBeTruthy();
+      expect(salvar.disabled).toBe(true);
+      fireEvent.change(screen.getByLabelText("Confirme a senha nova"), { target: { value: "Nova@4567" } });
+      fireEvent.click(salvar);
+      expect(await screen.findByText("Senha trocada.")).toBeTruthy();
+      expect(change).toHaveBeenCalledWith({ currentPassword: "bora1234", newPassword: "Nova@4567" });
+    });
+
+    it("trocar senha com a atual errada mostra o erro", async () => {
+      await open();
+      fireEvent.change(screen.getByLabelText("Senha atual da conta"), { target: { value: "errada" } });
+      fireEvent.change(screen.getByLabelText("Senha nova"), { target: { value: "Nova@4567" } });
+      fireEvent.change(screen.getByLabelText("Confirme a senha nova"), { target: { value: "Nova@4567" } });
+      fireEvent.click(screen.getByRole("button", { name: "Trocar senha" }));
+      expect(await screen.findByText("Senha atual incorreta.")).toBeTruthy();
+    });
+
+    it("apagar conta: abre a confirmação, pede a senha e mostra o erro do backend", async () => {
+      await open();
+      expect(screen.queryByLabelText("Senha para apagar a conta")).toBeNull();
+      fireEvent.click(screen.getByRole("button", { name: "Apagar conta" }));
+      expect(screen.getByText(/objetivos, etapas, plano, sessões de foco/)).toBeTruthy();
+      const apagar = screen.getByRole("button", { name: "Apagar minha conta" }) as HTMLButtonElement;
+      expect(apagar.disabled).toBe(true);
+      // O usuário de exemplo é o demo: o backend recusa (403).
+      fireEvent.change(screen.getByLabelText("Senha para apagar a conta"), { target: { value: "bora1234" } });
+      fireEvent.click(apagar);
+      expect(await screen.findByText("A conta demo não pode ser apagada.")).toBeTruthy();
+      expect(push).not.toHaveBeenCalled();
+    });
+
+    it("apagar conta com sucesso volta para o login", async () => {
+      const del = vi.spyOn(authRepository, "deleteAccount").mockResolvedValue();
+      await open();
+      fireEvent.click(screen.getByRole("button", { name: "Apagar conta" }));
+      fireEvent.change(screen.getByLabelText("Senha para apagar a conta"), { target: { value: "bora1234" } });
+      await act(async () => fireEvent.click(screen.getByRole("button", { name: "Apagar minha conta" })));
+      expect(del).toHaveBeenCalledWith({ currentPassword: "bora1234" });
+      expect(push).toHaveBeenCalledWith("/entrar");
+    });
   });
 });

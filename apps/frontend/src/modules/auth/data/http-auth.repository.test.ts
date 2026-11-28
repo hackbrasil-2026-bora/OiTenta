@@ -114,4 +114,26 @@ describe("HttpAuthRepository", () => {
     expect(err).toMatchObject({ statusCode: 403, message: "Senha atual incorreta." });
     expect(onUnauthorized).not.toHaveBeenCalled();
   });
+
+  it("changePassword faz PATCH /auth/me/password com a atual e a nova (AT9)", async () => {
+    const fetch = stubFetch({ status: 204 });
+    const { repo } = setup("tok-1");
+    await repo.changePassword({ currentPassword: "Senha@123", newPassword: "Nova@4567" });
+    const call = callOf(fetch);
+    expect(call.method).toBe("PATCH");
+    expect(call.url.pathname).toBe("/auth/me/password");
+    expect(call.body).toEqual({ currentPassword: "Senha@123", newPassword: "Nova@4567" });
+  });
+
+  it("deleteAccount faz DELETE /auth/me com a senha e apaga o token guardado (AT9)", async () => {
+    const fetch = stubFetch({ status: 204 });
+    const { repo, tokens } = setup("tok-1");
+    await repo.deleteAccount({ currentPassword: "Senha@123" });
+    const call = callOf(fetch);
+    expect(call.method).toBe("DELETE");
+    expect(call.url.pathname).toBe("/auth/me");
+    expect(call.body).toEqual({ currentPassword: "Senha@123" });
+    expect(call.headers.get("Authorization")).toBe("Bearer tok-1");
+    expect(tokens.get()).toBeNull();
+  });
 });

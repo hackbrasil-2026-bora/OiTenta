@@ -13,6 +13,7 @@ import AvailGrid from "@/modules/scheduling/components/avail-grid.component";
 import { schedulingRepository, type PlanBlock } from "@/modules/scheduling/data";
 import { LIMIT_DEFAULT, LIMIT_MAX, LIMIT_MIN, emptyGrid, gridToWindows, windowsToGrid, type HourGrid } from "@/modules/scheduling/logic/availability-grid.logic";
 import AccountSection from "../components/account-section.component";
+import DangerZoneSection from "../components/danger-zone-section.component";
 import LanguageSection from "../components/language-section.component";
 import { DESC, H2, PANEL } from "../components/settings-ui";
 import SuggestionSection from "../components/suggestion-section.component";
@@ -271,15 +272,16 @@ export default function SettingsPage() {
 
       <SuggestionSection onSend={(text) => settingsRepository.sendSuggestion(text)} />
 
-      <section className="flex items-center justify-between py-2">
+      <DangerZoneSection
+        onLogout={logout}
+        onDeleted={() => {
+          flush();
+          router.replace("/entrar");
+        }}
+      />
+
+      <section className="py-2">
         <span className="text-[14px]/[20px] font-semibold text-tx2">Bora · versão demo</span>
-        <button
-          type="button"
-          onClick={logout}
-          className="flex h-11 cursor-pointer items-center gap-1.5 rounded-full bg-transparent px-4 text-[15px]/none font-extrabold text-blue hover:bg-blue-soft"
-        >
-          <i className="ph-bold ph-sign-out text-[16px]" />Sair
-        </button>
       </section>
     </div>
   );
