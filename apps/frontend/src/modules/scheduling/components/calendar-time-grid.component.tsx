@@ -1,10 +1,15 @@
 import { KICKER, objColor } from "@/modules/core/components/ui";
 import { dayOfMonth, formatHm, localMinute, weekdayIndex, weekdayShort } from "@/modules/core/format/time.format";
 import type { DayPlan, PlanBlock, WeeklyAvailability } from "../data";
-import { FREE_BG, GRID_HEIGHT, GRID_HOURS, HOUR_HEIGHT, blockGeometry, dayAriaLabel, dayLoadLabel, freeRects } from "../logic/calendar.logic";
+import { useEffect, useRef } from "react";
+import { FREE_BG, GRID_HEIGHT, GRID_HOURS, HOUR_HEIGHT, blockGeometry, dayAriaLabel, dayLoadLabel, freeRects, initialScrollTop } from "../logic/calendar.logic";
 
 // Grade de horas do calendário em Execução (W15 semana, W20 dia): o dia inteiro, 00h–24h, com os blocos das etapas.
 // Sem faixas de ocupado: não há compromissos no MVP (P8). Sem arrastar (só leitura nesta fase).
+/** As horas rolam dentro do cartão, com o cabeçalho dos dias fixo; a altura acompanha a janela. */
+const BODY_MAX_H = "max(400px, calc(100vh - 340px))";
+/** Cabeçalho e corpo reservam o mesmo espaço da barra de rolagem, para as colunas alinharem. */
+const GUTTER = "[scrollbar-gutter:stable]";
 const BLOCK_BORDER = "1px solid color-mix(in srgb, var(--tx) 8%, transparent)";
 
 export interface CalendarColumn {
@@ -33,10 +38,18 @@ export default function CalendarTimeGrid({ columns, today, now, tz, availability
   const n = columns.length;
   const nowCol = columns.findIndex((c) => c.date === today);
   const nowTop = (localMinute(now, tz) / 60) * HOUR_HEIGHT;
+  const body = useRef<HTMLDivElement>(null);
+  const range = `${columns[0]?.date}:${n}`;
+
+  // Ao abrir e ao trocar de semana, dia ou visão, rola até a hora atual (não a cada minuto).
+  useEffect(() => {
+    if (body.current) body.current.scrollTop = initialScrollTop(localMinute(now, tz));
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [range]);
 
   return (
     <>
-      <div className="grid border-b border-border" style={{ gridTemplateColumns: `56px repeat(${n}, minmax(0,1fr))` }}>
+      <div className={`grid overflow-y-hidden border-b border-border ${GUTTER}`} style={{ gridTemplateColumns: `56px repeat(${n}, minmax(0,1fr))` }}>
         <span />
         {columns.map(({ date, plan, canOpen }) => {
           const isToday = date === today;
@@ -51,7 +64,7 @@ export default function CalendarTimeGrid({ columns, today, now, tz, availability
           );
         })}
       </div>
-      <div className="flex">
+      <div ref={body} role="region" aria-label="Horas do dia" className={`flex overflow-y-auto ${GUTTER}`} style={{ maxHeight: BODY_MAX_H }}>
         <div className="relative w-14 flex-none" style={{ height: GRID_HEIGHT }}>
           {Array.from({ length: GRID_HOURS }, (_, i) => (
             <span key={i} className="absolute right-2 -translate-y-1/2 text-[12px]/none font-semibold text-tx2" style={{ top: i * HOUR_HEIGHT + (i === 0 ? 8 : 0) }}>

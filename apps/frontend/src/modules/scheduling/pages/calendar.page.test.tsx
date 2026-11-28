@@ -16,6 +16,12 @@ describe("W15–W16 calendário semana (Execução) e detalhe do bloco", () => {
     expect(screen.getByText("livre")).toBeTruthy();
   });
 
+  it("a grade de horas abre na hora atual (19:40 → a partir das 18h)", async () => {
+    render(<CalendarPage />);
+    await screen.findByText("16–22 de novembro");
+    expect(screen.getByRole("region", { name: "Horas do dia" }).scrollTop).toBe(708);
+  });
+
   it("clicar num bloco abre o detalhe só leitura", async () => {
     render(<CalendarPage />);
     fireEvent.click(await screen.findByTitle("Trabalho de Eng. Software · Diagrama de casos de uso · 20:00–21:30"));

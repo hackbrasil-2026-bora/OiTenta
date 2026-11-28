@@ -12,6 +12,11 @@ export const FREE_BG = "var(--free)";
 
 const toTop = (minute: number) => (minute / 60) * HOUR_HEIGHT;
 
+/** Folga acima da primeira hora visível para o rótulo ("18h") não ficar cortado. */
+const LABEL_ROOM = 12;
+/** A grade abre rolada até 1h antes da hora atual (às 19:40, a partir das 18h). */
+export const initialScrollTop = (nowMinute: number) => Math.max(0, (Math.floor(nowMinute / 60) - 1) * HOUR_HEIGHT - LABEL_ROOM);
+
 export function weekRangeLabel(monday: string): string {
   const sunday = addDays(monday, 6);
   if (monday.slice(5, 7) === sunday.slice(5, 7)) return `${dayOfMonth(monday)}–${dayOfMonth(sunday)} de ${monthName(monday)}`;
