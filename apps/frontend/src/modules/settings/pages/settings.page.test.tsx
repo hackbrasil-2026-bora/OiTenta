@@ -262,4 +262,10 @@ describe("W26 Configurações", () => {
       expect(push).toHaveBeenCalledWith("/entrar");
     });
   });
+
+  it("o rodapé leva aos Termos de uso e à Política de privacidade", async () => {
+    await open();
+    expect(screen.getByRole("link", { name: "Termos de uso" }).getAttribute("href")).toBe("/termos");
+    expect(screen.getByRole("link", { name: "Política de privacidade" }).getAttribute("href")).toBe("/privacidade");
+  });
 });

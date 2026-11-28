@@ -1,5 +1,6 @@
 "use client";
 
+import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { useCallback, useEffect, useRef, useState } from "react";
 import { authRepository } from "@/modules/auth/data";
@@ -280,8 +281,12 @@ export default function SettingsPage() {
         }}
       />
 
-      <section className="py-2">
-        <span className="text-[14px]/[20px] font-semibold text-tx2">Bora · versão demo</span>
+      <section className="flex items-center justify-between py-2 text-[14px]/[20px] font-semibold text-tx2">
+        <span>Bora · versão demo</span>
+        <span className="flex gap-4">
+          <Link href="/termos" className="font-extrabold text-blue">Termos de uso</Link>
+          <Link href="/privacidade" className="font-extrabold text-blue">Política de privacidade</Link>
+        </span>
       </section>
     </div>
   );

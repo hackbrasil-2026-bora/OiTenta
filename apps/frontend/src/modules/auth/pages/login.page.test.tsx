@@ -79,3 +79,18 @@ describe("login sem dados de exemplo importados", () => {
     expect(src).not.toContain("example-data");
   });
 });
+
+describe("W04 cadastro: termos (28/11/2026)", () => {
+  it("avisa que criar a conta aceita os Termos e a Política, com os links", () => {
+    render(<LoginPage mode="cadastro" />);
+    expect(screen.getByText(/Ao criar a conta, você aceita os/)).toBeTruthy();
+    expect(screen.getByRole("link", { name: "Termos de uso" }).getAttribute("href")).toBe("/termos");
+    expect(screen.getByRole("link", { name: "Política de privacidade" }).getAttribute("href")).toBe("/privacidade");
+  });
+
+  it("o login não mostra o aviso", () => {
+    render(<LoginPage mode="login" />);
+    expect(screen.queryByText(/Ao criar a conta/)).toBeNull();
+  });
+});
+

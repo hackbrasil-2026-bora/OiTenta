@@ -141,6 +141,13 @@ export default function LoginPage({ mode }: { mode: AuthMode }) {
           <button type="button" onClick={demo} className="h-11 cursor-pointer rounded-full bg-transparent text-[15px]/none font-extrabold text-blue hover:bg-blue-soft">
             {t.demo}
           </button>
+          {isCad && (
+            <p className="m-0 text-center text-[13px]/[18px] font-semibold text-tx2">
+              Ao criar a conta, você aceita os{" "}
+              <Link href="/termos" className="font-extrabold text-blue">Termos de uso</Link> e a{" "}
+              <Link href="/privacidade" className="font-extrabold text-blue">Política de privacidade</Link>.
+            </p>
+          )}
         </div>
       </div>
     </div>
