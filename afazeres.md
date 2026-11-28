@@ -17,6 +17,12 @@ Siglas: W = tela do protótipo web (`design/web/SCREENS.md`); M = tela do mobile
 
 ## Frontend (web)
 
+- [ ] [DECIDIR] Trilha da submissão do Hack Brasil — (origem: `docs/9-pitch-e-descricao.md`, 28/11/2026) — vale para o projeto inteiro
+  - **Contexto:** cada projeto concorre em uma trilha só, e o problema e o público precisam estar dentro dela; o júri pode realocar o projeto ou deixá-lo inelegível (regulamento, itens 5.3–5.5). Submissão até 30/11/2026, 23h59.
+  - **Alternativas:** (1) **Acesso à educação**: público é o estudante que concilia aula, estágio e entregas; todos os exemplos do app já são acadêmicos. (2) **Saúde & bem-estar**: história sobre sobrecarga, ansiedade e procrastinação; público mais amplo, mas o app não tem nenhuma medida de saúde.
+  - **Recomendação:** (1), porque o público e os exemplos já são de estudantes e o impacto é mais fácil de mostrar. O vídeo e a descrição precisam usar a língua da trilha escolhida.
+- [ ] [EXECUTAR] Preencher no `README.md` o link do web na Vercel, o link do vídeo e os nomes da equipe — (origem: README reescrito, 28/11/2026). Pronto quando a tabela do topo e a seção "Equipe" não tiverem mais "_a preencher_".
+
 - [ ] [DECIDIR] Modal "7 dias regados" (W40) com valores fixos — (origem: diário, pergunta 8, B4, 10/11/2026)
   - **Contexto:** ao registrar "Não rolou" na rampa do web, o protótipo mostra um modal com confete e "7 dias regados". Gamificação está fora do MVP; pela P18, os elementos de gamificação aparecem com os valores fixos do protótipo.
   - **Problema:** o modal mostra um número que não vem de nenhum dado real. Um usuário pode achar que é a sequência dele.
